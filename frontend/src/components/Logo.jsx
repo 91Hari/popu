@@ -1,3 +1,9 @@
 export default function Logo() {
-  return <div style={{ fontWeight: 700, fontSize: 20 }}>Popu</div>;
+  return (
+    <img
+      src="/popu-logo.svg"
+      alt="Popu Logo"
+      style={{ height: 50, width: 50 }}
+    />
+  );
 }
