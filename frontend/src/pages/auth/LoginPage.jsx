@@ -1,289 +1,331 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Container,
+  Box,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Box,
   Typography,
+  Button,
+  Tabs,
+  Tab,
+  InputBase,
   Alert,
   CircularProgress,
   Stack,
-  useMediaQuery,
-  useTheme,
+  Divider,
 } from "@mui/material";
+import GoogleIcon from "@mui/icons-material/Google";
+import AppleIcon from "@mui/icons-material/Apple";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import { brand } from "../../theme";
+import Logo from "../../components/Logo";
 import authService from "../../services/authService";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+const OTP_LENGTH = 6;
+const RESEND_SECONDS = 30;
 
-  // Form validation
-  const validateForm = () => {
-    const newErrors = {};
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Invalid email format";
-    }
-    if (!password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-    return newErrors;
+// Backend is mock email/password auth; the OTP flow is a front-end demo that
+// signs into the seeded customer account so the rest of the app works.
+const DEMO_CREDENTIALS = { email: "customer@test.com", password: "password123" };
+
+export default function LoginPage() {
+  const [tab, setTab] = useState(0); // 0 = Login, 1 = Sign Up
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
+  const [timer, setTimer] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const otpRefs = useRef([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const id = setTimeout(() => setTimer((t) => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [timer]);
+
+  const phoneValid = /^\d{10}$/.test(phone);
+  const otpComplete = otp.every((d) => d !== "");
+
+  const resetFlow = () => {
+    setOtpSent(false);
+    setOtp(Array(OTP_LENGTH).fill(""));
+    setTimer(0);
+    setError("");
   };
 
-  // Handle login submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = validateForm();
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+  const handleSendOtp = () => {
+    if (!phoneValid) {
+      setError("Enter a valid 10-digit mobile number");
       return;
     }
+    if (tab === 1 && !name.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+    setError("");
+    setOtpSent(true);
+    setTimer(RESEND_SECONDS);
+    // Prefill a demo OTP so the flow is easy to walk through.
+    setOtp(["1", "2", "3", "4", "5", "6"]);
+    setTimeout(() => otpRefs.current[0]?.focus(), 50);
+  };
 
-    setErrors({});
-    setApiError("");
+  const handleOtpChange = (index, value) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    setOtp((prev) => {
+      const next = [...prev];
+      next[index] = digit;
+      return next;
+    });
+    if (digit && index < OTP_LENGTH - 1) otpRefs.current[index + 1]?.focus();
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!otpComplete) {
+      setError("Please enter the 6-digit OTP");
+      return;
+    }
+    setError("");
     setLoading(true);
-
     try {
-      const data = await authService.login({ email, password });
+      const data = await authService.login(DEMO_CREDENTIALS);
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...data.user, name: name || "Priya", phone }),
+      );
+      navigate("/customer");
     } catch (err) {
-      setApiError(err.message || "Login failed. Please try again.");
-      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle input change
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-    if (errors.email) setErrors({ ...errors, email: "" });
-  };
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-    if (errors.password) setErrors({ ...errors, password: "" });
+  const inputSx = {
+    border: `1px solid ${brand.border}`,
+    borderRadius: 2,
+    px: 1.5,
+    py: 1.25,
+    fontSize: "0.95rem",
+    width: "100%",
+    "&:focus-within": { borderColor: brand.orange },
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          py: isMobile ? 2 : 4,
-        }}
-      >
-        <Card
-          sx={{
-            width: "100%",
-            boxShadow: 3,
-            borderRadius: 2,
-          }}
-        >
-          <CardContent sx={{ p: isMobile ? 3 : 4 }}>
-            {/* Header */}
-            <Box sx={{ textAlign: "center", mb: 4 }}>
-              <Typography
-                variant="h3"
-                component="h1"
-                sx={{
-                  fontWeight: 800,
-                  background:
-                    "linear-gradient(135deg, #F5A623 0%, #FFA500 100%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  mb: 1,
-                  fontSize: isMobile ? "2rem" : "2.5rem",
-                }}
-              >
-                PO.PU
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: isMobile ? "0.875rem" : "1rem",
-                }}
-              >
-                Food Catering Platform
-              </Typography>
-            </Box>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: brand.bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 2,
+      }}
+    >
+      <Card sx={{ width: "100%", maxWidth: 420 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <Logo size={44} showTagline />
+          </Box>
 
-            {/* Error Alert */}
-            {apiError && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {apiError}
-              </Alert>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
+            {tab === 0 ? "Welcome Back! 👋" : "Create your account"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            {tab === 0 ? "Login to continue" : "Sign up to get started"}
+          </Typography>
+
+          <Tabs
+            value={tab}
+            onChange={(_, v) => {
+              setTab(v);
+              resetFlow();
+            }}
+            sx={{
+              mb: 3,
+              minHeight: 40,
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 600 },
+            }}
+          >
+            <Tab label="Login" />
+            <Tab label="Sign Up" />
+          </Tabs>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Stack spacing={2}>
+            {tab === 1 && (
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+                >
+                  Full Name
+                </Typography>
+                <InputBase
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Priya Sharma"
+                  sx={inputSx}
+                  disabled={otpSent}
+                />
+              </Box>
             )}
 
-            {/* Login Form */}
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-              <Stack spacing={2.5}>
-                {/* Email Field */}
-                <TextField
-                  fullWidth
-                  id="email"
-                  label="Email Address"
-                  type="email"
-                  value={email}
-                  onChange={handleEmailChange}
-                  error={!!errors.email}
-                  helperText={errors.email}
-                  placeholder="example@email.com"
-                  variant="outlined"
-                  disabled={loading}
-                  autoComplete="email"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                    },
-                  }}
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+              >
+                Mobile Number
+              </Typography>
+              <Box sx={{ ...inputSx, display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography sx={{ color: "text.secondary", fontWeight: 600 }}>
+                  +91
+                </Typography>
+                <InputBase
+                  value={phone}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                  }
+                  placeholder="98765 43210"
+                  disabled={otpSent}
+                  sx={{ flex: 1, fontSize: "0.95rem" }}
+                  inputProps={{ inputMode: "numeric" }}
                 />
+                {otpSent && (
+                  <Button size="small" onClick={resetFlow} sx={{ minWidth: 0 }}>
+                    Edit
+                  </Button>
+                )}
+              </Box>
+            </Box>
 
-                {/* Password Field */}
-                <TextField
-                  fullWidth
-                  id="password"
-                  label="Password"
-                  type="password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  error={!!errors.password}
-                  helperText={errors.password}
-                  placeholder="••••••••"
-                  variant="outlined"
-                  disabled={loading}
-                  autoComplete="current-password"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                    },
-                  }}
-                />
-
-                {/* Login Button */}
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size={isMobile ? "medium" : "large"}
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  sx={{
-                    mt: 2,
-                    background:
-                      "linear-gradient(135deg, #F5A623 0%, #FFA500 100%)",
-                    textTransform: "none",
-                    fontSize: isMobile ? "0.95rem" : "1rem",
-                    fontWeight: 600,
-                    py: isMobile ? 1.2 : 1.5,
-                    borderRadius: 1,
-                    "&:hover": {
-                      background:
-                        "linear-gradient(135deg, #E89410 0%, #FF9500 100%)",
-                    },
-                    "&:disabled": {
-                      background: "#ccc",
-                    },
-                  }}
+            {otpSent && (
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
                 >
-                  {loading ? (
-                    <>
-                      <CircularProgress
-                        size={20}
-                        sx={{ mr: 1, color: "white" }}
-                      />
-                      Logging in...
-                    </>
-                  ) : (
-                    "Login"
-                  )}
-                </Button>
-
-                {/* Register Link */}
-                <Box sx={{ textAlign: "center", mt: 2 }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Don't have an account?{" "}
-                    <Link
-                      to="/auth/register"
-                      style={{
-                        color: "#F5A623",
-                        textDecoration: "none",
-                        fontWeight: 600,
+                  Enter OTP
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  {otp.map((digit, i) => (
+                    <InputBase
+                      key={i}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      inputRef={(el) => (otpRefs.current[i] = el)}
+                      inputProps={{
+                        inputMode: "numeric",
+                        maxLength: 1,
+                        style: { textAlign: "center", padding: 0 },
                       }}
-                      onMouseEnter={(e) =>
-                        (e.target.style.textDecoration = "underline")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.style.textDecoration = "none")
-                      }
-                    >
-                      Register here
-                    </Link>
-                  </Typography>
+                      sx={{
+                        flex: 1,
+                        height: 48,
+                        fontSize: "1.25rem",
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        border: `1.5px solid ${digit ? brand.orange : brand.border}`,
+                        color: brand.orange,
+                      }}
+                    />
+                  ))}
                 </Box>
-              </Stack>
-            </Box>
+                <Box sx={{ mt: 1 }}>
+                  {timer > 0 ? (
+                    <Typography variant="caption" sx={{ color: brand.orange }}>
+                      Resend OTP in 0:{String(timer).padStart(2, "0")}
+                    </Typography>
+                  ) : (
+                    <Button
+                      size="small"
+                      onClick={() => setTimer(RESEND_SECONDS)}
+                      sx={{ p: 0, minWidth: 0 }}
+                    >
+                      Resend OTP
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+            )}
 
-            {/* Demo Credentials */}
-            <Box
-              sx={{
-                mt: 4,
-                pt: 3,
-                borderTop: "1px solid #eee",
-                backgroundColor: "#f9f9f9",
-                p: 2,
-                borderRadius: 1,
-                textAlign: "center",
-              }}
+            <Button
+              fullWidth
+              variant="contained"
+              size="large"
+              disabled={loading}
+              onClick={otpSent ? handleVerify : handleSendOtp}
+              sx={{ py: 1.25 }}
             >
-              <Typography
-                variant="caption"
+              {loading ? (
+                <CircularProgress size={22} sx={{ color: "white" }} />
+              ) : otpSent ? (
+                tab === 0 ? "Login" : "Create Account"
+              ) : (
+                "Get OTP"
+              )}
+            </Button>
+          </Stack>
+
+          <Divider sx={{ my: 3, fontSize: "0.75rem", color: "text.secondary" }}>
+            or continue with
+          </Divider>
+
+          <Stack direction="row" spacing={1.5}>
+            {[
+              { label: "Google", icon: <GoogleIcon fontSize="small" /> },
+              { label: "Apple", icon: <AppleIcon fontSize="small" /> },
+              { label: "Facebook", icon: <FacebookIcon fontSize="small" /> },
+            ].map((p) => (
+              <Button
+                key={p.label}
+                fullWidth
+                variant="outlined"
+                startIcon={p.icon}
+                onClick={handleVerify}
                 sx={{
-                  color: "text.secondary",
-                  display: "block",
-                  mb: 1,
-                  fontWeight: 600,
+                  color: "text.primary",
+                  borderColor: "divider",
+                  textTransform: "none",
+                  fontSize: "0.8rem",
+                  "&:hover": { borderColor: brand.orange },
                 }}
               >
-                Demo Credentials
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  display: "block",
-                  lineHeight: 1.8,
-                  fontSize: isMobile ? "0.75rem" : "0.875rem",
-                }}
-              >
-                <strong>Customer:</strong> customer@test.com / password123
-                <br />
-                <strong>Caterer:</strong> caterer@test.com / password123
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </Container>
+                {p.label}
+              </Button>
+            ))}
+          </Stack>
+
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+              textAlign: "center",
+              color: "text.secondary",
+              mt: 2,
+            }}
+          >
+            By continuing you agree to our Terms & Privacy Policy
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
