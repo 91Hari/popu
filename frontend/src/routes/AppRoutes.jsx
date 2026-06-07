@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import ProtectedRoute from "../components/ProtectedRoute";
 
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
@@ -21,80 +20,16 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
-
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <CustomerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/search"
-          element={
-            <ProtectedRoute>
-              <FoodSearchPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/food/:id"
-          element={
-            <ProtectedRoute>
-              <FoodDetailsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
-              <CartPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute>
-              <OrdersPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/caterer"
-          element={
-            <ProtectedRoute>
-              <CatererDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/caterer/add"
-          element={
-            <ProtectedRoute>
-              <AddFoodPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/caterer/foods"
-          element={
-            <ProtectedRoute>
-              <FoodListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/caterer/orders"
-          element={
-            <ProtectedRoute>
-              <CatererOrdersPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<CustomerDashboard />} />
+        <Route path="/search" element={<FoodSearchPage />} />
+        <Route path="/food/:id" element={<FoodDetailsPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/caterer" element={<CatererDashboard />} />
+        <Route path="/caterer/add" element={<AddFoodPage />} />
+        <Route path="/caterer/foods" element={<FoodListPage />} />
+        <Route path="/caterer/orders" element={<CatererOrdersPage />} />
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
