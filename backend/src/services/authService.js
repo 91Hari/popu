@@ -11,7 +11,7 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-async function register({ name, email, password, role }) {
+async function register({ name, email, password, role, business_name, address, latitude, longitude }) {
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
   if (existing.rows.length > 0) {
     const err = new Error('Email already registered');
@@ -20,12 +20,21 @@ async function register({ name, email, password, role }) {
   }
 
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+  const upperRole  = role.toUpperCase();
+  const isCaterer  = upperRole === 'CATERER';
 
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password_hash, role)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO users (name, email, password_hash, role, business_name, location, address, latitude, longitude)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id, name, email, role, is_active, created_at`,
-    [name, email, password_hash, role.toUpperCase()]
+    [
+      name, email, password_hash, upperRole,
+      isCaterer ? (business_name || null) : null,
+      isCaterer ? (address || null) : null,
+      isCaterer ? (address || null) : null,
+      isCaterer ? (latitude  != null ? latitude  : null) : null,
+      isCaterer ? (longitude != null ? longitude : null) : null,
+    ]
   );
 
   return rows[0];

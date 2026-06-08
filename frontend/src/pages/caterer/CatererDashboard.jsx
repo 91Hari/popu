@@ -17,6 +17,7 @@ import ListAltRoundedIcon from "@mui/icons-material/ListAltRounded";
 import AttachMoneyRoundedIcon from "@mui/icons-material/AttachMoneyRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 
 import foodService from "../../services/foodService";
 import orderService from "../../services/orderService";
@@ -27,17 +28,23 @@ const STAT_CARDS = [
   {
     key: "foods",
     label: "Total Foods",
+    hint: "Manage menu →",
+    href: "/caterer/foods",
     icon: <RestaurantMenuRoundedIcon sx={{ color: brand.orange, fontSize: 36 }} />,
   },
   {
     key: "orders",
     label: "Total Orders",
+    hint: "View all orders →",
+    href: "/caterer/orders",
     icon: <ListAltRoundedIcon sx={{ color: brand.orange, fontSize: 36 }} />,
   },
   {
     key: "revenue",
     label: "Revenue",
     prefix: "₹",
+    hint: "View orders →",
+    href: "/caterer/orders",
     icon: <AttachMoneyRoundedIcon sx={{ color: brand.orange, fontSize: 36 }} />,
   },
 ];
@@ -66,14 +73,14 @@ export default function CatererDashboard() {
         const totalOrders = orders.length;
 
         let revenue = 0;
-        orders.forEach((o) => {
-          revenue += Number(o.total_amount || 0);
-        });
+        orders
+          .filter((o) => o.status === "DELIVERED")
+          .forEach((o) => { revenue += Number(o.total_amount || 0); });
 
-        setStats({ foods: totalFoods, orders: totalOrders, revenue });
+        setStats({ foods: totalFoods, orders: totalOrders, revenue: revenue.toFixed(2) });
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
-        setStats({ foods: 0, orders: 0, revenue: 0 });
+        setStats({ foods: 0, orders: 0, revenue: "0.00" });
       } finally {
         setLoading(false);
       }
@@ -100,15 +107,21 @@ export default function CatererDashboard() {
           {STAT_CARDS.map((card) => (
             <Grid item xs={12} sm={4} key={card.key}>
               <Card
+                onClick={() => navigate(card.href)}
                 sx={{
                   height: "100%",
                   borderLeft: `4px solid ${brand.orange}`,
-                  "&:hover": { boxShadow: "0 4px 16px rgba(232,117,26,0.12)" },
-                  transition: "box-shadow 0.2s",
+                  cursor: "pointer",
+                  transition: "box-shadow 0.2s, transform 0.15s",
+                  "&:hover": {
+                    boxShadow: "0 6px 20px rgba(232,117,26,0.18)",
+                    transform: "translateY(-2px)",
+                  },
+                  "&:hover .stat-hint": { opacity: 1 },
                 }}
               >
-                <CardContent>
-                  <Stack direction="row" spacing={2} alignItems="center">
+                <CardContent sx={{ pb: "12px !important" }}>
+                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
                     <Box
                       sx={{
                         width: 56,
@@ -135,6 +148,23 @@ export default function CatererDashboard() {
                         </Typography>
                       )}
                     </Box>
+                  </Stack>
+
+                  <Stack
+                    className="stat-hint"
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.5}
+                    sx={{
+                      opacity: 0,
+                      transition: "opacity 0.2s",
+                      color: brand.orange,
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: brand.orange }}>
+                      {card.hint}
+                    </Typography>
+                    <ArrowForwardRoundedIcon sx={{ fontSize: 13, color: brand.orange }} />
                   </Stack>
                 </CardContent>
               </Card>

@@ -1,0 +1,37 @@
+import{r as m,a as M,j as e,c as $,o as S,p as R,q as T,t as W,u as F,e as a}from"./index-BnZ1taXd.js";import{T as N,a as z,A as D,g as A,R as E,i as L}from"./TopNav-edjnGvoN.js";import{g as O,b as U,h as V,s as B,m as X,j as I,B as y,T as c,a as b}from"./Logo-BVjULKRu.js";import{f as H}from"./foodService-COW3T1dP.js";import{o as _}from"./orderService-Dh26Hiba.js";import{C as G}from"./index-DT6Rhmkr.js";import{G as w}from"./Grid-CLdgLZi6.js";import{C as K}from"./Card-CB-8vweJ.js";import{C as P}from"./CardContent-D4GVsE-_.js";import{S as C}from"./Stack-B7pXEvyy.js";import"./isMuiElement-S292Pcue.js";function q(t){return O("MuiSkeleton",t)}U("MuiSkeleton",["root","text","rectangular","rounded","circular","pulse","wave","withChildren","fitContent","heightAuto"]);const J=t=>{const{classes:r,variant:o,animation:s,hasChildren:i,width:n,height:l}=t;return V({root:["root",o,s,i&&"withChildren",i&&!n&&"fitContent",i&&!l&&"heightAuto"]},q,r)},j=S`
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 1;
+  }
+`,k=S`
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    /* +0.5s of delay between each loop */
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+`,Q=typeof j!="string"?R`
+        animation: ${j} 2s ease-in-out 0.5s infinite;
+      `:null,Y=typeof k!="string"?R`
+        &::after {
+          animation: ${k} 2s linear 0.5s infinite;
+        }
+      `:null,Z=B("span",{name:"MuiSkeleton",slot:"Root",overridesResolver:(t,r)=>{const{ownerState:o}=t;return[r.root,r[o.variant],o.animation!==!1&&r[o.animation],o.hasChildren&&r.withChildren,o.hasChildren&&!o.width&&r.fitContent,o.hasChildren&&!o.height&&r.heightAuto]}})(X(({theme:t})=>{const r=T(t.shape.borderRadius)||"px",o=W(t.shape.borderRadius);return{display:"block",backgroundColor:t.vars?t.vars.palette.Skeleton.bg:t.alpha(t.palette.text.primary,t.palette.mode==="light"?.11:.13),height:"1.2em",variants:[{props:{variant:"text"},style:{marginTop:0,marginBottom:0,height:"auto",transformOrigin:"0 55%",transform:"scale(1, 0.60)",borderRadius:`${o}${r}/${Math.round(o/.6*10)/10}${r}`,"&:empty:before":{content:'"\\00a0"'}}},{props:{variant:"circular"},style:{borderRadius:"50%"}},{props:{variant:"rounded"},style:{borderRadius:(t.vars||t).shape.borderRadius}},{props:({ownerState:s})=>s.hasChildren,style:{"& > *":{visibility:"hidden"}}},{props:({ownerState:s})=>s.hasChildren&&!s.width,style:{maxWidth:"fit-content"}},{props:({ownerState:s})=>s.hasChildren&&!s.height,style:{height:"auto"}},{props:{animation:"pulse"},style:Q||{animation:`${j} 2s ease-in-out 0.5s infinite`}},{props:{animation:"wave"},style:{position:"relative",overflow:"hidden",WebkitMaskImage:"-webkit-radial-gradient(white, black)","&::after":{background:`linear-gradient(
+                90deg,
+                transparent,
+                ${(t.vars||t).palette.action.hover},
+                transparent
+              )`,content:'""',position:"absolute",transform:"translateX(-100%)",bottom:0,left:0,right:0,top:0}}},{props:{animation:"wave"},style:Y||{"&::after":{animation:`${k} 2s linear 0.5s infinite`}}}]}})),ee=m.forwardRef(function(r,o){const s=M({props:r,name:"MuiSkeleton"}),{animation:i="pulse",className:n,component:l="span",height:d,style:h,variant:v="text",width:u,...g}=s,f={...s,animation:i,component:l,variant:v,hasChildren:!!g.children},x=J(f);return e.jsx(Z,{as:l,ref:o,className:$(x.root,n),ownerState:f,...g,style:{width:u,height:d,...h}})}),te=I(e.jsx("path",{d:"M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.42 0 2.13.54 2.39 1.4.12.4.45.7.87.7h.3c.66 0 1.13-.65.9-1.27-.42-1.18-1.4-2.16-2.96-2.54V4.5c0-.83-.67-1.5-1.5-1.5S10 3.67 10 4.5v.66c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-1.65 0-2.5-.59-2.83-1.43-.15-.39-.49-.67-.9-.67h-.28c-.67 0-1.14.68-.89 1.3.57 1.39 1.9 2.21 3.4 2.53v.67c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-.65c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4"})),oe=I(e.jsx("path",{d:"M5 13h11.17l-4.88 4.88c-.39.39-.39 1.03 0 1.42s1.02.39 1.41 0l6.59-6.59c.39-.39.39-1.02 0-1.41l-6.58-6.6a.996.996 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41L16.17 11H5c-.55 0-1 .45-1 1s.45 1 1 1"})),re=[{key:"foods",label:"Total Foods",hint:"Manage menu →",href:"/caterer/foods",icon:e.jsx(A,{sx:{color:a.orange,fontSize:36}})},{key:"orders",label:"Total Orders",hint:"View all orders →",href:"/caterer/orders",icon:e.jsx(L,{sx:{color:a.orange,fontSize:36}})},{key:"revenue",label:"Revenue",prefix:"₹",hint:"View orders →",href:"/caterer/orders",icon:e.jsx(te,{sx:{color:a.orange,fontSize:36}})}];function fe(){const[t,r]=m.useState({foods:0,orders:0,revenue:0}),[o,s]=m.useState(!0),i=F();return m.useEffect(()=>{(async()=>{try{s(!0);const l=JSON.parse(localStorage.getItem("user")||"{}"),[d,h]=await Promise.all([H.getFoods(),_.getOrders()]),v=(Array.isArray(d)?d:[]).filter(p=>p.caterer_id===l.id),u=Array.isArray(h)?h:h?.orders??[],g=v.length,f=u.length;let x=0;u.filter(p=>p.status==="DELIVERED").forEach(p=>{x+=Number(p.total_amount||0)}),r({foods:g,orders:f,revenue:x.toFixed(2)})}catch(l){console.error("Failed to fetch dashboard stats:",l),r({foods:0,orders:0,revenue:"0.00"})}finally{s(!1)}})()},[]),e.jsxs(y,{sx:{minHeight:"100vh",backgroundColor:a.bg},children:[e.jsx(N,{}),e.jsx(z,{}),e.jsxs(G,{maxWidth:"lg",sx:{pt:3,pb:4},children:[e.jsx(c,{variant:"h4",sx:{fontWeight:800,color:a.orange,mb:.5},children:"Caterer Dashboard"}),e.jsx(c,{variant:"body2",sx:{color:"text.secondary",mb:3},children:"Manage your food menu, track orders and revenue."}),e.jsx(w,{container:!0,spacing:2,sx:{mb:4},children:re.map(n=>e.jsx(w,{item:!0,xs:12,sm:4,children:e.jsx(K,{onClick:()=>i(n.href),sx:{height:"100%",borderLeft:`4px solid ${a.orange}`,cursor:"pointer",transition:"box-shadow 0.2s, transform 0.15s","&:hover":{boxShadow:"0 6px 20px rgba(232,117,26,0.18)",transform:"translateY(-2px)"},"&:hover .stat-hint":{opacity:1}},children:e.jsxs(P,{sx:{pb:"12px !important"},children:[e.jsxs(C,{direction:"row",spacing:2,alignItems:"center",sx:{mb:1.5},children:[e.jsx(y,{sx:{width:56,height:56,borderRadius:2.5,backgroundColor:a.orangeLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:n.icon}),e.jsxs(y,{children:[e.jsx(c,{variant:"body2",sx:{color:"text.secondary",fontWeight:500},children:n.label}),o?e.jsx(ee,{width:80,height:32}):e.jsxs(c,{variant:"h4",sx:{fontWeight:900,lineHeight:1.2},children:[n.prefix||"",t[n.key]]})]})]}),e.jsxs(C,{className:"stat-hint",direction:"row",alignItems:"center",spacing:.5,sx:{opacity:0,transition:"opacity 0.2s",color:a.orange},children:[e.jsx(c,{variant:"caption",sx:{fontWeight:600,color:a.orange},children:n.hint}),e.jsx(oe,{sx:{fontSize:13,color:a.orange}})]})]})})},n.key))}),e.jsx(c,{variant:"h6",sx:{fontWeight:700,mb:2},children:"Quick Actions"}),e.jsxs(C,{direction:{xs:"column",sm:"row"},spacing:2,children:[e.jsx(b,{variant:"contained",size:"large",startIcon:e.jsx(D,{}),sx:{background:`linear-gradient(135deg, ${a.orange} 0%, ${a.orangeMid} 100%)`,fontWeight:700,px:3},onClick:()=>i("/caterer/add-food"),children:"Add New Food"}),e.jsx(b,{variant:"outlined",size:"large",startIcon:e.jsx(A,{}),onClick:()=>i("/caterer/foods"),sx:{borderColor:a.orange,color:a.orange,fontWeight:700,px:3},children:"Manage Menu"}),e.jsx(b,{variant:"outlined",size:"large",startIcon:e.jsx(E,{}),onClick:()=>i("/caterer/orders"),sx:{borderColor:a.orange,color:a.orange,fontWeight:700,px:3},children:"View Orders"})]})]})]})}export{fe as default};

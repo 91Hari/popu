@@ -21,27 +21,34 @@ import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import PersonPinRoundedIcon from "@mui/icons-material/PersonPinRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import foodService from "../../services/foodService";
 import orderService from "../../services/orderService";
 import TopNav from "../../components/TopNav";
 import { brand } from "../../theme";
+import { useCustomerGeo, etaRange } from "../../utils/geoUtils";
 
 export default function FoodDetailsPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [food, setFood] = useState(null);
+  const { id }         = useParams();
+  const navigate       = useNavigate();
+  const customerCoords = useCustomerGeo();
+  const [food, setFood]       = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [qty, setQty] = useState(1);
+  const [error, setError]     = useState("");
+  const [qty, setQty]         = useState(1);
   const [placing, setPlacing] = useState(false);
-  const theme = useTheme();
+  const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     const fetchFood = async () => {
       try {
         setLoading(true);
-        const data = await foodService.getFoodById(id);
+        const data = await foodService.getFoodById(id, {
+          customerLat: customerCoords?.lat,
+          customerLng: customerCoords?.lng,
+        });
         setFood(data);
       } catch (err) {
         console.error("Error fetching food:", err);
@@ -52,7 +59,7 @@ export default function FoodDetailsPage() {
     };
 
     if (id) fetchFood();
-  }, [id]);
+  }, [id, customerCoords]);
 
   const increase = () => setQty((q) => Math.min(q + 1, 99));
   const decrease = () => setQty((q) => Math.max(q - 1, 1));
@@ -70,6 +77,8 @@ export default function FoodDetailsPage() {
     try {
       await orderService.createOrder({
         items: [{ food_item_id: food.id, quantity: qty }],
+        customer_lat: customerCoords?.lat,
+        customer_lng: customerCoords?.lng,
       });
       navigate("/customer/orders");
     } catch (err) {
@@ -165,6 +174,36 @@ export default function FoodDetailsPage() {
                 By: {food.caterer_name || "Premium Caterer"}
               </Typography>
             </Box>
+
+            {/* ETA section */}
+            {food.estimatedDeliveryTime != null && (
+              <Box
+                sx={{
+                  display: "flex", alignItems: "center", gap: 2, mt: 1.5, p: 1.5,
+                  borderRadius: 2, backgroundColor: "#E3F2FD", border: "1px solid #BBDEFB",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <DirectionsBikeRoundedIcon sx={{ color: "#1565c0", fontSize: 20 }} />
+                  <Box>
+                    <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 700, display: "block", lineHeight: 1.2 }}>
+                      Estimated Delivery
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ color: "#1565c0", fontWeight: 800 }}>
+                      {food.etaRange || `${food.estimatedDeliveryTime} mins`}
+                    </Typography>
+                  </Box>
+                </Box>
+                {food.distanceKm != null && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <AccessTimeRoundedIcon sx={{ color: "#1565c0", fontSize: 16 }} />
+                    <Typography variant="caption" sx={{ color: "#1565c0" }}>
+                      {food.distanceKm} km away
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
 
             <Typography variant="body1" sx={{ mt: 2, color: "text.secondary", lineHeight: 1.7 }}>
               {food.description}

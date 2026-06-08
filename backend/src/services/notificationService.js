@@ -1,11 +1,15 @@
 const pool = require('../config/db');
 
 const NOTIFICATION_TYPES = {
-  NEW_FOOD_ITEM: 'NEW_FOOD_ITEM',
-  PRICE_DROP:    'PRICE_DROP',
-  BACK_IN_STOCK: 'BACK_IN_STOCK',
-  POPULAR_ITEM:  'POPULAR_ITEM',
-  SPECIAL_OFFER: 'SPECIAL_OFFER',
+  NEW_FOOD_ITEM:     'NEW_FOOD_ITEM',
+  PRICE_DROP:        'PRICE_DROP',
+  BACK_IN_STOCK:     'BACK_IN_STOCK',
+  POPULAR_ITEM:      'POPULAR_ITEM',
+  SPECIAL_OFFER:     'SPECIAL_OFFER',
+  ORDER_CANCELLED:   'ORDER_CANCELLED',
+  ORDER_ACCEPTED:    'ORDER_ACCEPTED',
+  ORDER_PREPARING:   'ORDER_PREPARING',
+  ORDER_DELIVERED:   'ORDER_DELIVERED',
 };
 
 const BATCH_SIZE = 500;
@@ -85,10 +89,19 @@ function _dispatch(userIds, payload) {
   //          emailQueue.enqueue(userIds, payload)
 }
 
+async function notifyUser(user_id, { notification_type, title, message }) {
+  await pool.query(
+    `INSERT INTO notifications (user_id, notification_type, title, message)
+     VALUES ($1, $2, $3, $4)`,
+    [user_id, notification_type, title, message]
+  );
+}
+
 module.exports = {
   NOTIFICATION_TYPES,
   notifyAllCustomers,
   notifyInterestedCustomers,
+  notifyUser,
   getNotificationsForUser,
   markAsRead,
   markAllAsRead,

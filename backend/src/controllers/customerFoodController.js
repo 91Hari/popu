@@ -1,9 +1,21 @@
+'use strict';
+
 const foodService         = require('../services/foodService');
 const notificationService = require('../services/notificationService');
 
+function _parseCoords(req) {
+  const lat = parseFloat(req.query.customer_lat);
+  const lng = parseFloat(req.query.customer_lng);
+  return {
+    customerLat: isNaN(lat) ? null : lat,
+    customerLng: isNaN(lng) ? null : lng,
+  };
+}
+
 async function getCustomerFoods(req, res, next) {
   try {
-    const foods = await foodService.getCustomerFoods();
+    const { customerLat, customerLng } = _parseCoords(req);
+    const foods = await foodService.getCustomerFoods({ customerLat, customerLng });
     res.json(foods);
   } catch (err) {
     next(err);
@@ -13,8 +25,10 @@ async function getCustomerFoods(req, res, next) {
 async function searchCustomerFoods(req, res, next) {
   try {
     const { foodName, category, catererName, minPrice, maxPrice, available } = req.query;
+    const { customerLat, customerLng } = _parseCoords(req);
     const foods = await foodService.searchCustomerFoods({
       foodName, category, catererName, minPrice, maxPrice, available,
+      customerLat, customerLng,
     });
     res.json(foods);
   } catch (err) {

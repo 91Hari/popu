@@ -2,14 +2,19 @@ const orderService = require('../services/orderService');
 
 async function createOrder(req, res, next) {
   try {
-    const { items } = req.body;
+    const { items, customer_lat, customer_lng } = req.body;
     if (!Array.isArray(items) || items.length === 0)
       return res.status(400).json({ error: 'items must be a non-empty array' });
     for (const item of items) {
       if (!item.food_item_id || !item.quantity || item.quantity < 1)
         return res.status(400).json({ error: 'Each item requires food_item_id and quantity >= 1' });
     }
-    const order = await orderService.createOrder({ customer_id: req.user.id, items });
+    const order = await orderService.createOrder({
+      customer_id: req.user.id,
+      items,
+      customer_lat,
+      customer_lng,
+    });
     res.status(201).json({ order });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useCustomerGeo } from "../../utils/geoUtils";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Toolbar, Typography, InputBase, IconButton,
@@ -16,7 +17,8 @@ import catererService from "../../services/catererService";
 const LOCATIONS = ["All", "Hyderabad", "Bangalore", "Chennai", "Mumbai", "Delhi", "Pune"];
 
 export default function CateringPage() {
-  const navigate = useNavigate();
+  const navigate      = useNavigate();
+  const customerCoords = useCustomerGeo();
   const [caterers, setCaterers]   = useState([]);
   const [total, setTotal]         = useState(0);
   const [page, setPage]           = useState(1);
@@ -139,7 +141,7 @@ export default function CateringPage() {
             <Grid container spacing={2}>
               {caterers.map((c) => (
                 <Grid item key={c.id} xs={12} sm={6} md={4} lg={3}>
-                  <CatererCard caterer={c} onClick={() => navigate(`/services/catering/${c.id}`)} />
+                  <CatererCard caterer={c} onClick={() => navigate(`/services/catering/${c.id}`)} customerCoords={customerCoords} />
                 </Grid>
               ))}
             </Grid>

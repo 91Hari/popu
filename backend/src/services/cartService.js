@@ -6,14 +6,17 @@ async function getCart(customer_id) {
        ci.id,
        ci.quantity,
        ci.created_at,
-       f.id           AS food_item_id,
+       f.id                          AS food_item_id,
        f.food_name,
        f.price,
        f.image_url,
        f.is_available,
        f.category,
-       u.id           AS caterer_id,
-       u.name         AS caterer_name
+       f.preparation_time_minutes,
+       u.id                          AS caterer_id,
+       u.name                        AS caterer_name,
+       u.latitude                    AS caterer_latitude,
+       u.longitude                   AS caterer_longitude
      FROM cart_items ci
      JOIN food_items f ON f.id = ci.food_item_id
      JOIN users u      ON u.id = f.caterer_id

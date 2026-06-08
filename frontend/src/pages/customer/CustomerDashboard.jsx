@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -24,6 +24,7 @@ import { brand } from "../../theme";
 import TopNav from "../../components/TopNav";
 import FoodCard from "../../components/FoodCard";
 import foodService from "../../services/foodService";
+import { useCustomerGeo } from "../../utils/geoUtils";
 
 const CATEGORIES = [
   { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Catering",  to: "/services/catering" },
@@ -34,9 +35,10 @@ const CATEGORIES = [
 ];
 
 export default function CustomerDashboard() {
-  const [foods, setFoods] = useState([]);
+  const [foods, setFoods]     = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const navigate              = useNavigate();
+  const customerCoords        = useCustomerGeo();
 
   const user = (() => {
     try {
@@ -47,21 +49,24 @@ export default function CustomerDashboard() {
   })();
   const firstName = (user.name || "there").split(" ")[0];
 
-  useEffect(() => {
-    const fetchFoods = async () => {
-      try {
-        setLoading(true);
-        const data = await foodService.getCustomerFoods();
-        setFoods((data || []).slice(0, 12));
-      } catch (err) {
-        console.error("Failed to fetch foods:", err);
-        setFoods([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFoods();
-  }, []);
+  const fetchFoods = useCallback(async (coords) => {
+    try {
+      setLoading(true);
+      const geo  = coords || customerCoords;
+      const data = await foodService.getCustomerFoods({
+        customerLat: geo?.lat,
+        customerLng: geo?.lng,
+      });
+      setFoods((data || []).slice(0, 12));
+    } catch (err) {
+      console.error("Failed to fetch foods:", err);
+      setFoods([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [customerCoords]);
+
+  useEffect(() => { fetchFoods(); }, [fetchFoods]);
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>

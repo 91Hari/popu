@@ -7,17 +7,21 @@ import {
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
+import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import api from "../../services/api";
 import FoodCard from "../../components/FoodCard";
 import TopNav from "../../components/TopNav";
 import { brand } from "../../theme";
+import { useCustomerGeo, haversineKm, etaMinutes, formatDistance, formatEta } from "../../utils/geoUtils";
 
 export default function CatererDetailPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [data, setData]     = useState(null);
+  const { id }         = useParams();
+  const navigate       = useNavigate();
+  const customerCoords = useCustomerGeo();
+  const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState("");
+  const [error, setError]     = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -34,10 +38,16 @@ export default function CatererDetailPage() {
     if (id) load();
   }, [id]);
 
-  const caterer = data?.caterer;
-  const foods   = data?.foods || [];
-  const available = foods.filter((f) => f.is_available);
+  const caterer   = data?.caterer;
+  const foods     = data?.foods || [];
+  const available   = foods.filter((f) => f.is_available);
   const unavailable = foods.filter((f) => !f.is_available);
+
+  const hasDistance = customerCoords && caterer?.latitude != null && caterer?.longitude != null;
+  const distKm = hasDistance
+    ? haversineKm(customerCoords.lat, customerCoords.lng, Number(caterer.latitude), Number(caterer.longitude))
+    : null;
+  const eta = distKm != null ? etaMinutes(distKm) : null;
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
@@ -87,18 +97,39 @@ export default function CatererDetailPage() {
                     {caterer.businessName}
                   </Typography>
                 )}
-                <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 1.25 }} flexWrap="wrap">
-                  {caterer.location && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                      <LocationOnRoundedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{caterer.location}</Typography>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1.25 }} flexWrap="wrap" useFlexGap>
+                  {(caterer.address || caterer.location) && (
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.4 }}>
+                      <LocationOnRoundedIcon sx={{ fontSize: 14, color: "text.secondary", mt: "1px", flexShrink: 0 }} />
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {caterer.address || caterer.location}
+                      </Typography>
                     </Box>
+                  )}
+                </Stack>
+
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                  {distKm != null && (
+                    <>
+                      <Chip
+                        icon={<DirectionsBikeRoundedIcon sx={{ fontSize: "14px !important" }} />}
+                        label={formatDistance(distKm)}
+                        size="small"
+                        sx={{ height: 26, backgroundColor: "#E8F5E9", color: "#2e7d32", "& .MuiChip-icon": { color: "#2e7d32" }, fontSize: "0.75rem" }}
+                      />
+                      <Chip
+                        icon={<AccessTimeRoundedIcon sx={{ fontSize: "14px !important" }} />}
+                        label={`~${formatEta(eta)} delivery`}
+                        size="small"
+                        sx={{ height: 26, backgroundColor: "#E3F2FD", color: "#1565c0", "& .MuiChip-icon": { color: "#1565c0" }, fontSize: "0.75rem" }}
+                      />
+                    </>
                   )}
                   <Chip
                     icon={<RestaurantMenuRoundedIcon sx={{ fontSize: "14px !important" }} />}
                     label={`${available.length} item${available.length !== 1 ? "s" : ""} available`}
                     size="small"
-                    sx={{ height: 24, backgroundColor: brand.orangeLight, color: brand.orange, fontSize: "0.75rem" }}
+                    sx={{ height: 26, backgroundColor: brand.orangeLight, color: brand.orange, fontSize: "0.75rem" }}
                   />
                 </Stack>
               </Box>

@@ -28,12 +28,15 @@ async function getCaterers({ search, location, page = 1, limit = 20 } = {}) {
        u.name            AS "catererName",
        u.business_name   AS "businessName",
        u.location,
+       u.address,
+       u.latitude,
+       u.longitude,
        u.email,
        COUNT(f.id)::int  AS "foodCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
      WHERE ${where}
-     GROUP BY u.id, u.name, u.business_name, u.location, u.email
+     GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email
      ORDER BY u.name ASC
      LIMIT $${idx++} OFFSET $${idx}`,
     params
@@ -49,12 +52,15 @@ async function getCatererById(id) {
        u.name            AS "catererName",
        u.business_name   AS "businessName",
        u.location,
+       u.address,
+       u.latitude,
+       u.longitude,
        u.email,
        COUNT(f.id)::int  AS "foodCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
      WHERE u.id = $1 AND u.role = 'CATERER' AND u.is_active = TRUE
-     GROUP BY u.id, u.name, u.business_name, u.location, u.email`,
+     GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email`,
     [id]
   );
   return rows[0] || null;
@@ -62,7 +68,7 @@ async function getCatererById(id) {
 
 async function getCatererFoods(caterer_id) {
   const { rows: catererRows } = await pool.query(
-    `SELECT id, name AS "catererName", business_name AS "businessName", location, email
+    `SELECT id, name AS "catererName", business_name AS "businessName", location, address, latitude, longitude, email
      FROM users WHERE id = $1 AND role = 'CATERER' AND is_active = TRUE`,
     [caterer_id]
   );

@@ -3,6 +3,7 @@ import { Box, Button, Chip, CircularProgress, Tooltip, Typography } from "@mui/m
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import CommonCard from "./CommonCard";
 import { useCart } from "../contexts/CartContext";
 import { brand } from "../theme";
@@ -19,6 +20,8 @@ export default function FoodCard({ food = {}, onClick }) {
   const isAvailable = food.available ?? food.is_available ?? true;
   const imgSrc      = food.imageUrl || food.image_url;
   const category    = food.category;
+  const eta         = food.estimatedDeliveryTime; // minutes, from backend
+  const etaRange    = food.etaRange;              // e.g. "35-45 mins"
 
   const handleAddToCart = async (e) => {
     e.stopPropagation();
@@ -43,23 +46,37 @@ export default function FoodCard({ food = {}, onClick }) {
   ) : null;
 
   const meta = (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
-        ₹{price}
-      </Typography>
-      {category && isAvailable && (
-        <Chip
-          label={category}
-          size="small"
-          sx={{ height: 18, fontSize: "0.6rem", backgroundColor: brand.orangeLight, color: brand.orange }}
-        />
-      )}
-      {!isAvailable && (
-        <Chip
-          label="Unavailable"
-          size="small"
-          sx={{ height: 18, fontSize: "0.6rem", backgroundColor: "#f5f5f5", color: brand.muted }}
-        />
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
+          ₹{price}
+        </Typography>
+        {category && isAvailable && (
+          <Chip
+            label={category}
+            size="small"
+            sx={{ height: 18, fontSize: "0.6rem", backgroundColor: brand.orangeLight, color: brand.orange }}
+          />
+        )}
+        {!isAvailable && (
+          <Chip
+            label="Unavailable"
+            size="small"
+            sx={{ height: 18, fontSize: "0.6rem", backgroundColor: "#f5f5f5", color: brand.muted }}
+          />
+        )}
+      </Box>
+
+      {/* ETA chip — only shown when backend supplies it */}
+      {eta != null && isAvailable && (
+        <Tooltip title={`Prep + delivery: ~${eta} min`} placement="top">
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, mt: 0.5 }}>
+            <AccessTimeRoundedIcon sx={{ fontSize: 11, color: "#1565c0" }} />
+            <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 600, fontSize: "0.65rem" }}>
+              {etaRange || `${eta} mins`}
+            </Typography>
+          </Box>
+        </Tooltip>
       )}
     </Box>
   );

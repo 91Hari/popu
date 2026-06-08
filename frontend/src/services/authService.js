@@ -7,10 +7,10 @@ export default {
       body: JSON.stringify({ email, password }),
     });
   },
-  async register({ name, email, password, role }) {
+  async register({ name, email, password, role, business_name, address, latitude, longitude }) {
     return api.request("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify({ name, email, password, role, business_name, address, latitude, longitude }),
     });
   },
 };

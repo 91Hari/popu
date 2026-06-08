@@ -1,11 +1,22 @@
+'use strict';
+
 const foodService = require('../services/foodService');
 
 async function createFood(req, res, next) {
   try {
-    const { food_name, description, price, image_url, is_available, category } = req.body;
+    const {
+      food_name, description, price, image_url,
+      is_available, category, preparation_time_minutes,
+    } = req.body;
+
     if (!food_name || price === undefined) {
       return res.status(400).json({ error: 'food_name and price are required' });
     }
+
+    const prepTime = preparation_time_minutes != null
+      ? Math.max(1, parseInt(preparation_time_minutes, 10))
+      : 20;
+
     const food = await foodService.createFood({
       caterer_id: req.user.id,
       food_name,
@@ -14,6 +25,7 @@ async function createFood(req, res, next) {
       image_url,
       is_available,
       category,
+      preparation_time_minutes: prepTime,
     });
     res.status(201).json({ food });
   } catch (err) {
@@ -46,7 +58,12 @@ async function searchFoods(req, res, next) {
 
 async function getFoodById(req, res, next) {
   try {
-    const food = await foodService.getFoodById(req.params.id);
+    const customerLat = parseFloat(req.query.customer_lat);
+    const customerLng = parseFloat(req.query.customer_lng);
+    const food = await foodService.getFoodById(req.params.id, {
+      customerLat: isNaN(customerLat) ? null : customerLat,
+      customerLng: isNaN(customerLng) ? null : customerLng,
+    });
     if (!food) return res.status(404).json({ error: 'Food item not found' });
     res.json({ food });
   } catch (err) {

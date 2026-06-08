@@ -1,30 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  Box,
-  Container,
-  Toolbar,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  Button,
-  Stack,
-  Card,
-  CardContent,
-  CircularProgress,
-  Alert,
-  useTheme,
-  useMediaQuery,
+  Box, Container, Toolbar, Typography, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Paper,
+  Chip, Button, Stack, Card, CardContent, CircularProgress,
+  Alert, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
-import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import ReceiptLongRoundedIcon        from "@mui/icons-material/ReceiptLongRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
-import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import TaskAltRoundedIcon from "@mui/icons-material/TaskAltRounded";
+import CancelOutlinedIcon            from "@mui/icons-material/CancelOutlined";
+import LocalDiningRoundedIcon        from "@mui/icons-material/LocalDiningRounded";
+import TaskAltRoundedIcon            from "@mui/icons-material/TaskAltRounded";
 import orderService from "../../services/orderService";
 import TopNav from "../../components/TopNav";
 import { brand } from "../../theme";
@@ -37,45 +22,100 @@ const STATUS_MAP = {
   CANCELLED: { label: "Cancelled", color: "default" },
 };
 
+/**
+ * Returns the action buttons a caterer can take for a given order status.
+ * Mirrors backend VALID_TRANSITIONS.CATERER exactly:
+ *   PLACED    → ACCEPTED | CANCELLED
+ *   ACCEPTED  → PREPARING
+ *   PREPARING → DELIVERED
+ */
+function getActions(status, orderId, busy, onAction) {
+  const btn = (label, newStatus, icon, color, bg) => (
+    <Button
+      key={newStatus}
+      variant={color === "error" ? "outlined" : "contained"}
+      color={color === "error" ? "error" : undefined}
+      size="small"
+      startIcon={busy ? <CircularProgress size={12} color="inherit" /> : icon}
+      disabled={!!busy}
+      onClick={() => onAction(orderId, newStatus)}
+      sx={{
+        fontWeight: 600,
+        fontSize: "0.75rem",
+        ...(bg ? { backgroundColor: bg, "&:hover": { backgroundColor: bg, filter: "brightness(0.9)" } } : {}),
+      }}
+    >
+      {busy === newStatus ? "…" : label}
+    </Button>
+  );
+
+  switch (status) {
+    case "PLACED":
+      return [
+        btn("Accept", "ACCEPTED",  <CheckCircleOutlineRoundedIcon />, null,    brand.green),
+        btn("Reject", "CANCELLED", <CancelOutlinedIcon />,            "error", null),
+      ];
+    case "ACCEPTED":
+      return [
+        btn("Start Preparing", "PREPARING", <LocalDiningRoundedIcon />, null, brand.orange),
+        btn("Cancel",          "CANCELLED", <CancelOutlinedIcon />,     "error", null),
+      ];
+    case "PREPARING":
+      return [
+        btn("Mark Delivered", "DELIVERED", <TaskAltRoundedIcon />,  null, "#1976d2"),
+        btn("Cancel",         "CANCELLED", <CancelOutlinedIcon />,  "error", null),
+      ];
+    default:
+      return null;
+  }
+}
+
 export default function CatererOrdersPage() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const theme = useTheme();
+  const [error, setError]     = useState("");
+  const [busy, setBusy]       = useState({});  // { [orderId]: newStatus }
+  const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await orderService.getOrders();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to fetch orders:", err);
-        setError(err?.message || "Failed to load orders.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getOrders();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err?.message || "Failed to load orders.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateOrderStatus = async (orderId, newStatus) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const handleAction = useCallback(async (orderId, newStatus) => {
+    const prev = orders.find((o) => o.id === orderId);
+    if (!prev) return;
+
+    setBusy((b) => ({ ...b, [orderId]: newStatus }));
+    setError("");
+
+    // optimistic update
+    setOrders((all) => all.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
+
     try {
       await orderService.updateOrderStatus(orderId, newStatus);
     } catch (err) {
-      console.error("Failed to update order status:", err);
-      setError("Failed to update order status.");
+      // revert on failure
+      setOrders((all) => all.map((o) => o.id === orderId ? { ...o, status: prev.status } : o));
+      setError(
+        err?.message?.includes("Cannot transition")
+          ? `Cannot change status: ${err.message}`
+          : "Failed to update order status. Please try again."
+      );
+    } finally {
+      setBusy((b) => { const n = { ...b }; delete n[orderId]; return n; });
     }
-  };
-
-  const handleAccept   = (id) => updateOrderStatus(id, "ACCEPTED");
-  const handleReject   = (id) => updateOrderStatus(id, "CANCELLED");
-  const handleComplete = (id) => updateOrderStatus(id, "DELIVERED");
+  }, [orders]);
 
   if (loading) {
     return (
@@ -102,90 +142,73 @@ export default function CatererOrdersPage() {
               Incoming Orders
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Accept, reject or mark orders as delivered.
+              Manage and track all customer orders.
             </Typography>
           </Box>
         </Box>
 
-        {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="warning" onClose={() => setError("")} sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         {orders.length === 0 ? (
           <Card elevation={0} sx={{ p: 4, textAlign: "center", border: `1px solid ${brand.border}` }}>
             <ReceiptLongRoundedIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>
-              No orders yet
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              Incoming orders will appear here.
-            </Typography>
+            <Typography variant="h6" sx={{ color: "text.secondary" }}>No orders yet</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>Incoming orders will appear here.</Typography>
           </Card>
         ) : isMobile ? (
+          /* ─── Mobile cards ─── */
           <Stack spacing={2}>
             {orders.map((order) => {
-              const orderId = order.id || order.orderNumber;
-              const firstItem = (order.items && order.items[0]) || {};
-              const qty = Number(firstItem.quantity || firstItem.qty || 0);
-              const price = Number(firstItem.unit_price || firstItem.unitPrice || firstItem.price || 0);
-              const amount = order.total_amount ?? order.total ?? order.amount ?? qty * price;
+              const orderId   = order.id;
+              const items     = Array.isArray(order.items) ? order.items : [];
+              const amount    = Number(order.total_amount || 0).toFixed(2);
               const statusKey = order.status || "PLACED";
+              const actions   = getActions(statusKey, orderId, busy[orderId], handleAction);
 
               return (
                 <Card key={orderId} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
-                  <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                          {order.orderNumber || order.id}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                          {firstItem.food_name || firstItem.foodName || firstItem.name || "-"}
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          #{orderId.slice(0, 8).toUpperCase()}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          Qty: {qty}
+                          {new Date(order.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
                         </Typography>
                       </Box>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: brand.orange }}>
-                          ₹{amount}
-                        </Typography>
-                        <Chip
-                          label={STATUS_MAP[statusKey]?.label || statusKey}
-                          color={STATUS_MAP[statusKey]?.color}
-                          size="small"
-                          sx={{ mt: 0.5 }}
-                        />
-                      </Box>
+                      <Chip
+                        label={STATUS_MAP[statusKey]?.label || statusKey}
+                        color={STATUS_MAP[statusKey]?.color}
+                        size="small"
+                        sx={{ fontWeight: 700 }}
+                      />
                     </Stack>
 
-                    <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<CheckCircleOutlineRoundedIcon />}
-                        sx={{ backgroundColor: brand.green, fontWeight: 600 }}
-                        onClick={() => handleAccept(orderId)}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        startIcon={<CancelOutlinedIcon />}
-                        sx={{ fontWeight: 600 }}
-                        onClick={() => handleReject(orderId)}
-                      >
-                        Reject
-                      </Button>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<TaskAltRoundedIcon />}
-                        sx={{ backgroundColor: "#1976d2", fontWeight: 600 }}
-                        onClick={() => handleComplete(orderId)}
-                      >
-                        Done
-                      </Button>
+                    <Divider sx={{ mb: 1 }} />
+
+                    {items.map((it, i) => (
+                      <Box key={i} sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        <Typography variant="body2">{it.food_name} × {it.quantity}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>₹{Number(it.total_price || 0).toFixed(2)}</Typography>
+                      </Box>
+                    ))}
+
+                    <Divider sx={{ my: 1 }} />
+
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
+                        Total ₹{amount}
+                      </Typography>
+                      {actions && (
+                        <Stack direction="row" spacing={0.75}>
+                          {actions}
+                        </Stack>
+                      )}
                     </Stack>
                   </CardContent>
                 </Card>
@@ -193,17 +216,14 @@ export default function CatererOrdersPage() {
             })}
           </Stack>
         ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}
-          >
+          /* ─── Desktop table ─── */
+          <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
             <Table>
               <TableHead sx={{ backgroundColor: brand.orangeLight }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Food Item</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Qty</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Date & Time</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Amount</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>Actions</TableCell>
@@ -211,59 +231,56 @@ export default function CatererOrdersPage() {
               </TableHead>
               <TableBody>
                 {orders.map((order) => {
-                  const orderId = order.id || order.orderNumber;
-                  const firstItem = (order.items && order.items[0]) || {};
-                  const qty = Number(firstItem.quantity || firstItem.qty || 0);
-                  const price = Number(firstItem.unit_price || firstItem.unitPrice || firstItem.price || 0);
-                  const amount = order.total_amount ?? order.total ?? order.amount ?? qty * price;
+                  const orderId   = order.id;
+                  const items     = Array.isArray(order.items) ? order.items : [];
+                  const amount    = Number(order.total_amount || 0).toFixed(2);
                   const statusKey = order.status || "PLACED";
+                  const actions   = getActions(statusKey, orderId, busy[orderId], handleAction);
 
                   return (
                     <TableRow key={orderId} hover>
-                      <TableCell sx={{ fontWeight: 600 }}>{order.orderNumber || order.id}</TableCell>
-                      <TableCell>{firstItem.food_name || firstItem.foodName || firstItem.name || "-"}</TableCell>
-                      <TableCell align="center">{qty}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontFamily: "monospace", fontSize: "0.8rem" }}>
+                        #{orderId.slice(0, 8).toUpperCase()}
+                      </TableCell>
+
+                      <TableCell>
+                        {items.map((it, i) => (
+                          <Box key={i}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                              {it.food_name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              Qty: {it.quantity} × ₹{Number(it.unit_price || 0).toFixed(2)}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </TableCell>
+
+                      <TableCell sx={{ fontSize: "0.8rem", color: "text.secondary", whiteSpace: "nowrap" }}>
+                        {new Date(order.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                      </TableCell>
+
                       <TableCell align="right" sx={{ fontWeight: 700, color: brand.orange }}>
                         ₹{amount}
                       </TableCell>
+
                       <TableCell align="center">
                         <Chip
                           label={STATUS_MAP[statusKey]?.label || statusKey}
                           color={STATUS_MAP[statusKey]?.color}
                           size="small"
+                          sx={{ fontWeight: 700 }}
                         />
                       </TableCell>
+
                       <TableCell align="center">
-                        <Stack direction="row" spacing={0.75} justifyContent="center">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            startIcon={<CheckCircleOutlineRoundedIcon />}
-                            sx={{ backgroundColor: brand.green, fontWeight: 600 }}
-                            onClick={() => handleAccept(orderId)}
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            startIcon={<CancelOutlinedIcon />}
-                            sx={{ fontWeight: 600 }}
-                            onClick={() => handleReject(orderId)}
-                          >
-                            Reject
-                          </Button>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            startIcon={<TaskAltRoundedIcon />}
-                            sx={{ backgroundColor: "#1976d2", fontWeight: 600 }}
-                            onClick={() => handleComplete(orderId)}
-                          >
-                            Complete
-                          </Button>
-                        </Stack>
+                        {actions ? (
+                          <Stack direction="row" spacing={0.75} justifyContent="center">
+                            {actions}
+                          </Stack>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

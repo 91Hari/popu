@@ -2,10 +2,16 @@ import { Box, Card, CardActionArea, CardContent, Typography, Chip } from "@mui/m
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import { brand } from "../theme";
+import { haversineKm, etaMinutes, formatDistance, formatEta } from "../utils/geoUtils";
 
-export default function CatererCard({ caterer = {}, onClick }) {
-  const { catererName, businessName, location, rating, foodCount, email } = caterer;
+export default function CatererCard({ caterer = {}, onClick, customerCoords }) {
+  const { catererName, businessName, location, address, latitude, longitude, rating, foodCount, email } = caterer;
+
+  const hasDistance = customerCoords && latitude != null && longitude != null;
+  const distKm      = hasDistance ? haversineKm(customerCoords.lat, customerCoords.lng, Number(latitude), Number(longitude)) : null;
+  const eta         = distKm != null ? etaMinutes(distKm) : null;
 
   return (
     <Card
@@ -29,6 +35,7 @@ export default function CatererCard({ caterer = {}, onClick }) {
         >
           <RestaurantMenuRoundedIcon sx={{ fontSize: 36, color: "white", opacity: 0.6 }} />
         </Box>
+
         <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2 }} noWrap>
             {catererName || "Caterer"}
@@ -39,12 +46,28 @@ export default function CatererCard({ caterer = {}, onClick }) {
             </Typography>
           )}
 
-          {location && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, mt: 0.75 }}>
-              <LocationOnRoundedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-              <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
-                {location}
+          {(address || location) && (
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.4, mt: 0.75 }}>
+              <LocationOnRoundedIcon sx={{ fontSize: 13, color: "text.secondary", mt: "1px", flexShrink: 0 }} />
+              <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.3 }}>
+                {address || location}
               </Typography>
+            </Box>
+          )}
+
+          {/* Distance + ETA chip */}
+          {distKm != null && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, mt: 1 }}>
+              <Chip
+                icon={<DirectionsBikeRoundedIcon sx={{ fontSize: "13px !important" }} />}
+                label={`${formatDistance(distKm)} · ${formatEta(eta)}`}
+                size="small"
+                sx={{
+                  height: 22, fontSize: "0.7rem",
+                  backgroundColor: "#E8F5E9", color: "#2e7d32",
+                  "& .MuiChip-icon": { color: "#2e7d32" },
+                }}
+              />
             </Box>
           )}
 

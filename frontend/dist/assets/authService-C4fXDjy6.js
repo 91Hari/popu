@@ -1,1 +1,0 @@
-import{a as e}from"./index-B9pAAvSG.js";const o={async login({email:r,password:t}){return e.request("/auth/login",{method:"POST",body:JSON.stringify({email:r,password:t})})},async register({name:r,email:t,password:i,role:s}){return e.request("/auth/register",{method:"POST",body:JSON.stringify({name:r,email:t,password:i,role:s})})}};export{o as a};
