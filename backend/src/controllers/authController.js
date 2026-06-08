@@ -1,56 +1,44 @@
-const jwt = require("jsonwebtoken");
+const authService = require('../services/authService');
 
-const SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-prod";
+async function register(req, res, next) {
+  try {
+    const { name, email, password, role } = req.body;
 
-// Mock user database
-const users = [
-  {
-    id: 1,
-    email: "customer@test.com",
-    password: "password123",
-    role: "customer",
-  },
-  {
-    id: 2,
-    email: "caterer@test.com",
-    password: "password123",
-    role: "caterer",
-  },
-];
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ error: 'name, email, password, and role are required' });
+    }
 
-function register(req, res) {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password required" });
+    const validRoles = ['CUSTOMER', 'CATERER'];
+    if (!validRoles.includes(role.toUpperCase())) {
+      return res.status(400).json({ error: 'role must be CUSTOMER or CATERER' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'password must be at least 8 characters' });
+    }
+
+    const user = await authService.register({ name, email, password, role });
+    res.status(201).json({ user });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
   }
-  if (users.find((u) => u.email === email)) {
-    return res.status(400).json({ error: "User already exists" });
-  }
-  const newUser = { id: users.length + 1, email, password, role: "customer" };
-  users.push(newUser);
-  res
-    .status(201)
-    .json({ id: newUser.id, email: newUser.email, role: newUser.role });
 }
 
-function login(req, res) {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password required" });
+async function login(req, res, next) {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'email and password are required' });
+    }
+
+    const result = await authService.login({ email, password });
+    res.json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
   }
-  const user = users.find((u) => u.email === email && u.password === password);
-  if (!user) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    SECRET,
-    { expiresIn: "7d" },
-  );
-  res.json({
-    token,
-    user: { id: user.id, email: user.email, role: user.role },
-  });
 }
 
 module.exports = { register, login };

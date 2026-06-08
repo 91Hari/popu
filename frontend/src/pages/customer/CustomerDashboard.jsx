@@ -6,9 +6,6 @@ import {
   Toolbar,
   Typography,
   Button,
-  Card,
-  CardContent,
-  Chip,
   CircularProgress,
   IconButton,
   Badge,
@@ -16,7 +13,6 @@ import {
 } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
@@ -26,14 +22,15 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import { brand } from "../../theme";
 import TopNav from "../../components/TopNav";
+import FoodCard from "../../components/FoodCard";
 import foodService from "../../services/foodService";
 
 const CATEGORIES = [
-  { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Catering", to: "/customer/search" },
-  { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Tiffins", to: "/customer/services" },
-  { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Book Cook", to: "/customer/services" },
-  { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Home Food", to: "/customer/search" },
-  { icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Training", to: "/customer/services" },
+  { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Catering",  to: "/services/catering" },
+  { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Tiffins",  to: "/services/tiffins" },
+  { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,   label: "Book Cook", to: "/services/book-cook" },
+  { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,        label: "Home Food", to: "/services/home-food" },
+  { icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,      label: "Training",  to: "/services/training" },
 ];
 
 export default function CustomerDashboard() {
@@ -54,8 +51,8 @@ export default function CustomerDashboard() {
     const fetchFoods = async () => {
       try {
         setLoading(true);
-        const data = await foodService.getFoods();
-        setFoods(data || []);
+        const data = await foodService.getCustomerFoods();
+        setFoods((data || []).slice(0, 12));
       } catch (err) {
         console.error("Failed to fetch foods:", err);
         setFoods([]);
@@ -151,7 +148,7 @@ export default function CustomerDashboard() {
               pure · fresh · trusted
             </Typography>
             <Button
-              onClick={() => navigate("/customer/services")}
+              onClick={() => navigate("/services")}
               sx={{
                 backgroundColor: "white",
                 color: brand.orange,
@@ -233,74 +230,21 @@ export default function CustomerDashboard() {
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
             <CircularProgress sx={{ color: brand.orange }} />
           </Box>
+        ) : foods.length === 0 ? (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <DinnerDiningRoundedIcon sx={{ fontSize: 48, color: brand.border, mb: 1 }} />
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              No food items available right now.
+            </Typography>
+          </Box>
         ) : (
           <Grid container spacing={2}>
             {foods.map((food) => (
-              <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
-                <Card
-                  onClick={() => navigate(`/customer/food/${food.id}`)}
-                  sx={{
-                    cursor: "pointer",
-                    transition: "transform 0.15s, box-shadow 0.15s",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 8px 20px rgba(232,117,26,0.15)",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      height: { xs: 90, md: 110 },
-                      background: `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <DinnerDiningRoundedIcon
-                      sx={{ fontSize: { xs: 36, md: 44 }, color: brand.orange, opacity: 0.7 }}
-                    />
-                  </Box>
-                  <CardContent sx={{ p: 1.25, "&:last-child": { pb: 1.25 } }}>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 700, lineHeight: 1.2 }}
-                      noWrap
-                    >
-                      {food.name}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
-                    >
-                      ₹{food.price}
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <StarRoundedIcon sx={{ fontSize: 13, color: brand.star }} />
-                        <Typography variant="caption" sx={{ ml: 0.25 }}>
-                          4.8
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label="Veg"
-                        size="small"
-                        sx={{
-                          height: 18,
-                          fontSize: "0.6rem",
-                          backgroundColor: brand.greenLight,
-                          color: brand.green,
-                        }}
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
+              <Grid item key={food.foodId || food.id} xs={6} sm={4} md={3} lg={2}>
+                <FoodCard
+                  food={food}
+                  onClick={() => navigate(`/customer/food/${food.foodId || food.id}`)}
+                />
               </Grid>
             ))}
           </Grid>

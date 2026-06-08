@@ -1,88 +1,73 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Box,
-  Container,
-  Toolbar,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  Card,
-  CardContent,
-  Stack,
-  Divider,
-  CircularProgress,
-  useTheme,
-  useMediaQuery,
+  Box, Container, Toolbar, Typography, Card, CardContent,
+  Stack, Chip, Button, CircularProgress, Alert, Divider, Dialog,
+  DialogTitle, DialogContent, DialogActions, TextField,
 } from "@mui/material";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
+import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import orderService from "../../services/orderService";
 import TopNav from "../../components/TopNav";
 import { brand } from "../../theme";
 
-const STATUS_MAP = {
-  placed: { label: "Placed", color: "info" },
-  preparing: { label: "Preparing", color: "warning" },
-  delivered: { label: "Delivered", color: "success" },
+const STATUS_CFG = {
+  PLACED:    { label: "Placed",    color: "info",    canCancel: true },
+  ACCEPTED:  { label: "Accepted",  color: "primary", canCancel: true },
+  PREPARING: { label: "Preparing", color: "warning", canCancel: false },
+  DELIVERED: { label: "Delivered", color: "success", canCancel: false },
+  CANCELLED: { label: "Cancelled", color: "default", canCancel: false },
 };
 
+function fmtDate(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+function fmtTime(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
 export default function OrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const navigate = useNavigate();
+  const [orders, setOrders]     = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
+  const [cancelId, setCancelId] = useState(null);
+  const [reason, setReason]     = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await orderService.getOrders();
-        setOrders(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to fetch orders:", err);
-        setError(err?.message || "Failed to load orders.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getOrders();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err?.message || "Failed to load orders.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const rows = useMemo(() => {
-    const out = [];
-    (orders || []).forEach((order) => {
-      const orderNumber =
-        order.orderNumber ||
-        order.id ||
-        order._id ||
-        `#${Math.floor(Math.random() * 100000)}`;
-      const statusRaw = (order.status || "placed").toString().toLowerCase();
-      const status = STATUS_MAP[statusRaw] ? statusRaw : "placed";
+  useEffect(() => { load(); }, [load]);
 
-      const items = Array.isArray(order.items) ? order.items : [];
-      if (items.length === 0) {
-        out.push({ orderNumber, foodName: "(no items)", quantity: 0, price: 0, status });
-      } else {
-        items.forEach((it) => {
-          out.push({
-            orderNumber,
-            foodName: it.name || it.foodName || "Item",
-            quantity: Number(it.quantity || it.qty || 1),
-            price: Number(it.price || it.unitPrice || 0),
-            status,
-          });
-        });
-      }
-    });
-    return out;
-  }, [orders]);
+  const handleCancelConfirm = async () => {
+    if (!cancelId) return;
+    setCancelling(true);
+    try {
+      const updated = await orderService.cancelOrder(cancelId, reason);
+      setOrders((prev) => prev.map((o) => o.id === cancelId ? { ...o, ...updated } : o));
+      setCancelId(null);
+      setReason("");
+    } catch (err) {
+      setError(err?.message || "Failed to cancel order.");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -101,111 +86,149 @@ export default function OrdersPage() {
       <TopNav />
       <Toolbar />
 
-      <Container maxWidth="lg" sx={{ pt: 3, pb: 4 }}>
+      <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Inventory2RoundedIcon sx={{ color: brand.orange, fontSize: 28 }} />
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>
-            My Bookings
-          </Typography>
+          <Inventory2RoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>My Bookings</Typography>
         </Box>
 
-        {error ? (
-          <Paper sx={{ p: 3 }}>
-            <Typography color="error">{error}</Typography>
-          </Paper>
-        ) : rows.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: "center" }}>
+        {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
+
+        {orders.length === 0 ? (
+          <Card elevation={0} sx={{ p: 5, textAlign: "center", border: `1px solid ${brand.border}` }}>
             <Inventory2RoundedIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>
-              No orders yet
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Typography variant="h6" sx={{ color: "text.secondary" }}>No orders yet</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               Your orders will appear here once placed.
             </Typography>
+            <Button variant="contained" onClick={() => navigate("/services/tiffins")}>
+              Browse Food
+            </Button>
           </Card>
-        ) : isMobile ? (
+        ) : (
           <Stack spacing={2}>
             {orders.map((order) => {
-              const orderNumber = order.orderNumber || order.id || order._id || `#${Math.floor(Math.random() * 100000)}`;
-              const statusRaw = (order.status || "placed").toString().toLowerCase();
-              const statusKey = STATUS_MAP[statusRaw] ? statusRaw : "placed";
-              const items = Array.isArray(order.items) ? order.items : [];
+              const statusKey = order.status || "PLACED";
+              const cfg       = STATUS_CFG[statusKey] || { label: statusKey, color: "default", canCancel: false };
+              const items     = Array.isArray(order.items) ? order.items : [];
 
               return (
-                <Card key={orderNumber} elevation={0}>
-                  <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                        {orderNumber}
-                      </Typography>
+                <Card key={order.id} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
+                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                    {/* Header row */}
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.5 }}>
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
+                          Order #{order.id.slice(0, 8).toUpperCase()}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          {fmtDate(order.created_at)} · {fmtTime(order.created_at)}
+                        </Typography>
+                      </Box>
                       <Chip
-                        label={STATUS_MAP[statusKey].label}
-                        color={STATUS_MAP[statusKey].color}
+                        label={cfg.label}
+                        color={cfg.color}
                         size="small"
+                        sx={{ fontWeight: 700 }}
                       />
                     </Stack>
-                    <Divider sx={{ my: 1 }} />
-                    {items.length === 0 ? (
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        No items
-                      </Typography>
-                    ) : (
-                      items.map((it, idx) => (
-                        <Box key={idx} sx={{ my: 1 }}>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Box>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                                {it.name || it.foodName}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                Qty: {it.quantity || it.qty || 1}
-                              </Typography>
-                            </Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                              ₹{Number(it.price || it.unitPrice || 0)}
+
+                    <Divider sx={{ mb: 1.5 }} />
+
+                    {/* Items */}
+                    <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+                      {items.map((it, idx) => (
+                        <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                          <Box
+                            sx={{
+                              width: 36, height: 36, borderRadius: 1.5, flexShrink: 0,
+                              background: `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                          >
+                            <DinnerDiningRoundedIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {it.food_name || it.foodName}
                             </Typography>
-                          </Stack>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              Qty: {it.quantity} × ₹{Number(it.unit_price || 0).toFixed(2)}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, flexShrink: 0 }}>
+                            ₹{Number(it.total_price || 0).toFixed(2)}
+                          </Typography>
                         </Box>
-                      ))
-                    )}
+                      ))}
+                    </Stack>
+
+                    <Divider sx={{ mb: 1.25 }} />
+
+                    {/* Footer */}
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>Total</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 900, color: brand.orange }}>
+                          ₹{Number(order.total_amount || 0).toFixed(2)}
+                        </Typography>
+                      </Box>
+                      {cfg.canCancel && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<CancelRoundedIcon fontSize="small" />}
+                          onClick={() => { setCancelId(order.id); setReason(""); }}
+                          sx={{ fontWeight: 600, fontSize: "0.78rem" }}
+                        >
+                          Cancel Order
+                        </Button>
+                      )}
+                      {order.cancelled_at && (
+                        <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                          Cancelled {fmtDate(order.cancelled_at)}
+                        </Typography>
+                      )}
+                    </Box>
                   </CardContent>
                 </Card>
               );
             })}
           </Stack>
-        ) : (
-          <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
-            <Table>
-              <TableHead sx={{ backgroundColor: brand.orangeLight }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Food Name</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Quantity</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Price</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((r, idx) => (
-                  <TableRow key={`${r.orderNumber}-${idx}`} hover>
-                    <TableCell>{r.orderNumber}</TableCell>
-                    <TableCell>{r.foodName}</TableCell>
-                    <TableCell align="center">{r.quantity}</TableCell>
-                    <TableCell align="right">₹{r.price}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={STATUS_MAP[r.status].label}
-                        color={STATUS_MAP[r.status].color}
-                        size="small"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
         )}
       </Container>
+
+      {/* Cancel dialog */}
+      <Dialog open={!!cancelId} onClose={() => !cancelling && setCancelId(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Cancel Order?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            This action cannot be undone. Please provide a reason (optional).
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            label="Reason (optional)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            multiline
+            rows={2}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCancelId(null)} disabled={cancelling}>Keep Order</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCancelConfirm}
+            disabled={cancelling}
+            startIcon={cancelling ? <CircularProgress size={14} color="inherit" /> : null}
+          >
+            Yes, Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

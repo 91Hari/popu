@@ -68,9 +68,9 @@ export default function FoodDetailsPage() {
     setPlacing(true);
     setError("");
     try {
-      if (orderService && typeof orderService.placeOrder === "function") {
-        await orderService.placeOrder({ foodId: food.id, quantity: qty });
-      }
+      await orderService.createOrder({
+        items: [{ food_item_id: food.id, quantity: qty }],
+      });
       navigate("/customer/orders");
     } catch (err) {
       console.error("Place order failed:", err);
@@ -156,13 +156,13 @@ export default function FoodDetailsPage() {
 
           <CardContent sx={{ flex: 1, p: { xs: 2.5, md: 3 } }}>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 800, color: brand.dark }}>
-              {food.name}
+              {food.food_name}
             </Typography>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
               <PersonPinRoundedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                {food.caterer || "Premium Caterer"}
+                By: {food.caterer_name || "Premium Caterer"}
               </Typography>
             </Box>
 

@@ -1,0 +1,1 @@
+import{j as s}from"./index-B9pAAvSG.js";import{c as o}from"./Logo-D1ZmGyGF.js";const d=o(s.jsx("path",{d:"M18 13h-5v5c0 .55-.45 1-1 1s-1-.45-1-1v-5H6c-.55 0-1-.45-1-1s.45-1 1-1h5V6c0-.55.45-1 1-1s1 .45 1 1v5h5c.55 0 1 .45 1 1s-.45 1-1 1"})),e=o(s.jsx("path",{d:"M18 13H6c-.55 0-1-.45-1-1s.45-1 1-1h12c.55 0 1 .45 1 1s-.45 1-1 1"}));export{d as A,e as R};

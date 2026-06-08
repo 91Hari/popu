@@ -51,21 +51,24 @@ export default function CatererDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const foods = await foodService.getFoods();
-        const orders = await orderService.getOrders();
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const [allFoods, ordersData] = await Promise.all([
+          foodService.getFoods(),
+          orderService.getOrders(),
+        ]);
 
-        const totalFoods = Array.isArray(foods) ? foods.length : 0;
-        const totalOrders = Array.isArray(orders) ? orders.length : 0;
+        const myFoods = (Array.isArray(allFoods) ? allFoods : [])
+          .filter((f) => f.caterer_id === user.id);
+        const orders = Array.isArray(ordersData) ? ordersData :
+          (ordersData?.orders ?? []);
+
+        const totalFoods = myFoods.length;
+        const totalOrders = orders.length;
 
         let revenue = 0;
-        if (Array.isArray(orders)) {
-          orders.forEach((o) => {
-            const items = Array.isArray(o.items) ? o.items : [];
-            items.forEach((it) => {
-              revenue += Number(it.quantity || it.qty || 1) * Number(it.price || it.unitPrice || 0);
-            });
-          });
-        }
+        orders.forEach((o) => {
+          revenue += Number(o.total_amount || 0);
+        });
 
         setStats({ foods: totalFoods, orders: totalOrders, revenue });
       } catch (err) {

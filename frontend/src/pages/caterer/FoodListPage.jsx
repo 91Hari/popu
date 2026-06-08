@@ -44,12 +44,14 @@ export default function FoodListPage() {
     const fetchFoods = async () => {
       try {
         setLoading(true);
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
         const data = await foodService.getFoods();
-        const mapped = (data || []).map((f) => ({
-          id: f.id ?? f._id ?? f.foodId ?? Math.random().toString(36).slice(2, 9),
-          name: f.name || "",
+        const mine = user.id ? (data || []).filter((f) => f.caterer_id === user.id) : (data || []);
+        const mapped = mine.map((f) => ({
+          id: f.id,
+          name: f.food_name || "",
           price: Number(f.price ?? 0),
-          available: !!f.available,
+          available: !!f.is_available,
           raw: f,
         }));
         setRows(mapped);

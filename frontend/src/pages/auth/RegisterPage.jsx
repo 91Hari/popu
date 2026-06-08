@@ -85,7 +85,7 @@ export default function RegisterPage() {
 
     try {
       await authService.register({ name, email, password, role });
-      navigate("/auth/login");
+      navigate("/login");
     } catch (err) {
       setApiError(err.message || "Registration failed. Please try again.");
       console.error("Register error:", err);
@@ -337,7 +337,7 @@ export default function RegisterPage() {
                   variant="outlined"
                   size={isMobile ? "medium" : "large"}
                   component={Link}
-                  to="/auth/login"
+                  to="/login"
                   disabled={loading}
                   sx={{
                     textTransform: "none",

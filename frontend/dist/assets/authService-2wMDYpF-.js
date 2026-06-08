@@ -1,1 +1,0 @@
-import{a as e}from"./api-C0QzGLJu.js";const s={async login({email:r,password:t}){return e.request("/auth/login",{method:"POST",body:JSON.stringify({email:r,password:t})})},async register({email:r,password:t}){return e.request("/auth/register",{method:"POST",body:JSON.stringify({email:r,password:t})})}};export{s as a};

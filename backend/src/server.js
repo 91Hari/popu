@@ -1,10 +1,18 @@
-const http = require("http");
-const app = require("./app");
+require('dotenv').config();
+const app  = require('./app');
+const pool = require('./config/db');
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
-const server = http.createServer(app);
+pool.query('SELECT 1')
+  .then(() => {
+    console.log('Database connected');
+    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error('Database connection failed:', err.message);
+    process.exit(1);
+  });
 
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+process.on('SIGTERM', () => pool.end(() => process.exit(0)));
+process.on('SIGINT',  () => pool.end(() => process.exit(0)));

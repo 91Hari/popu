@@ -30,10 +30,11 @@ import TopNav from "../../components/TopNav";
 import { brand } from "../../theme";
 
 const STATUS_MAP = {
-  placed: { label: "Placed", color: "info" },
-  preparing: { label: "Preparing", color: "warning" },
-  delivered: { label: "Delivered", color: "success" },
-  rejected: { label: "Rejected", color: "default" },
+  PLACED:    { label: "Placed",    color: "info" },
+  ACCEPTED:  { label: "Accepted",  color: "primary" },
+  PREPARING: { label: "Preparing", color: "warning" },
+  DELIVERED: { label: "Delivered", color: "success" },
+  CANCELLED: { label: "Cancelled", color: "default" },
 };
 
 export default function CatererOrdersPage() {
@@ -62,23 +63,19 @@ export default function CatererOrdersPage() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId || o.orderNumber === orderId ? { ...o, status: newStatus } : o,
-      ),
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
     );
     try {
-      if (orderService && typeof orderService.updateOrder === "function") {
-        await orderService.updateOrder(orderId, { status: newStatus });
-      }
+      await orderService.updateOrderStatus(orderId, newStatus);
     } catch (err) {
       console.error("Failed to update order status:", err);
       setError("Failed to update order status.");
     }
   };
 
-  const handleAccept = (id) => updateOrderStatus(id, "preparing");
-  const handleReject = (id) => updateOrderStatus(id, "rejected");
-  const handleComplete = (id) => updateOrderStatus(id, "delivered");
+  const handleAccept   = (id) => updateOrderStatus(id, "ACCEPTED");
+  const handleReject   = (id) => updateOrderStatus(id, "CANCELLED");
+  const handleComplete = (id) => updateOrderStatus(id, "DELIVERED");
 
   if (loading) {
     return (
@@ -128,9 +125,9 @@ export default function CatererOrdersPage() {
               const orderId = order.id || order.orderNumber;
               const firstItem = (order.items && order.items[0]) || {};
               const qty = Number(firstItem.quantity || firstItem.qty || 0);
-              const price = Number(firstItem.price || firstItem.unitPrice || 0);
-              const amount = order.total ?? order.amount ?? qty * price;
-              const statusKey = order.status || "placed";
+              const price = Number(firstItem.unit_price || firstItem.unitPrice || firstItem.price || 0);
+              const amount = order.total_amount ?? order.total ?? order.amount ?? qty * price;
+              const statusKey = order.status || "PLACED";
 
               return (
                 <Card key={orderId} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
@@ -141,7 +138,7 @@ export default function CatererOrdersPage() {
                           {order.orderNumber || order.id}
                         </Typography>
                         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                          {firstItem.name || firstItem.foodName || "-"}
+                          {firstItem.food_name || firstItem.foodName || firstItem.name || "-"}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
                           Qty: {qty}
@@ -217,14 +214,14 @@ export default function CatererOrdersPage() {
                   const orderId = order.id || order.orderNumber;
                   const firstItem = (order.items && order.items[0]) || {};
                   const qty = Number(firstItem.quantity || firstItem.qty || 0);
-                  const price = Number(firstItem.price || firstItem.unitPrice || 0);
-                  const amount = order.total ?? order.amount ?? qty * price;
-                  const statusKey = order.status || "placed";
+                  const price = Number(firstItem.unit_price || firstItem.unitPrice || firstItem.price || 0);
+                  const amount = order.total_amount ?? order.total ?? order.amount ?? qty * price;
+                  const statusKey = order.status || "PLACED";
 
                   return (
                     <TableRow key={orderId} hover>
                       <TableCell sx={{ fontWeight: 600 }}>{order.orderNumber || order.id}</TableCell>
-                      <TableCell>{firstItem.name || firstItem.foodName || "-"}</TableCell>
+                      <TableCell>{firstItem.food_name || firstItem.foodName || firstItem.name || "-"}</TableCell>
                       <TableCell align="center">{qty}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, color: brand.orange }}>
                         ₹{amount}
