@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: popu-postgres
+    environment:
+      POSTGRES_USER: popu
+      POSTGRES_PASSWORD: popu_secret
+      POSTGRES_DB: popu
+    ports:
+      - "5432:5432"
+    volumes:
+      - popu_pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U popu -d popu"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: popu-backend
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: popu
+      DB_USER: popu
+      DB_PASSWORD: popu_secret
+      DB_POOL_MAX: 10
+      JWT_SECRET: popu_jwt_super_secret_change_in_production
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: "*"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  popu_pgdata:
