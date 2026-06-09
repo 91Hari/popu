@@ -2,7 +2,7 @@ import { Box, Container, Toolbar, Typography } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 
 const OFFERS = [
   {
@@ -21,9 +21,7 @@ const OFFERS = [
 
 export default function OffersPage() {
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.white }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="sm" sx={{ pt: 3, pb: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
@@ -115,6 +113,6 @@ export default function OffersPage() {
           </Box>
         ))}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

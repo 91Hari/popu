@@ -10,7 +10,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import CatererCard from "../../components/CatererCard";
 import catererService from "../../services/catererService";
 
@@ -66,9 +66,7 @@ export default function CateringPage() {
   const pageCount = Math.ceil(total / LIMIT);
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         {/* Header */}
@@ -159,6 +157,6 @@ export default function CateringPage() {
           </>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

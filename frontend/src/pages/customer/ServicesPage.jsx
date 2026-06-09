@@ -7,7 +7,7 @@ import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 
 const SERVICES = [
   {
@@ -46,9 +46,7 @@ export default function ServicesPage() {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.white }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="md" sx={{ pt: 3, pb: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 800, mb: 2.5 }}>
@@ -98,6 +96,6 @@ export default function ServicesPage() {
           </Card>
         ))}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

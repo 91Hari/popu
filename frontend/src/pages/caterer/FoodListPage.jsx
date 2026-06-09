@@ -28,7 +28,7 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
 import foodService from "../../services/foodService";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 export default function FoodListPage() {
@@ -98,9 +98,7 @@ export default function FoodListPage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 4 }}>
         <Box
@@ -216,6 +214,6 @@ export default function FoodListPage() {
           </DialogActions>
         </Dialog>
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

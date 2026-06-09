@@ -1,8 +1,14 @@
 import React, { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { CircularProgress, Box } from "@mui/material";
+import { brand } from "../theme";
+import ErrorBoundary from "../components/ErrorBoundary";
 
-const LoginPage          = React.lazy(() => import("../pages/auth/LoginPage"));
-const RegisterPage       = React.lazy(() => import("../pages/auth/RegisterPage"));
+// Auth
+const LoginPage    = React.lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage = React.lazy(() => import("../pages/auth/RegisterPage"));
+
+// Customer
 const CustomerDashboard  = React.lazy(() => import("../pages/customer/CustomerDashboard"));
 const SearchPage         = React.lazy(() => import("../pages/customer/SearchPage"));
 const FoodDetailsPage    = React.lazy(() => import("../pages/customer/FoodDetailsPage"));
@@ -12,18 +18,32 @@ const CustomerOrdersPage = React.lazy(() => import("../pages/customer/OrdersPage
 const NotificationsPage  = React.lazy(() => import("../pages/customer/NotificationsPage"));
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
 
-const ServicesPage       = React.lazy(() => import("../pages/services/ServicesPage"));
-const CateringPage       = React.lazy(() => import("../pages/services/CateringPage"));
-const CatererDetailPage  = React.lazy(() => import("../pages/services/CatererDetailPage"));
-const TiffinsPage        = React.lazy(() => import("../pages/services/TiffinsPage"));
-const BookCookPage       = React.lazy(() => import("../pages/services/BookCookPage"));
-const HomeFoodPage       = React.lazy(() => import("../pages/services/HomeFoodPage"));
-const TrainingPage       = React.lazy(() => import("../pages/services/TrainingPage"));
+// Services
+const ServicesPage      = React.lazy(() => import("../pages/services/ServicesPage"));
+const CateringPage      = React.lazy(() => import("../pages/services/CateringPage"));
+const CatererDetailPage = React.lazy(() => import("../pages/services/CatererDetailPage"));
+const TiffinsPage       = React.lazy(() => import("../pages/services/TiffinsPage"));
+const BookCookPage      = React.lazy(() => import("../pages/services/BookCookPage"));
+const HomeFoodPage      = React.lazy(() => import("../pages/services/HomeFoodPage"));
+const TrainingPage      = React.lazy(() => import("../pages/services/TrainingPage"));
 
-const CatererDashboard  = React.lazy(() => import("../pages/caterer/CatererDashboard"));
-const AddFoodPage       = React.lazy(() => import("../pages/caterer/AddFoodPage"));
-const FoodListPage      = React.lazy(() => import("../pages/caterer/FoodListPage"));
-const CatererOrdersPage = React.lazy(() => import("../pages/caterer/CatererOrdersPage"));
+// Caterer
+const CatererDashboard        = React.lazy(() => import("../pages/caterer/CatererDashboard"));
+const AddFoodPage              = React.lazy(() => import("../pages/caterer/AddFoodPage"));
+const FoodListPage             = React.lazy(() => import("../pages/caterer/FoodListPage"));
+const CatererOrdersPage        = React.lazy(() => import("../pages/caterer/CatererOrdersPage"));
+const AvailabilityPage         = React.lazy(() => import("../pages/caterer/AvailabilityPage"));
+const CatererNotificationsPage = React.lazy(() => import("../pages/caterer/CatererNotificationsPage"));
+
+// Admin
+const AdminDashboard       = React.lazy(() => import("../pages/admin/AdminDashboard"));
+const CustomersPage        = React.lazy(() => import("../pages/admin/CustomersPage"));
+const AdminCaterersPage    = React.lazy(() => import("../pages/admin/CaterersPage"));
+const AdminFoodsPage       = React.lazy(() => import("../pages/admin/AdminFoodsPage"));
+const AdminOrdersPage      = React.lazy(() => import("../pages/admin/AdminOrdersPage"));
+const AdminNotifPage       = React.lazy(() => import("../pages/admin/AdminNotificationsPage"));
+const ReportsPage          = React.lazy(() => import("../pages/admin/ReportsPage"));
+const SettingsPage         = React.lazy(() => import("../pages/admin/SettingsPage"));
 
 function isAuthenticated() {
   try { return !!localStorage.getItem("token"); } catch { return false; }
@@ -40,56 +60,75 @@ function RequireAuth({ children }) {
 function RequireRole({ allowed = [], children }) {
   const role = getUserRole();
   if (!role || !allowed.includes(role)) {
-    if (isAuthenticated()) return <Navigate to={role === "caterer" ? "/caterer" : "/customer"} replace />;
+    if (isAuthenticated()) {
+      if (role === "caterer") return <Navigate to="/caterer" replace />;
+      if (role === "admin")   return <Navigate to="/admin" replace />;
+      return <Navigate to="/customer" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
   return children;
 }
 
 function C({ allowed, element }) {
-  return (
-    <RequireAuth>
-      <RequireRole allowed={allowed}>{element}</RequireRole>
-    </RequireAuth>
-  );
+  return <RequireAuth><RequireRole allowed={allowed}>{element}</RequireRole></RequireAuth>;
 }
 
-const CUST = ["customer"];
-const CATR = ["caterer"];
+const CUST  = ["customer"];
+const CATR  = ["caterer"];
+const ADMIN = ["admin"];
+
+const Loader = () => (
+  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+    <CircularProgress sx={{ color: brand.orange }} />
+  </Box>
+);
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div />}>
+      <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
           {/* Customer */}
-          <Route path="/customer"               element={<C allowed={CUST} element={<CustomerDashboard />} />} />
-          <Route path="/customer/search"        element={<C allowed={CUST} element={<SearchPage />} />} />
+          <Route path="/customer"               element={<ErrorBoundary><C allowed={CUST} element={<CustomerDashboard />} /></ErrorBoundary>} />
+          <Route path="/customer/search"        element={<ErrorBoundary><C allowed={CUST} element={<SearchPage />} /></ErrorBoundary>} />
           <Route path="/customer/services"      element={<Navigate to="/services" replace />} />
-          <Route path="/customer/food/:id"      element={<C allowed={CUST} element={<FoodDetailsPage />} />} />
-          <Route path="/customer/orders"        element={<C allowed={CUST} element={<CustomerOrdersPage />} />} />
-          <Route path="/customer/profile"       element={<C allowed={CUST} element={<ProfilePage />} />} />
-          <Route path="/customer/offers"        element={<C allowed={CUST} element={<OffersPage />} />} />
-          <Route path="/customer/notifications" element={<C allowed={CUST} element={<NotificationsPage />} />} />
-          <Route path="/cart"                   element={<C allowed={CUST} element={<CartPage />} />} />
+          <Route path="/customer/food/:id"      element={<ErrorBoundary><C allowed={CUST} element={<FoodDetailsPage />} /></ErrorBoundary>} />
+          <Route path="/customer/orders"        element={<ErrorBoundary><C allowed={CUST} element={<CustomerOrdersPage />} /></ErrorBoundary>} />
+          <Route path="/customer/profile"       element={<ErrorBoundary><C allowed={CUST} element={<ProfilePage />} /></ErrorBoundary>} />
+          <Route path="/customer/offers"        element={<ErrorBoundary><C allowed={CUST} element={<OffersPage />} /></ErrorBoundary>} />
+          <Route path="/customer/notifications" element={<ErrorBoundary><C allowed={CUST} element={<NotificationsPage />} /></ErrorBoundary>} />
+          <Route path="/cart"                   element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
 
           {/* Services */}
-          <Route path="/services"               element={<C allowed={CUST} element={<ServicesPage />} />} />
-          <Route path="/services/catering"      element={<C allowed={CUST} element={<CateringPage />} />} />
-          <Route path="/services/catering/:id"  element={<C allowed={CUST} element={<CatererDetailPage />} />} />
-          <Route path="/services/tiffins"       element={<C allowed={CUST} element={<TiffinsPage />} />} />
-          <Route path="/services/book-cook"     element={<C allowed={CUST} element={<BookCookPage />} />} />
-          <Route path="/services/home-food"     element={<C allowed={CUST} element={<HomeFoodPage />} />} />
-          <Route path="/services/training"      element={<C allowed={CUST} element={<TrainingPage />} />} />
+          <Route path="/services"               element={<ErrorBoundary><C allowed={CUST} element={<ServicesPage />} /></ErrorBoundary>} />
+          <Route path="/services/catering"      element={<ErrorBoundary><C allowed={CUST} element={<CateringPage />} /></ErrorBoundary>} />
+          <Route path="/services/catering/:id"  element={<ErrorBoundary><C allowed={CUST} element={<CatererDetailPage />} /></ErrorBoundary>} />
+          <Route path="/services/tiffins"       element={<ErrorBoundary><C allowed={CUST} element={<TiffinsPage />} /></ErrorBoundary>} />
+          <Route path="/services/book-cook"     element={<ErrorBoundary><C allowed={CUST} element={<BookCookPage />} /></ErrorBoundary>} />
+          <Route path="/services/home-food"     element={<ErrorBoundary><C allowed={CUST} element={<HomeFoodPage />} /></ErrorBoundary>} />
+          <Route path="/services/training"      element={<ErrorBoundary><C allowed={CUST} element={<TrainingPage />} /></ErrorBoundary>} />
 
           {/* Caterer */}
-          <Route path="/caterer"                element={<C allowed={CATR} element={<CatererDashboard />} />} />
-          <Route path="/caterer/add-food"       element={<C allowed={CATR} element={<AddFoodPage />} />} />
-          <Route path="/caterer/foods"          element={<C allowed={CATR} element={<FoodListPage />} />} />
-          <Route path="/caterer/orders"         element={<C allowed={CATR} element={<CatererOrdersPage />} />} />
+          <Route path="/caterer"                    element={<C allowed={CATR} element={<CatererDashboard />} />} />
+          <Route path="/caterer/add-food"           element={<C allowed={CATR} element={<AddFoodPage />} />} />
+          <Route path="/caterer/foods"              element={<C allowed={CATR} element={<FoodListPage />} />} />
+          <Route path="/caterer/orders"             element={<C allowed={CATR} element={<CatererOrdersPage />} />} />
+          <Route path="/caterer/availability"       element={<C allowed={CATR} element={<AvailabilityPage />} />} />
+          <Route path="/caterer/notifications"      element={<C allowed={CATR} element={<CatererNotificationsPage />} />} />
+
+          {/* Admin */}
+          <Route path="/admin"               element={<C allowed={ADMIN} element={<AdminDashboard />} />} />
+          <Route path="/admin/customers"     element={<C allowed={ADMIN} element={<CustomersPage />} />} />
+          <Route path="/admin/caterers"      element={<C allowed={ADMIN} element={<AdminCaterersPage />} />} />
+          <Route path="/admin/foods"         element={<C allowed={ADMIN} element={<AdminFoodsPage />} />} />
+          <Route path="/admin/orders"        element={<C allowed={ADMIN} element={<AdminOrdersPage />} />} />
+          <Route path="/admin/notifications" element={<C allowed={ADMIN} element={<AdminNotifPage />} />} />
+          <Route path="/admin/reports"       element={<C allowed={ADMIN} element={<ReportsPage />} />} />
+          <Route path="/admin/settings"      element={<C allowed={ADMIN} element={<SettingsPage />} />} />
 
           <Route path="/" element={<Navigate to="/customer" replace />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />

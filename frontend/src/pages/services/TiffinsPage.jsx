@@ -10,7 +10,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
 import SortRoundedIcon from "@mui/icons-material/SortRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
 import foodService from "../../services/foodService";
 import { useCustomerGeo } from "../../utils/geoUtils";
@@ -83,9 +83,7 @@ export default function TiffinsPage() {
   const displayed = sortFoods(foods, sort);
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         {/* Header */}
@@ -181,6 +179,6 @@ export default function TiffinsPage() {
           </Grid>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

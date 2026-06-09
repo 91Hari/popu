@@ -25,18 +25,19 @@ async function getCaterers({ search, location, page = 1, limit = 20 } = {}) {
   const { rows } = await pool.query(
     `SELECT
        u.id,
-       u.name            AS "catererName",
-       u.business_name   AS "businessName",
+       u.name                AS "catererName",
+       u.business_name       AS "businessName",
        u.location,
        u.address,
        u.latitude,
        u.longitude,
        u.email,
-       COUNT(f.id)::int  AS "foodCount"
+       u.availability_status AS "availabilityStatus",
+       COUNT(f.id)::int      AS "foodCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
      WHERE ${where}
-     GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email
+     GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email, u.availability_status
      ORDER BY u.name ASC
      LIMIT $${idx++} OFFSET $${idx}`,
     params
@@ -49,18 +50,19 @@ async function getCatererById(id) {
   const { rows } = await pool.query(
     `SELECT
        u.id,
-       u.name            AS "catererName",
-       u.business_name   AS "businessName",
+       u.name                AS "catererName",
+       u.business_name       AS "businessName",
        u.location,
        u.address,
        u.latitude,
        u.longitude,
        u.email,
-       COUNT(f.id)::int  AS "foodCount"
+       u.availability_status AS "availabilityStatus",
+       COUNT(f.id)::int      AS "foodCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
      WHERE u.id = $1 AND u.role = 'CATERER' AND u.is_active = TRUE
-     GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email`,
+     GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email, u.availability_status`,
     [id]
   );
   return rows[0] || null;

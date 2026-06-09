@@ -10,6 +10,7 @@ const NOTIFICATION_TYPES = {
   ORDER_ACCEPTED:    'ORDER_ACCEPTED',
   ORDER_PREPARING:   'ORDER_PREPARING',
   ORDER_DELIVERED:   'ORDER_DELIVERED',
+  NEW_ORDER:         'NEW_ORDER',
 };
 
 const BATCH_SIZE = 500;
@@ -89,12 +90,20 @@ function _dispatch(userIds, payload) {
   //          emailQueue.enqueue(userIds, payload)
 }
 
-async function notifyUser(user_id, { notification_type, title, message }) {
+async function notifyUser(user_id, { notification_type, title, message, reference_id = null }) {
   await pool.query(
-    `INSERT INTO notifications (user_id, notification_type, title, message)
-     VALUES ($1, $2, $3, $4)`,
-    [user_id, notification_type, title, message]
+    `INSERT INTO notifications (user_id, notification_type, title, message, reference_id)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [user_id, notification_type, title, message, reference_id]
   );
+}
+
+async function getUnreadCountForUser(user_id) {
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) AS count FROM notifications WHERE user_id = $1 AND is_read = FALSE`,
+    [user_id]
+  );
+  return parseInt(rows[0].count, 10);
 }
 
 module.exports = {
@@ -103,6 +112,7 @@ module.exports = {
   notifyInterestedCustomers,
   notifyUser,
   getNotificationsForUser,
+  getUnreadCountForUser,
   markAsRead,
   markAllAsRead,
 };

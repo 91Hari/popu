@@ -5,10 +5,11 @@ const { notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 const { orderETA } = require('./locationService');
 
 const STATUS_NOTIFICATIONS = {
-  CANCELLED: { title: 'Order Cancelled',  message: (id) => `Your order #${id.slice(0,8).toUpperCase()} has been cancelled by the caterer.` },
-  ACCEPTED:  { title: 'Order Accepted',   message: (id) => `Great news! Your order #${id.slice(0,8).toUpperCase()} has been accepted.` },
-  PREPARING: { title: 'Order Preparing',  message: (id) => `Your order #${id.slice(0,8).toUpperCase()} is now being prepared.` },
-  DELIVERED: { title: 'Order Delivered',  message: (id) => `Your order #${id.slice(0,8).toUpperCase()} has been delivered. Enjoy your meal!` },
+  CANCELLED: { title: 'Order Cancelled',      message: (id) => `Your order #${id.slice(0,8).toUpperCase()} has been cancelled by the caterer.` },
+  ACCEPTED:  { title: 'Order Accepted',       message: (id) => `Your order #${id.slice(0,8).toUpperCase()} has been accepted. Preparation will begin shortly.` },
+  PREPARING: { title: 'Order Being Prepared', message: (id) => `Your order #${id.slice(0,8).toUpperCase()} is now being prepared.` },
+  READY:     { title: 'Order Ready',          message: (id) => `Your order #${id.slice(0,8).toUpperCase()} is ready and out for delivery!` },
+  DELIVERED: { title: 'Order Delivered',      message: (id) => `Your order #${id.slice(0,8).toUpperCase()} has been delivered. Enjoy your meal!` },
 };
 
 async function _recordHistory(client_or_pool, order_id, status, updated_by, notes) {
@@ -51,6 +52,8 @@ async function createOrder({ customer_id, items, customer_lat, customer_lng }) {
     const foodIds = items.map((i) => i.food_item_id);
     const { rows: foods } = await client.query(
       `SELECT f.id, f.price, f.is_available, f.preparation_time_minutes,
+              f.food_name, f.caterer_id,
+              u.availability_status,
               u.latitude AS caterer_lat, u.longitude AS caterer_lng
        FROM food_items f
        JOIN users u ON u.id = f.caterer_id
@@ -72,6 +75,10 @@ async function createOrder({ customer_id, items, customer_lat, customer_lng }) {
         const err = new Error(`Food item ${item.food_item_id} is not available`);
         err.status = 400; throw err;
       }
+      if (food.availability_status === 'NOT_READY') {
+        const err = new Error('Caterer is not accepting orders right now');
+        err.status = 400; throw err;
+      }
       const unit_price  = parseFloat(food.price);
       const total_price = unit_price * item.quantity;
       total_amount += total_price;
@@ -81,50 +88,26 @@ async function createOrder({ customer_id, items, customer_lat, customer_lng }) {
         unit_price,
         total_price,
         preparation_time_minutes: food.preparation_time_minutes || 20,
+        caterer_id:               food.caterer_id,
+        food_name:                food.food_name,
         caterer_lat:              food.caterer_lat,
         caterer_lng:              food.caterer_lng,
       });
     }
 
-    // Calculate ETA if customer coordinates were supplied
-    let eta_minutes      = null;
-    let expected_arrival = null;
-
+    // Store coords on order — ETA is calculated when caterer accepts, not now
     const cLat = parseFloat(customer_lat);
     const cLng = parseFloat(customer_lng);
-
-    if (!isNaN(cLat) && !isNaN(cLng)) {
-      eta_minutes = orderETA(cLat, cLng, lineItems.map((l) => ({
-        caterer_lat:              l.caterer_lat,
-        caterer_lng:              l.caterer_lng,
-        preparation_time_minutes: l.preparation_time_minutes,
-      })));
-    }
+    const storedLat = !isNaN(cLat) ? cLat : null;
+    const storedLng = !isNaN(cLng) ? cLng : null;
 
     const { rows: orderRows } = await client.query(
-      `INSERT INTO orders (customer_id, total_amount, eta_minutes, expected_arrival_at)
+      `INSERT INTO orders (customer_id, total_amount, customer_lat, customer_lng)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [
-        customer_id,
-        total_amount,
-        eta_minutes,
-        eta_minutes ? `NOW() + interval '${eta_minutes} minutes'` : null,
-      ]
+      [customer_id, total_amount, storedLat, storedLng]
     );
-
-    // Re-query with proper interval arithmetic (can't use expression in param)
-    let order = orderRows[0];
-    if (eta_minutes) {
-      const { rows: updated } = await client.query(
-        `UPDATE orders
-         SET expected_arrival_at = created_at + ($1 || ' minutes')::interval
-         WHERE id = $2
-         RETURNING *`,
-        [String(eta_minutes), order.id]
-      );
-      order = updated[0];
-    }
+    const order = orderRows[0];
 
     for (const line of lineItems) {
       await client.query(
@@ -136,6 +119,26 @@ async function createOrder({ customer_id, items, customer_lat, customer_lng }) {
 
     await _recordHistory(client, order.id, 'PLACED', customer_id, null);
     await client.query('COMMIT');
+
+    // Fire-and-forget: notify each unique caterer that an order arrived
+    const orderId     = order.id;
+    const shortId     = orderId.slice(0, 8).toUpperCase();
+    const firstFood   = lineItems[0]?.food_name || 'your food item';
+    const catererIds  = [...new Set(lineItems.map((l) => l.caterer_id).filter(Boolean))];
+    setImmediate(async () => {
+      for (const catId of catererIds) {
+        try {
+          await notifyUser(catId, {
+            notification_type: NOTIFICATION_TYPES.NEW_ORDER,
+            title:        'New Order Received',
+            message:      `Order #${shortId} has been placed for ${firstFood}.`,
+            reference_id: orderId,
+          });
+        } catch (err) {
+          console.error('[OrderService] Caterer notification failed:', err.message);
+        }
+      }
+    });
 
     const { rows: full } = await pool.query(ORDER_WITH_ITEMS, [order.id]);
     return full[0];
@@ -189,9 +192,10 @@ async function getOrderById(id, user) {
 
 const VALID_TRANSITIONS = {
   CATERER: {
-    PLACED:    ['ACCEPTED', 'CANCELLED'],
+    PLACED:    ['ACCEPTED',  'CANCELLED'],
     ACCEPTED:  ['PREPARING', 'CANCELLED'],
-    PREPARING: ['DELIVERED', 'CANCELLED'],
+    PREPARING: ['READY',     'CANCELLED'],
+    READY:     ['DELIVERED'],
   },
   CUSTOMER: {
     PLACED:   ['CANCELLED'],
@@ -212,10 +216,75 @@ async function updateOrderStatus(id, status, user) {
     e.status = 400; throw e;
   }
 
-  const extra = status === 'CANCELLED' ? ', cancelled_at = NOW()' : '';
+  let extra = '';
+  const extraParams = [];
+
+  if (status === 'CANCELLED') {
+    extra = ', cancelled_at = NOW()';
+  }
+
+  if (status === 'ACCEPTED') {
+    extra = ', accepted_at = NOW()';
+  }
+
+  // Always set ETA when caterer starts preparing. Use GPS-based calculation if
+  // coords are available; fall back to 30-minute default so ETA is never null.
+  if (status === 'PREPARING' && user.role === 'CATERER') {
+    const cLat = order.customer_lat != null ? parseFloat(order.customer_lat) : null;
+    const cLng = order.customer_lng != null ? parseFloat(order.customer_lng) : null;
+
+    let etaMin = 30; // MVP default — no GPS required
+
+    if (cLat != null && cLng != null) {
+      const { rows: foodRows } = await pool.query(
+        `SELECT f.preparation_time_minutes, u.latitude AS caterer_lat, u.longitude AS caterer_lng
+         FROM order_items oi
+         JOIN food_items f ON f.id = oi.food_item_id
+         JOIN users u ON u.id = f.caterer_id
+         WHERE oi.order_id = $1`,
+        [id]
+      );
+      const calculated = orderETA(cLat, cLng, foodRows.map((r) => ({
+        caterer_lat:              r.caterer_lat,
+        caterer_lng:              r.caterer_lng,
+        preparation_time_minutes: r.preparation_time_minutes || 20,
+      })));
+      if (calculated) etaMin = calculated;
+    }
+
+    const { rows: updated } = await pool.query(
+      `UPDATE orders
+       SET status = 'PREPARING',
+           preparation_started_at = NOW(),
+           eta_minutes = $1,
+           expected_arrival_at = NOW() + make_interval(mins => $1)
+       WHERE id = $2
+       RETURNING *`,
+      [etaMin, id]
+    );
+    await _recordHistory(pool, id, status, user.id, null);
+
+    setImmediate(async () => {
+      try {
+        const etaText    = `${etaMin} mins`;
+        const arrivalStr = new Date(updated[0].expected_arrival_at)
+          .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        await notifyUser(updated[0].customer_id, {
+          notification_type: 'ORDER_PREPARING',
+          title:   'Order Being Prepared',
+          message: `Your order #${id.slice(0,8).toUpperCase()} is now being prepared. Estimated delivery: ${etaText}. Expected arrival: ${arrivalStr}.`,
+        });
+      } catch (err) {
+        console.error('[OrderService] Notification failed:', err.message);
+      }
+    });
+
+    return updated[0];
+  }
+
   const { rows: updated } = await pool.query(
     `UPDATE orders SET status = $1${extra} WHERE id = $2 RETURNING *`,
-    [status, id]
+    [status, id, ...extraParams]
   );
   const updatedOrder = updated[0];
   await _recordHistory(pool, id, status, user.id, null);

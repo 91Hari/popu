@@ -42,7 +42,7 @@ async function getOrderById(req, res, next) {
 async function updateOrderStatus(req, res, next) {
   try {
     const { status } = req.body;
-    const validStatuses = ['ACCEPTED', 'PREPARING', 'DELIVERED', 'CANCELLED'];
+    const validStatuses = ['ACCEPTED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'];
     if (!status || !validStatuses.includes(status))
       return res.status(400).json({ error: `status must be one of: ${validStatuses.join(', ')}` });
     const order = await orderService.updateOrderStatus(req.params.id, status, req.user);

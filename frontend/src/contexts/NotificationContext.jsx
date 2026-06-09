@@ -1,7 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import notificationService from "../services/notificationService";
+import notificationService         from "../services/notificationService";
+import catererNotificationService  from "../services/catererNotificationService";
 
 const NotificationContext = createContext(null);
+
+function getUserRole() {
+  try { return JSON.parse(localStorage.getItem("user"))?.role || "customer"; } catch { return "customer"; }
+}
 
 export function NotificationProvider({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -9,9 +14,14 @@ export function NotificationProvider({ children }) {
   const refresh = useCallback(async () => {
     if (!localStorage.getItem("token")) { setUnreadCount(0); return; }
     try {
-      const data = await notificationService.getNotifications();
-      const count = (data || []).filter((n) => !n.is_read).length;
-      setUnreadCount(count);
+      const role = getUserRole();
+      if (role === "caterer") {
+        const data = await catererNotificationService.getUnreadCount();
+        setUnreadCount(data?.unread_count ?? 0);
+      } else {
+        const data = await notificationService.getNotifications();
+        setUnreadCount((data || []).filter((n) => !n.is_read).length);
+      }
     } catch {
       setUnreadCount(0);
     }
@@ -24,12 +34,22 @@ export function NotificationProvider({ children }) {
   }, [refresh]);
 
   const markRead = async (id) => {
-    await notificationService.markRead(id);
+    const role = getUserRole();
+    if (role === "caterer") {
+      await catererNotificationService.markRead(id);
+    } else {
+      await notificationService.markRead(id);
+    }
     setUnreadCount((c) => Math.max(0, c - 1));
   };
 
   const markAllRead = async () => {
-    await notificationService.markAllRead();
+    const role = getUserRole();
+    if (role === "caterer") {
+      await catererNotificationService.markAllRead();
+    } else {
+      await notificationService.markAllRead();
+    }
     setUnreadCount(0);
   };
 

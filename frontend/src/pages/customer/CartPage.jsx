@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Toolbar, Typography, IconButton, Button,
@@ -16,7 +16,7 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import { useCart } from "../../contexts/CartContext";
 import orderService from "../../services/orderService";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import {
   useCustomerGeo, haversineKm, travelTimeMinutes,
@@ -38,6 +38,8 @@ export default function CartPage() {
   const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
   const { items, total, cartCount, updateQty, removeFromCart, clearCart, loading } = useCart();
+
+  useEffect(() => { console.log("[Diag] CartPage mounted, items:", items?.length); }, []);
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError]             = useState("");
   const [confirmation, setConfirmation] = useState(null); // { etaMinutes, expectedArrivalAt }
@@ -87,9 +89,7 @@ export default function CartPage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
@@ -302,6 +302,6 @@ export default function CartPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </AppLayout>
   );
 }

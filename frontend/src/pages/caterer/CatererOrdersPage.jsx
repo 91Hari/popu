@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  Box, Container, Toolbar, Typography, Table, TableBody,
+  Box, Container, Typography, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper,
   Chip, Button, Stack, Card, CardContent, CircularProgress,
   Alert, Divider, useTheme, useMediaQuery,
@@ -10,16 +11,18 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import CancelOutlinedIcon            from "@mui/icons-material/CancelOutlined";
 import LocalDiningRoundedIcon        from "@mui/icons-material/LocalDiningRounded";
 import TaskAltRoundedIcon            from "@mui/icons-material/TaskAltRounded";
+import TwoWheelerRoundedIcon         from "@mui/icons-material/TwoWheelerRounded";
 import orderService from "../../services/orderService";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 const STATUS_MAP = {
-  PLACED:    { label: "Placed",    color: "info" },
-  ACCEPTED:  { label: "Accepted",  color: "primary" },
-  PREPARING: { label: "Preparing", color: "warning" },
-  DELIVERED: { label: "Delivered", color: "success" },
-  CANCELLED: { label: "Cancelled", color: "default" },
+  PLACED:    { label: "Placed",         color: "info" },
+  ACCEPTED:  { label: "Accepted",       color: "primary" },
+  PREPARING: { label: "Preparing",      color: "warning" },
+  READY:     { label: "Out for Delivery", color: "success" },
+  DELIVERED: { label: "Delivered",      color: "success" },
+  CANCELLED: { label: "Cancelled",      color: "default" },
 };
 
 /**
@@ -62,8 +65,12 @@ function getActions(status, orderId, busy, onAction) {
       ];
     case "PREPARING":
       return [
-        btn("Mark Delivered", "DELIVERED", <TaskAltRoundedIcon />,  null, "#1976d2"),
-        btn("Cancel",         "CANCELLED", <CancelOutlinedIcon />,  "error", null),
+        btn("Mark Ready",     "READY",     <TwoWheelerRoundedIcon />, null, "#1976d2"),
+        btn("Cancel",         "CANCELLED", <CancelOutlinedIcon />,    "error", null),
+      ];
+    case "READY":
+      return [
+        btn("Mark Delivered", "DELIVERED", <TaskAltRoundedIcon />, null, brand.green),
       ];
     default:
       return null;
@@ -77,6 +84,8 @@ export default function CatererOrdersPage() {
   const [busy, setBusy]       = useState({});  // { [orderId]: newStatus }
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [searchParams]  = useSearchParams();
+  const highlightId     = searchParams.get("highlight") || "";
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -119,20 +128,16 @@ export default function CatererOrdersPage() {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-        <TopNav />
-        <Toolbar />
+      <AppLayout>
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress sx={{ color: brand.orange }} />
         </Box>
-      </Box>
+      </AppLayout>
     );
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 4 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
@@ -163,20 +168,31 @@ export default function CatererOrdersPage() {
           /* ─── Mobile cards ─── */
           <Stack spacing={2}>
             {orders.map((order) => {
-              const orderId   = order.id;
-              const items     = Array.isArray(order.items) ? order.items : [];
-              const amount    = Number(order.total_amount || 0).toFixed(2);
-              const statusKey = order.status || "PLACED";
-              const actions   = getActions(statusKey, orderId, busy[orderId], handleAction);
+              const orderId      = order.id;
+              const items        = Array.isArray(order.items) ? order.items : [];
+              const amount       = Number(order.total_amount || 0).toFixed(2);
+              const statusKey    = order.status || "PLACED";
+              const actions      = getActions(statusKey, orderId, busy[orderId], handleAction);
+              const isHighlighted = highlightId && orderId === highlightId;
 
               return (
-                <Card key={orderId} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
+                <Card key={orderId} elevation={0} sx={{
+                  border: isHighlighted ? `2px solid ${brand.orange}` : `1px solid ${brand.border}`,
+                  backgroundColor: isHighlighted ? "#FFF3E0" : undefined,
+                }}>
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
                       <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                          #{orderId.slice(0, 8).toUpperCase()}
-                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            #{orderId.slice(0, 8).toUpperCase()}
+                          </Typography>
+                          {isHighlighted && (
+                            <Chip label="NEW" size="small"
+                              sx={{ height: 16, fontSize: "0.62rem", fontWeight: 800,
+                                backgroundColor: brand.orange, color: "#fff", borderRadius: 1 }} />
+                          )}
+                        </Stack>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
                           {new Date(order.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
                         </Typography>
@@ -231,16 +247,30 @@ export default function CatererOrdersPage() {
               </TableHead>
               <TableBody>
                 {orders.map((order) => {
-                  const orderId   = order.id;
-                  const items     = Array.isArray(order.items) ? order.items : [];
-                  const amount    = Number(order.total_amount || 0).toFixed(2);
-                  const statusKey = order.status || "PLACED";
-                  const actions   = getActions(statusKey, orderId, busy[orderId], handleAction);
+                  const orderId      = order.id;
+                  const items        = Array.isArray(order.items) ? order.items : [];
+                  const amount       = Number(order.total_amount || 0).toFixed(2);
+                  const statusKey    = order.status || "PLACED";
+                  const actions      = getActions(statusKey, orderId, busy[orderId], handleAction);
+                  const isHighlighted = highlightId && orderId === highlightId;
 
                   return (
-                    <TableRow key={orderId} hover>
+                    <TableRow
+                      key={orderId}
+                      hover
+                      sx={isHighlighted ? {
+                        backgroundColor: "#FFF3E0",
+                        outline: `2px solid ${brand.orange}`,
+                        outlineOffset: "-2px",
+                      } : {}}
+                    >
                       <TableCell sx={{ fontWeight: 600, fontFamily: "monospace", fontSize: "0.8rem" }}>
                         #{orderId.slice(0, 8).toUpperCase()}
+                        {isHighlighted && (
+                          <Chip label="NEW" size="small"
+                            sx={{ ml: 0.75, height: 16, fontSize: "0.62rem", fontWeight: 800,
+                              backgroundColor: brand.orange, color: "#fff", borderRadius: 1 }} />
+                        )}
                       </TableCell>
 
                       <TableCell>
@@ -290,6 +320,6 @@ export default function CatererOrdersPage() {
           </TableContainer>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

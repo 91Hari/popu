@@ -20,7 +20,7 @@ import PaymentRoundedIcon from "@mui/icons-material/PaymentRounded";
 import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 
 const MENU = [
   { label: "My Bookings", to: "/customer/orders", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
@@ -49,9 +49,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="sm" sx={{ pt: 3, pb: 4 }}>
         {/* Avatar card */}
@@ -115,6 +113,6 @@ export default function ProfilePage() {
           Log Out
         </Button>
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

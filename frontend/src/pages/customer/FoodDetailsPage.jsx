@@ -25,7 +25,7 @@ import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import foodService from "../../services/foodService";
 import orderService from "../../services/orderService";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import { useCustomerGeo, etaRange } from "../../utils/geoUtils";
 
@@ -91,44 +91,36 @@ export default function FoodDetailsPage() {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-        <TopNav />
-        <Toolbar />
+      <AppLayout>
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress sx={{ color: brand.orange }} />
         </Box>
-      </Box>
+      </AppLayout>
     );
   }
 
   if (error && !food) {
     return (
-      <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-        <TopNav />
-        <Toolbar />
+      <AppLayout>
         <Container maxWidth="md" sx={{ py: 4 }}>
           <Alert severity="error">{error}</Alert>
         </Container>
-      </Box>
+      </AppLayout>
     );
   }
 
   if (!food) {
     return (
-      <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-        <TopNav />
-        <Toolbar />
+      <AppLayout>
         <Container maxWidth="md" sx={{ py: 4 }}>
           <Alert severity="info">Food not found.</Alert>
         </Container>
-      </Box>
+      </AppLayout>
     );
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4 }}>
         <Button
@@ -275,6 +267,6 @@ export default function FoodDetailsPage() {
           </CardContent>
         </Card>
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

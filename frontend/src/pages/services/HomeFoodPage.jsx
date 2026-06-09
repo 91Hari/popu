@@ -3,15 +3,13 @@ import { Box, Container, Toolbar, Typography, Button, IconButton, Stack } from "
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 
 export default function HomeFoodPage() {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="sm" sx={{ pt: 3, pb: 5 }}>
         <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 4 }}>
@@ -46,6 +44,6 @@ export default function HomeFoodPage() {
           </Button>
         </Box>
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

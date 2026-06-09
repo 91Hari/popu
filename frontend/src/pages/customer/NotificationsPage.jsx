@@ -21,7 +21,7 @@ import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsAct
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import notificationService from "../../services/notificationService";
 import { useNotifications } from "../../contexts/NotificationContext";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 export default function NotificationsPage() {
@@ -30,11 +30,14 @@ export default function NotificationsPage() {
   const [error, setError] = useState("");
   const { refresh: refreshCount } = useNotifications();
 
+  useEffect(() => { console.log("[Diag] NotificationsPage mounted"); }, []);
+
   const load = useCallback(async () => {
     try {
       setLoading(true);
       const data = await notificationService.getNotifications();
-      setNotifications(data);
+      console.log("[Diag] NotificationsPage API response:", data);
+      setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err?.message || "Failed to load notifications.");
     } finally {
@@ -70,20 +73,16 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-        <TopNav />
-        <Toolbar />
+      <AppLayout>
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress sx={{ color: brand.orange }} />
         </Box>
-      </Box>
+      </AppLayout>
     );
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="md" sx={{ pt: 3, pb: 4 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
@@ -183,6 +182,6 @@ export default function NotificationsPage() {
           </Paper>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

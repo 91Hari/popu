@@ -60,7 +60,7 @@ export default function LoginPage() {
           </Box>
 
           <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
-            Welcome Back! 👋
+            Welcome Back
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
             Login to continue

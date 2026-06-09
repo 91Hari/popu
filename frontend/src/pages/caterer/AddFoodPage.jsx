@@ -10,7 +10,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import TimerRoundedIcon from "@mui/icons-material/TimerRounded";
 import foodService from "../../services/foodService";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 export default function AddFoodPage() {
@@ -74,9 +74,7 @@ export default function AddFoodPage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="sm" sx={{ py: isMobile ? 2 : 4 }}>
         <Button startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate(-1)} sx={{ mb: 2, color: brand.muted }}>
@@ -172,6 +170,6 @@ export default function AddFoodPage() {
           </CardContent>
         </Card>
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

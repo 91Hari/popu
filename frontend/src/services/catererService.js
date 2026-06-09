@@ -7,7 +7,17 @@ export default {
     if (location) params.set("location", location);
     params.set("page",  String(page));
     params.set("limit", String(limit));
-    const data = await api.request(`/caterers?${params.toString()}`);
-    return data;
+    return api.request(`/caterers?${params.toString()}`);
+  },
+
+  async getMyAvailability() {
+    return api.request("/caterers/me/availability");
+  },
+
+  async setMyAvailability(status) {
+    return api.request("/caterers/me/availability", {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
   },
 };

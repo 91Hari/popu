@@ -8,7 +8,7 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { brand } from "../../theme";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import foodService from "../../services/foodService";
 
 export default function FoodSearchPage() {
@@ -50,9 +50,7 @@ export default function FoodSearchPage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 2.5, pb: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>
@@ -150,6 +148,6 @@ export default function FoodSearchPage() {
           </Grid>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }

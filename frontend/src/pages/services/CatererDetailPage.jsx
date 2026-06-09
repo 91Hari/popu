@@ -11,7 +11,7 @@ import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import api from "../../services/api";
 import FoodCard from "../../components/FoodCard";
-import TopNav from "../../components/TopNav";
+import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import { useCustomerGeo, haversineKm, etaMinutes, formatDistance, formatEta } from "../../utils/geoUtils";
 
@@ -50,9 +50,7 @@ export default function CatererDetailPage() {
   const eta = distKm != null ? etaMinutes(distKm) : null;
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg }}>
-      <TopNav />
-      <Toolbar />
+    <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         <IconButton size="small" onClick={() => navigate("/services/catering")} sx={{ color: brand.muted, mb: 2 }}>
@@ -182,6 +180,6 @@ export default function CatererDetailPage() {
           </>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }
