@@ -5,7 +5,7 @@ const pool = require("./config/db");
 async function init() {
   try {
     const sql = fs.readFileSync(
-      path.join(__dirname, "../schema.sql"),
+      path.join(__dirname, "./schema.sql"),
       "utf8"
     );
 
