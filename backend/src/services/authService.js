@@ -11,7 +11,7 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-async function register({ name, email, password, role, business_name, address, latitude, longitude }) {
+async function register({ name, email, password, role, business_name, location, address, latitude, longitude }) {
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
   if (existing.rows.length > 0) {
     const err = new Error('Email already registered');
@@ -30,7 +30,7 @@ async function register({ name, email, password, role, business_name, address, l
     [
       name, email, password_hash, upperRole,
       isCaterer ? (business_name || null) : null,
-      isCaterer ? (address || null) : null,
+      isCaterer ? (location || address || null) : null,
       isCaterer ? (address || null) : null,
       isCaterer ? (latitude  != null ? latitude  : null) : null,
       isCaterer ? (longitude != null ? longitude : null) : null,

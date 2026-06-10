@@ -20,11 +20,12 @@ CREATE TABLE IF NOT EXISTS system_notifications (
   created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+-- Extension must exist before gin_trgm_ops indexes
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Index for search suggestions performance
 CREATE INDEX IF NOT EXISTS idx_food_items_name_trgm
   ON food_items USING gin (food_name gin_trgm_ops);
 
 CREATE INDEX IF NOT EXISTS idx_users_name_trgm
   ON users USING gin (name gin_trgm_ops);
-
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
