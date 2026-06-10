@@ -4,6 +4,7 @@ const pool = require("./config/db");
 
 async function init() {
   try {
+    // Existing schema execution
     const sql = fs.readFileSync(
       path.join(__dirname, "./schema.sql"),
       "utf8"
@@ -11,10 +12,28 @@ async function init() {
 
     await pool.query(sql);
 
-    console.log("Schema created successfully");
+    // Migration for existing databases
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS business_name VARCHAR(255);
+
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS location TEXT;
+
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS address TEXT;
+
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS latitude NUMERIC(10,7);
+
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS longitude NUMERIC(10,7);
+    `);
+
+    console.log("Schema and migrations applied successfully");
     process.exit(0);
   } catch (err) {
-    console.error("Schema creation failed:", err);
+    console.error("Initialization failed:", err);
     process.exit(1);
   }
 }
