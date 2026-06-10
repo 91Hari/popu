@@ -1,0 +1,87 @@
+'use strict';
+
+const masterOrderService = require('../services/masterOrderService');
+const cartService        = require('../services/cartService');
+
+async function createSplitOrder(req, res, next) {
+  try {
+    const { items, customer_lat, customer_lng, payment_proofs } = req.body;
+    if (!items || !items.length) {
+      return res.status(400).json({ error: 'items are required' });
+    }
+    const masterOrder = await masterOrderService.createSplitOrder({
+      customer_id:    req.user.id,
+      items,
+      customer_lat,
+      customer_lng,
+      payment_proofs: payment_proofs || [],
+    });
+    await cartService.clearCart(req.user.id);
+    res.status(201).json({ masterOrder });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function getMasterOrders(req, res, next) {
+  try {
+    const orders = await masterOrderService.getMasterOrders(req.user);
+    res.json({ orders });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function getMasterOrderById(req, res, next) {
+  try {
+    const order = await masterOrderService.getMasterOrderById(req.params.id, req.user);
+    res.json({ order });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function getCatererSubOrders(req, res, next) {
+  try {
+    const orders = await masterOrderService.getCatererSubOrders(req.user.id);
+    res.json({ orders });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function updateCatererOrderStatus(req, res, next) {
+  try {
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ error: 'status is required' });
+    const updated = await masterOrderService.updateCatererOrderStatus(req.params.id, status, req.user);
+    res.json({ catererOrder: updated });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function cancelCatererOrder(req, res, next) {
+  try {
+    const { cancel_reason } = req.body;
+    const updated = await masterOrderService.cancelCatererOrder(req.params.id, req.user, cancel_reason);
+    res.json({ catererOrder: updated });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+module.exports = {
+  createSplitOrder,
+  getMasterOrders,
+  getMasterOrderById,
+  getCatererSubOrders,
+  updateCatererOrderStatus,
+  cancelCatererOrder,
+};

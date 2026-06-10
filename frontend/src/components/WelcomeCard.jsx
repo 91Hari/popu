@@ -72,7 +72,7 @@ export default function WelcomeCard({ catererName, availabilityStatus, stats, lo
       <Stack direction="row" divider={<Divider orientation="vertical" flexItem sx={{ borderColor: "rgba(255,255,255,0.25)" }} />} spacing={1}>
         <StatBox label="Today's Orders" value={loading ? "—" : (stats?.todayOrders ?? 0)} color="white" loading={loading} />
         <StatBox label="Food Items"     value={loading ? "—" : (stats?.totalFoods  ?? 0)} color="white" loading={loading} />
-        <StatBox label="Pending"        value={loading ? "—" : (stats?.pendingOrders ?? 0)} color={stats?.pendingOrders > 0 ? "#FFE082" : "white"} loading={loading} />
+        <StatBox label="Pending"        value={loading ? "—" : (stats?.pendingOrders ?? 0)} color={stats?.pendingOrders > 0 ? brand.gold : "white"} loading={loading} />
       </Stack>
     </Box>
   );

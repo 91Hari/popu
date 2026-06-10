@@ -91,4 +91,19 @@ async function deleteFood(req, res, next) {
   }
 }
 
-module.exports = { createFood, getAllFoods, searchFoods, getFoodById, updateFood, deleteFood };
+async function patchAvailability(req, res, next) {
+  try {
+    const { availabilityStatus } = req.body;
+    if (!['AVAILABLE', 'UNAVAILABLE'].includes(availabilityStatus)) {
+      return res.status(400).json({ error: 'availabilityStatus must be AVAILABLE or UNAVAILABLE' });
+    }
+    const is_available = availabilityStatus === 'AVAILABLE';
+    const food = await foodService.changeAvailability(req.params.id, req.user.id, is_available);
+    res.json({ success: true, foodId: food.id, availabilityStatus });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+module.exports = { createFood, getAllFoods, searchFoods, getFoodById, updateFood, deleteFood, patchAvailability };

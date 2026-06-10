@@ -41,6 +41,13 @@ export default {
     return api.request(`/foods/${id}`, { method: "DELETE" });
   },
 
+  async patchAvailability(id, availabilityStatus) {
+    return api.request(`/foods/${id}/availability`, {
+      method: "PATCH",
+      body: JSON.stringify({ availabilityStatus }),
+    });
+  },
+
   async searchFoods(q) {
     const data = await api.request(`/customer/foods/search?foodName=${encodeURIComponent(q)}`);
     return Array.isArray(data) ? data : (data.foods ?? []);

@@ -15,12 +15,12 @@ import adminService from "../../services/adminService";
 import { brand } from "../../theme";
 
 const STAT_DEFS = [
-  { key: "totalCustomers", label: "Customers",     color: "#1565c0", bg: "#E3F2FD", icon: <PeopleRoundedIcon /> },
-  { key: "totalCaterers",  label: "Caterers",      color: brand.orange, bg: brand.orangeLight, icon: <StorefrontRoundedIcon /> },
-  { key: "totalFoods",     label: "Food Items",    color: "#2e7d32", bg: "#E8F5E9", icon: <RestaurantMenuRoundedIcon /> },
-  { key: "totalOrders",    label: "Total Orders",  color: "#6a1b9a", bg: "#F3E5F5", icon: <ReceiptLongRoundedIcon /> },
-  { key: "pendingOrders",  label: "Pending",       color: "#e65100", bg: "#FFF3E0", icon: <HourglassEmptyRoundedIcon /> },
-  { key: "revenue",        label: "Revenue",       color: "#1b5e20", bg: "#E8F5E9", icon: <AttachMoneyRoundedIcon />, prefix: "₹" },
+  { key: "totalCustomers", label: "Customers",     color: brand.orange,    bg: brand.orangeLight, icon: <PeopleRoundedIcon /> },
+  { key: "totalCaterers",  label: "Caterers",      color: brand.gold,      bg: brand.goldLight,   icon: <StorefrontRoundedIcon /> },
+  { key: "totalFoods",     label: "Food Items",    color: brand.green,     bg: brand.greenLight,  icon: <RestaurantMenuRoundedIcon /> },
+  { key: "totalOrders",    label: "Total Orders",  color: brand.orange,    bg: brand.orangeLight, icon: <ReceiptLongRoundedIcon /> },
+  { key: "pendingOrders",  label: "Pending",       color: brand.gold,      bg: brand.goldLight,   icon: <HourglassEmptyRoundedIcon /> },
+  { key: "revenue",        label: "Revenue",       color: brand.green,     bg: brand.greenLight,  icon: <AttachMoneyRoundedIcon />, prefix: "₹" },
 ];
 
 export default function AdminDashboard() {

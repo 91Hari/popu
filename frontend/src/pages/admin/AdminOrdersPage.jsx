@@ -73,7 +73,7 @@ export default function AdminOrdersPage() {
         ) : (
           <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
             <Table>
-              <TableHead sx={{ backgroundColor: brand.orangeLight }}>
+              <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>

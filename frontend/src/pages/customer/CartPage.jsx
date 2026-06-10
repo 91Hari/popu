@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Toolbar, Typography, IconButton, Button,
+  Box, Container, Typography, IconButton, Button,
   Stack, CircularProgress, Alert, Divider, Paper, Chip,
-  Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
@@ -12,15 +11,12 @@ import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartChe
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import { useCart } from "../../contexts/CartContext";
-import orderService from "../../services/orderService";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import {
-  useCustomerGeo, haversineKm, travelTimeMinutes,
-  etaRange, formatEta, formatArrivalTime,
+  useCustomerGeo, haversineKm, travelTimeMinutes, etaRange, formatArrivalTime,
 } from "../../utils/geoUtils";
 
 function itemEta(item, customerCoords) {
@@ -37,18 +33,22 @@ function itemEta(item, customerCoords) {
 export default function CartPage() {
   const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
-  const { items, total, cartCount, updateQty, removeFromCart, clearCart, loading } = useCart();
+  const { items, total, cartCount, updateQty, removeFromCart, loading } = useCart();
 
   useEffect(() => { console.log("[Diag] CartPage mounted, items:", items?.length); }, []);
-  const [checkingOut, setCheckingOut] = useState(false);
-  const [error, setError]             = useState("");
-  const [confirmation, setConfirmation] = useState(null); // { etaMinutes, expectedArrivalAt }
+  const [error, setError] = useState("");
 
   // Calculate ETA for each item and derive overall worst-case ETA
   const itemsWithEta = useMemo(
     () => items.map((i) => ({ ...i, _eta: itemEta(i, customerCoords) })),
     [items, customerCoords]
   );
+
+  const unavailableItems = useMemo(
+    () => items.filter((i) => i.is_available === false),
+    [items]
+  );
+  const hasUnavailableItems = unavailableItems.length > 0;
 
   const overallEta = useMemo(() => {
     const etaValues = itemsWithEta.map((i) => i._eta).filter((v) => v != null);
@@ -61,31 +61,9 @@ export default function CartPage() {
     return d;
   }, [overallEta]);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!items.length) return;
-    setCheckingOut(true);
-    setError("");
-    try {
-      const order = await orderService.createOrder({
-        items: items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
-        customer_lat: customerCoords?.lat,
-        customer_lng: customerCoords?.lng,
-      });
-      await clearCart();
-      // Show confirmation dialog using backend ETA if available, else frontend calc
-      const eta     = order?.eta_minutes    ?? overallEta;
-      const arrival = order?.expected_arrival_at ?? expectedArrival;
-      setConfirmation({ etaMinutes: eta, expectedArrivalAt: arrival });
-    } catch (err) {
-      setError(err?.message || "Checkout failed. Please try again.");
-    } finally {
-      setCheckingOut(false);
-    }
-  };
-
-  const handleConfirmClose = () => {
-    setConfirmation(null);
-    navigate("/customer/orders");
+    navigate("/checkout/split");
   };
 
   return (
@@ -132,7 +110,7 @@ export default function CartPage() {
                         width: 64, height: 64, borderRadius: 2, flexShrink: 0,
                         background: item.image_url
                           ? `url(${item.image_url}) center/cover no-repeat`
-                          : `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
+                          : `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}
                     >
@@ -151,8 +129,8 @@ export default function CartPage() {
                       {/* Per-item ETA */}
                       {item._eta != null && (
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, mt: 0.25 }}>
-                          <AccessTimeRoundedIcon sx={{ fontSize: 11, color: "#1565c0" }} />
-                          <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 600, fontSize: "0.65rem" }}>
+                          <AccessTimeRoundedIcon sx={{ fontSize: 11, color: brand.orange }} />
+                          <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 600, fontSize: "0.65rem" }}>
                             {etaRange(item._eta)}
                           </Typography>
                         </Box>
@@ -171,14 +149,17 @@ export default function CartPage() {
                     {/* Qty controls */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
                       <IconButton size="small" onClick={() => updateQty(item.id, item.quantity - 1)}
-                        sx={{ width: 28, height: 28, backgroundColor: brand.orangeLight, color: brand.orange }}>
+                        sx={{ width: 28, height: 28, backgroundColor: brand.greenLight, color: brand.orange }}>
                         <RemoveRoundedIcon fontSize="small" />
                       </IconButton>
                       <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 24, textAlign: "center" }}>
                         {item.quantity}
                       </Typography>
-                      <IconButton size="small" onClick={() => updateQty(item.id, item.quantity + 1)}
-                        sx={{ width: 28, height: 28, backgroundColor: brand.orange, color: "white" }}>
+                      <IconButton size="small"
+                        disabled={item.is_available === false}
+                        onClick={() => updateQty(item.id, item.quantity + 1)}
+                        sx={{ width: 28, height: 28, backgroundColor: brand.orange, color: "white",
+                          "&.Mui-disabled": { backgroundColor: "#e0e0e0", color: "#bdbdbd" } }}>
                         <AddRoundedIcon fontSize="small" />
                       </IconButton>
                     </Box>
@@ -226,82 +207,50 @@ export default function CartPage() {
                   sx={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     mb: 2, p: 1.25, borderRadius: 1.5,
-                    backgroundColor: "#E3F2FD", border: "1px solid #BBDEFB",
+                    backgroundColor: brand.greenLight, border: `1px solid ${brand.border}`,
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <DirectionsBikeRoundedIcon sx={{ color: "#1565c0", fontSize: 18 }} />
+                    <DirectionsBikeRoundedIcon sx={{ color: brand.orange, fontSize: 18 }} />
                     <Box>
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: "#1565c0", display: "block", lineHeight: 1.2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange, display: "block", lineHeight: 1.2 }}>
                         Estimated Delivery
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "#1565c0" }}>
+                      <Typography variant="caption" sx={{ color: brand.orange }}>
                         {etaRange(overallEta)}
                       </Typography>
                     </Box>
                   </Box>
                   {expectedArrival && (
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: "#1565c0" }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange }}>
                       By {formatArrivalTime(expectedArrival)}
                     </Typography>
                   )}
                 </Box>
               )}
 
+              {hasUnavailableItems && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {unavailableItems.map((i) => `"${i.food_name}"`).join(", ")}{" "}
+                  {unavailableItems.length === 1 ? "is" : "are"} no longer available. Remove{" "}
+                  {unavailableItems.length === 1 ? "it" : "them"} before checkout.
+                </Alert>
+              )}
+
               <Button
                 fullWidth variant="contained" size="large"
-                startIcon={checkingOut ? <CircularProgress size={18} color="inherit" /> : <ShoppingCartCheckoutRoundedIcon />}
+                startIcon={<ShoppingCartCheckoutRoundedIcon />}
                 onClick={handleCheckout}
-                disabled={checkingOut || !items.length}
+                disabled={!items.length || hasUnavailableItems}
                 sx={{ fontWeight: 700, py: 1.25 }}
               >
-                {checkingOut ? "Placing Order…" : "Checkout"}
+                Checkout
               </Button>
             </Paper>
           </Stack>
         )}
       </Container>
 
-      {/* Order confirmation dialog */}
-      <Dialog open={!!confirmation} onClose={handleConfirmClose} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ textAlign: "center", pt: 3, pb: 1 }}>
-          <CheckCircleRoundedIcon sx={{ fontSize: 52, color: "#4caf50", mb: 1, display: "block", mx: "auto" }} />
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>Order Placed!</Typography>
-        </DialogTitle>
-        <DialogContent sx={{ textAlign: "center", px: 3 }}>
-          {confirmation?.etaMinutes != null ? (
-            <Stack spacing={1.5} alignItems="center" sx={{ py: 1 }}>
-              <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: "#E3F2FD", width: "100%" }}>
-                <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 600, display: "block" }}>
-                  Estimated Delivery
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 900, color: "#1565c0" }}>
-                  {etaRange(confirmation.etaMinutes)}
-                </Typography>
-              </Box>
-              {confirmation.expectedArrivalAt && (
-                <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: brand.orangeLight, width: "100%" }}>
-                  <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 600, display: "block" }}>
-                    Expected Arrival
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 900, color: brand.orange }}>
-                    {formatArrivalTime(confirmation.expectedArrivalAt)}
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
-          ) : (
-            <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>
-              Your order has been placed successfully.
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button fullWidth variant="contained" onClick={handleConfirmClose} sx={{ fontWeight: 700 }}>
-            View My Orders
-          </Button>
-        </DialogActions>
-      </Dialog>
     </AppLayout>
   );
 }

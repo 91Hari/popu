@@ -144,7 +144,7 @@ export default function CatererDashboard() {
                   height: "100%", borderLeft: `4px solid ${brand.orange}`,
                   cursor: "pointer",
                   transition: "box-shadow 0.2s, transform 0.15s",
-                  "&:hover": { boxShadow: "0 6px 20px rgba(232,117,26,0.18)", transform: "translateY(-2px)" },
+                  "&:hover": { boxShadow: "0 6px 20px rgba(27,94,32,0.18)", transform: "translateY(-2px)" },
                   "&:hover .stat-hint": { opacity: 1 },
                 }}
               >
@@ -152,7 +152,7 @@ export default function CatererDashboard() {
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
                     <Box sx={{
                       width: 52, height: 52, borderRadius: 2.5,
-                      backgroundColor: brand.orangeLight,
+                      backgroundColor: brand.greenLight,
                       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                     }}>
                       {card.icon}
@@ -231,8 +231,8 @@ export default function CatererDashboard() {
                       onClick={() => handleNotifClick(n)}
                       sx={{
                         px: 2, py: 1.25,
-                        backgroundColor: n.is_read ? "transparent" : "#FFF8F3",
-                        "&:hover": { backgroundColor: brand.orangeLight },
+                        backgroundColor: n.is_read ? "transparent" : brand.goldLight,
+                        "&:hover": { backgroundColor: brand.greenLight },
                       }}
                     >
                       <ListItemIcon sx={{ minWidth: 36 }}>
@@ -247,7 +247,7 @@ export default function CatererDashboard() {
                             {!n.is_read && (
                               <Chip label="NEW" size="small"
                                 sx={{ height: 16, fontSize: "0.62rem", fontWeight: 700,
-                                  backgroundColor: brand.orange, color: "#fff", borderRadius: 1 }} />
+                                  backgroundColor: brand.gold, color: brand.text, borderRadius: 1 }} />
                             )}
                           </Stack>
                         }

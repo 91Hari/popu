@@ -134,7 +134,7 @@ async function setFoodStatus(id, is_available) {
 }
 
 async function updateOrderStatus(id, status) {
-  const valid = ['PLACED', 'ACCEPTED', 'PREPARING', 'DELIVERED', 'CANCELLED'];
+  const valid = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'];
   if (!valid.includes(status)) {
     const e = new Error('Invalid status'); e.status = 400; throw e;
   }

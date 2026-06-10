@@ -79,10 +79,10 @@ export default function TopNav() {
               onClick={() => navigate(item.path)}
               sx={{
                 borderRadius: 2, mx: 1, mb: 0.5,
-                backgroundColor: active ? brand.orangeLight : "transparent",
+                backgroundColor: active ? brand.greenLight : "transparent",
                 color: active ? brand.orange : "text.primary",
                 "& .MuiListItemIcon-root": { color: active ? brand.orange : "text.secondary", minWidth: 40 },
-                "&:hover": { backgroundColor: brand.orangeLight },
+                "&:hover": { backgroundColor: brand.greenLight },
               }}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
@@ -146,9 +146,9 @@ export default function TopNav() {
                     sx={{
                       fontWeight: active ? 700 : 500,
                       color: active ? brand.orange : brand.muted,
-                      backgroundColor: active ? brand.orangeLight : "transparent",
+                      backgroundColor: active ? brand.greenLight : "transparent",
                       borderRadius: 2, px: 1.5,
-                      "&:hover": { backgroundColor: brand.orangeLight, color: brand.orange },
+                      "&:hover": { backgroundColor: brand.greenLight, color: brand.orange },
                     }}
                   >
                     {item.label}
@@ -191,7 +191,7 @@ export default function TopNav() {
                       badgeContent={cartCount > 0 ? cartCount : null}
                       color="primary"
                       max={99}
-                      sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", minWidth: 16, height: 16, backgroundColor: brand.orange } }}
+                      sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", minWidth: 16, height: 16, backgroundColor: brand.gold, color: brand.text } }}
                     >
                       <ShoppingCartRoundedIcon />
                     </Badge>

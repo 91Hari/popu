@@ -10,5 +10,9 @@ router.use('/customer',               require('./customerFoodRoutes'));
 router.use('/search',                 require('./searchRoutes'));
 router.use('/admin',                  require('./adminRoutes'));
 router.use('/caterer/notifications',  require('./catererNotificationRoutes'));
+router.use('/checkout',               require('./checkoutRoutes'));
+router.use('/master-orders',          require('./masterOrderRoutes'));
+router.use('/caterer-orders',         require('./catererOrderRoutes'));
+router.use('/payment-proofs',         require('./paymentProofRoutes'));
 
 module.exports = router;

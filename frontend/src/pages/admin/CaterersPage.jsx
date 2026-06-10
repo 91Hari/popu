@@ -67,7 +67,7 @@ export default function CaterersPage() {
         ) : (
           <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
             <Table>
-              <TableHead sx={{ backgroundColor: brand.orangeLight }}>
+              <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Business</TableCell>
@@ -86,7 +86,7 @@ export default function CaterersPage() {
                     <TableCell align="center">
                       <Chip label={c.availability_status || "READY"}
                         size="small" sx={{ fontWeight: 700, fontSize: "0.7rem",
-                          backgroundColor: c.availability_status === "NOT_READY" ? "#9e9e9e" : brand.green, color: "white" }} />
+                          backgroundColor: c.availability_status === "NOT_READY" ? "#9e9e9e" : brand.green, color: "#fff" }} />
                     </TableCell>
                     <TableCell align="center">
                       <Chip label={c.is_active ? "Active" : "Inactive"}

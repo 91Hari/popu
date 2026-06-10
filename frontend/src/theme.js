@@ -1,20 +1,30 @@
 import { createTheme, responsiveFontSizes } from "@mui/material/styles";
 
-// popu Brand design tokens (pure · fresh · trusted)
-// Mirrors the values used across the app mockup.
+// PO.PU Brand design tokens — Deep Forest Green + Saffron Gold
 export const brand = {
-  orange: "#E8751A", // primary
-  orangeLight: "#FDF0E6",
-  orangeMid: "#F5A05A",
+  // Primary — Deep Forest Green
+  orange: "#1B5E20",       // PRIMARY (token kept as "orange" for backward compat)
+  orangeLight: "#E8F5E9",  // Primary light — light green surface
+  orangeMid: "#2E7D32",    // Primary mid — hover / secondary green
+
+  // Secondary — Saffron Gold
+  gold: "#F4B400",
+  goldLight: "#FFF8E1",    // Cream accent
+
+  // Neutrals
   dark: "#1A1A1A",
-  text: "#333333",
+  text: "#212121",
   muted: "#777777",
-  border: "#E8E8E8",
-  bg: "#F7F7F5",
+  border: "#C8E6C9",       // Light green border
+  bg: "#FAFAF7",
   white: "#FFFFFF",
-  green: "#2E7D32", // veg / success accent
+
+  // Success (same green, explicit token)
+  green: "#2E7D32",
   greenLight: "#E8F5E9",
-  star: "#FFA500",
+
+  // Ratings
+  star: "#F4B400",
 };
 
 let theme = createTheme({
@@ -26,8 +36,8 @@ let theme = createTheme({
       contrastText: "#ffffff",
     },
     secondary: {
-      main: brand.dark,
-      contrastText: "#ffffff",
+      main: brand.gold,
+      contrastText: "#212121",
     },
     success: {
       main: brand.green,
@@ -77,7 +87,7 @@ let theme = createTheme({
         },
         containedPrimary: {
           backgroundColor: brand.orange,
-          "&:hover": { backgroundColor: "#d2680f", boxShadow: "none" },
+          "&:hover": { backgroundColor: brand.orangeMid, boxShadow: "none" },
         },
         outlinedPrimary: {
           borderWidth: 1.5,
@@ -109,6 +119,35 @@ let theme = createTheme({
         root: {
           borderRadius: 8,
           backgroundColor: brand.white,
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: brand.orange,
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused": { color: brand.orange },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          backgroundColor: brand.orange,
+          color: "#ffffff",
+          fontWeight: 700,
+          borderBottomColor: brand.orangeMid,
+        },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&.MuiTableRow-hover:hover": {
+            backgroundColor: `${brand.goldLight} !important`,
+          },
         },
       },
     },

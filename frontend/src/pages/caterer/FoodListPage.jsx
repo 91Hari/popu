@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
-  Toolbar,
   Typography,
   Button,
   useTheme,
@@ -23,6 +22,10 @@ import {
   IconButton,
   Stack,
   Chip,
+  Switch,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
@@ -36,6 +39,8 @@ export default function FoodListPage() {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [toggling, setToggling] = useState({});
+  const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -97,9 +102,28 @@ export default function FoodListPage() {
     }
   };
 
+  const handleToggle = async (id, name, currentAvailable) => {
+    setToggling((t) => ({ ...t, [id]: true }));
+    const newStatus = currentAvailable ? "UNAVAILABLE" : "AVAILABLE";
+    try {
+      await foodService.patchAvailability(id, newStatus);
+      setRows((prev) =>
+        prev.map((r) => r.id === id ? { ...r, available: !currentAvailable } : r)
+      );
+      const msg = currentAvailable
+        ? `${name} marked as unavailable.`
+        : `${name} is now available.`;
+      setSnack({ open: true, message: msg, severity: "success" });
+    } catch (err) {
+      console.error("Toggle failed:", err);
+      setSnack({ open: true, message: "Failed to update availability. Please try again.", severity: "error" });
+    } finally {
+      setToggling((t) => { const n = { ...t }; delete n[id]; return n; });
+    }
+  };
+
   return (
     <AppLayout>
-
       <Container maxWidth="lg" sx={{ pt: 3, pb: 4 }}>
         <Box
           sx={{
@@ -137,11 +161,11 @@ export default function FoodListPage() {
           sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}
         >
           <Table>
-            <TableHead sx={{ backgroundColor: brand.orangeLight }}>
+            <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Food Name</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700 }}>Price (₹)</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>Availability</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 700 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -163,17 +187,38 @@ export default function FoodListPage() {
                   <TableRow key={r.id} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{r.name}</TableCell>
                     <TableCell align="right">₹{r.price}</TableCell>
+
+                    {/* Availability column: chip + toggle */}
                     <TableCell align="center">
-                      <Chip
-                        label={r.available ? "Available" : "Unavailable"}
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          backgroundColor: r.available ? brand.greenLight : "#FFF0F0",
-                          color: r.available ? brand.green : "#D32F2F",
-                        }}
-                      />
+                      <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
+                        <Chip
+                          label={r.available ? "AVAILABLE" : "UNAVAILABLE"}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: "0.65rem",
+                            backgroundColor: r.available ? brand.greenLight : "#FFEBEE",
+                            color: r.available ? brand.green : "#C62828",
+                          }}
+                        />
+                        {toggling[r.id] ? (
+                          <CircularProgress size={16} sx={{ color: brand.orange }} />
+                        ) : (
+                          <Switch
+                            size="small"
+                            checked={r.available}
+                            onChange={() => handleToggle(r.id, r.name, r.available)}
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": { color: brand.green },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                backgroundColor: brand.green,
+                              },
+                            }}
+                          />
+                        )}
+                      </Stack>
                     </TableCell>
+
                     <TableCell align="center">
                       <Stack direction="row" spacing={0.5} justifyContent="center">
                         <IconButton
@@ -214,6 +259,22 @@ export default function FoodListPage() {
           </DialogActions>
         </Dialog>
       </Container>
+
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={() => setSnack((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
+          severity={snack.severity}
+          variant="filled"
+          sx={{ fontWeight: 600 }}
+        >
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </AppLayout>
   );
 }

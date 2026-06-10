@@ -80,8 +80,8 @@ export default function CatererNotificationsPage() {
                     onClick={() => handleClick(n)}
                     sx={{
                       px: 2, py: 1.5,
-                      backgroundColor: n.is_read ? "transparent" : "#FFF8F3",
-                      "&:hover": { backgroundColor: brand.orangeLight },
+                      backgroundColor: n.is_read ? "transparent" : brand.goldLight,
+                      "&:hover": { backgroundColor: brand.greenLight },
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 36 }}>
@@ -97,7 +97,7 @@ export default function CatererNotificationsPage() {
                           {!n.is_read && (
                             <Chip label="NEW" size="small"
                               sx={{ height: 16, fontSize: "0.62rem", fontWeight: 700,
-                                backgroundColor: brand.orange, color: "#fff", borderRadius: 1 }} />
+                                backgroundColor: brand.gold, color: brand.text, borderRadius: 1 }} />
                           )}
                         </Stack>
                       }

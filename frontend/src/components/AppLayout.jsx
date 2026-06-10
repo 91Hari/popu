@@ -88,11 +88,11 @@ function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose 
       {/* Brand */}
       <Box sx={{ px: 2.5, py: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
         <Logo size={36} showWordmark={false} />
-        <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange, letterSpacing: "-0.03em" }}>
+        <Typography variant="h6" sx={{ fontWeight: 900, color: brand.goldLight, letterSpacing: "-0.03em" }}>
           PO.PU
         </Typography>
       </Box>
-      <Divider />
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.15)" }} />
 
       {/* Nav items */}
       <List sx={{ flex: 1, pt: 1, px: 1 }}>
@@ -101,13 +101,13 @@ function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose 
           let icon = item.icon;
           if (item.cartBadge && cartCount > 0) {
             icon = <Badge badgeContent={cartCount} color="primary" max={99}
-              sx={{ "& .MuiBadge-badge": { backgroundColor: brand.orange, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
+              sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
               {item.icon}
             </Badge>;
           }
           if (item.notifBadge && unreadCount > 0) {
-            icon = <Badge badgeContent={unreadCount} color="error" max={99}
-              sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
+            icon = <Badge badgeContent={unreadCount} max={99}
+              sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
               {item.icon}
             </Badge>;
           }
@@ -117,11 +117,17 @@ function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose 
               onClick={() => go(item.path)}
               sx={{
                 borderRadius: 2, mb: 0.25, px: 1.5,
-                backgroundColor: active ? brand.orangeLight : "transparent",
-                color: active ? brand.orange : "text.primary",
-                "& .MuiListItemIcon-root": { color: active ? brand.orange : "text.secondary", minWidth: 38 },
-                "&:hover": { backgroundColor: brand.orangeLight, color: brand.orange,
-                  "& .MuiListItemIcon-root": { color: brand.orange } },
+                backgroundColor: active ? brand.gold : "transparent",
+                color: active ? brand.text : "rgba(255,255,255,0.85)",
+                "& .MuiListItemIcon-root": {
+                  color: active ? brand.text : "rgba(255,255,255,0.7)",
+                  minWidth: 38,
+                },
+                "&:hover": {
+                  backgroundColor: active ? brand.gold : brand.orangeMid,
+                  color: active ? brand.text : "white",
+                  "& .MuiListItemIcon-root": { color: active ? brand.text : "white" },
+                },
               }}
             >
               <ListItemIcon sx={{ minWidth: 38 }}>{icon}</ListItemIcon>
@@ -134,17 +140,20 @@ function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose 
         })}
       </List>
 
-      <Divider />
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.15)" }} />
       {/* Logout */}
       <List sx={{ px: 1, pb: 1 }}>
         <ListItemButton
           onClick={handleLogout}
           sx={{
             borderRadius: 2, px: 1.5,
-            color: "text.secondary",
-            "& .MuiListItemIcon-root": { color: "text.secondary", minWidth: 38 },
-            "&:hover": { backgroundColor: "#FFF0F0", color: "error.main",
-              "& .MuiListItemIcon-root": { color: "error.main" } },
+            color: "rgba(255,255,255,0.65)",
+            "& .MuiListItemIcon-root": { color: "rgba(255,255,255,0.65)", minWidth: 38 },
+            "&:hover": {
+              backgroundColor: "rgba(244,180,0,0.15)",
+              color: brand.goldLight,
+              "& .MuiListItemIcon-root": { color: brand.goldLight },
+            },
           }}
         >
           <ListItemIcon sx={{ minWidth: 38 }}><LogoutRoundedIcon /></ListItemIcon>
@@ -176,6 +185,12 @@ export default function AppLayout({ children }) {
 
   const sidebarProps = { navItems, cartCount, unreadCount };
 
+  const drawerSx = {
+    width: DRAWER_WIDTH, boxSizing: "border-box",
+    borderRight: "none",
+    bgcolor: brand.orange,
+  };
+
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: brand.bg }}>
       {/* Permanent sidebar — desktop */}
@@ -184,11 +199,7 @@ export default function AppLayout({ children }) {
           variant="permanent"
           sx={{
             width: DRAWER_WIDTH, flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH, boxSizing: "border-box",
-              borderRight: `1px solid ${brand.border}`,
-              bgcolor: brand.white,
-            },
+            "& .MuiDrawer-paper": drawerSx,
           }}
         >
           <SidebarContent {...sidebarProps} />
@@ -202,13 +213,7 @@ export default function AppLayout({ children }) {
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH, boxSizing: "border-box",
-              borderRight: `1px solid ${brand.border}`,
-              bgcolor: brand.white,
-            },
-          }}
+          sx={{ "& .MuiDrawer-paper": drawerSx }}
         >
           <SidebarContent {...sidebarProps} onClose={() => setMobileOpen(false)} />
         </Drawer>
@@ -221,7 +226,6 @@ export default function AppLayout({ children }) {
           flexGrow: 1,
           minWidth: 0,
           bgcolor: brand.bg,
-          ...(isMobile ? {} : { ml: 0 }),
         }}
       >
         {/* Mobile top bar */}
@@ -231,8 +235,10 @@ export default function AppLayout({ children }) {
               position="fixed"
               elevation={0}
               sx={{
-                bgcolor: brand.white, borderBottom: `1px solid ${brand.border}`,
-                color: brand.text, zIndex: theme.zIndex.drawer + 1,
+                bgcolor: brand.white,
+                borderBottom: `1px solid ${brand.border}`,
+                color: brand.text,
+                zIndex: theme.zIndex.drawer + 1,
               }}
             >
               <Toolbar sx={{ justifyContent: "space-between", minHeight: 56 }}>
@@ -243,22 +249,21 @@ export default function AppLayout({ children }) {
                 <Box sx={{ display: "flex", gap: 0.5 }}>
                   {navItems === CUSTOMER_NAV && (
                     <>
-                      <IconButton size="small" sx={{ color: brand.muted }}
-                        onClick={() => { /* notifications */ }}>
-                        <Badge badgeContent={unreadCount > 0 ? unreadCount : null} color="error" max={99}>
+                      <IconButton size="small" sx={{ color: brand.orange }}>
+                        <Badge badgeContent={unreadCount > 0 ? unreadCount : null} max={99}
+                          sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
                           <NotificationsNoneRoundedIcon fontSize="small" />
                         </Badge>
                       </IconButton>
-                      <IconButton size="small" sx={{ color: brand.muted }}
-                        onClick={() => { /* cart */ }}>
-                        <Badge badgeContent={cartCount > 0 ? cartCount : null} color="primary" max={99}
-                          sx={{ "& .MuiBadge-badge": { backgroundColor: brand.orange } }}>
+                      <IconButton size="small" sx={{ color: brand.orange }}>
+                        <Badge badgeContent={cartCount > 0 ? cartCount : null} max={99}
+                          sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
                           <ShoppingCartRoundedIcon fontSize="small" />
                         </Badge>
                       </IconButton>
                     </>
                   )}
-                  {(navItems === ADMIN_NAV) && (
+                  {navItems === ADMIN_NAV && (
                     <AdminPanelSettingsRoundedIcon sx={{ color: brand.orange }} />
                   )}
                 </Box>

@@ -19,7 +19,7 @@ export default function CatererCard({ caterer = {}, onClick, customerCoords }) {
         transition: "transform 0.15s, box-shadow 0.15s",
         "&:hover": {
           transform: "translateY(-3px)",
-          boxShadow: "0 8px 24px rgba(232,117,26,0.14)",
+          boxShadow: "0 8px 24px rgba(27,94,32,0.18)",
         },
       }}
     >
@@ -64,8 +64,8 @@ export default function CatererCard({ caterer = {}, onClick, customerCoords }) {
                 size="small"
                 sx={{
                   height: 22, fontSize: "0.7rem",
-                  backgroundColor: "#E8F5E9", color: "#2e7d32",
-                  "& .MuiChip-icon": { color: "#2e7d32" },
+                  backgroundColor: brand.greenLight, color: brand.green,
+                  "& .MuiChip-icon": { color: brand.green },
                 }}
               />
             </Box>
@@ -88,7 +88,7 @@ export default function CatererCard({ caterer = {}, onClick, customerCoords }) {
               icon={<RestaurantMenuRoundedIcon sx={{ fontSize: "14px !important" }} />}
               label={`${foodCount ?? 0} items`}
               size="small"
-              sx={{ height: 22, fontSize: "0.7rem", backgroundColor: brand.orangeLight, color: brand.orange }}
+              sx={{ height: 22, fontSize: "0.7rem", backgroundColor: brand.goldLight, color: brand.text }}
             />
           </Box>
 
