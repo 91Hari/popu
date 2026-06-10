@@ -30,4 +30,17 @@ async function getCatererFoods(req, res, next) {
   }
 }
 
-module.exports = { getCaterers, getCatererById, getCatererFoods };
+async function updatePaymentProfile(req, res, next) {
+  try {
+    const { upi_id, payment_name, qr_code_image_url, bank_account_name } = req.body;
+    const profile = await catererService.updatePaymentProfile(req.user.id, {
+      upi_id, payment_name, qr_code_image_url, bank_account_name,
+    });
+    res.json({ profile });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+module.exports = { getCaterers, getCatererById, getCatererFoods, updatePaymentProfile };

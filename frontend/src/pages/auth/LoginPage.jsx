@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import Logo from "../../components/Logo";
 import authService from "../../services/authService";
+import { brand } from "../../theme";
 
 export default function LoginPage() {
   const [email, setEmail]       = useState("");
@@ -46,7 +47,7 @@ export default function LoginPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: brand.bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -102,12 +103,12 @@ export default function LoginPage() {
                 disabled={loading}
                 sx={{
                   py: 1.5,
-                  background: "linear-gradient(135deg, #E8751A 0%, #F5A05A 100%)",
+                  background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: "1rem",
                   borderRadius: 1,
-                  "&:hover": { background: "linear-gradient(135deg, #D2680F 0%, #D2680F 100%)" },
+                  "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
                 }}
               >
                 {loading ? <CircularProgress size={22} sx={{ color: "white" }} /> : "Login"}
@@ -125,9 +126,9 @@ export default function LoginPage() {
                   fontWeight: 600,
                   fontSize: "1rem",
                   borderRadius: 1,
-                  borderColor: "#E8751A",
-                  color: "#E8751A",
-                  "&:hover": { borderColor: "#E8751A", backgroundColor: "rgba(232,117,26,0.05)" },
+                  borderColor: brand.orange,
+                  color: brand.orange,
+                  "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
                 }}
               >
                 Create Account

@@ -10,7 +10,7 @@ export default function ServiceCard({ icon, title, subtitle, comingSoon = false,
         transition: "transform 0.15s, box-shadow 0.15s",
         "&:hover": comingSoon ? {} : {
           transform: "translateY(-3px)",
-          boxShadow: "0 8px 24px rgba(232,117,26,0.14)",
+          boxShadow: "0 8px 24px rgba(27,94,32,0.18)",
         },
       }}
     >

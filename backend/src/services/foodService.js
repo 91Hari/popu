@@ -238,7 +238,6 @@ async function getAllFoods() {
     `SELECT f.*, u.name AS caterer_name
      FROM food_items f
      JOIN users u ON u.id = f.caterer_id
-     WHERE f.is_available = TRUE
      ORDER BY f.created_at DESC`
   );
   return rows;
@@ -249,8 +248,7 @@ async function searchFoods(q) {
     `SELECT f.*, u.name AS caterer_name
      FROM food_items f
      JOIN users u ON u.id = f.caterer_id
-     WHERE f.is_available = TRUE
-       AND to_tsvector('english', f.food_name) @@ plainto_tsquery('english', $1)
+     WHERE to_tsvector('english', f.food_name) @@ plainto_tsquery('english', $1)
      ORDER BY f.created_at DESC`,
     [q]
   );
@@ -309,7 +307,7 @@ const CUSTOMER_FOOD_SELECT = `
 async function getCustomerFoods({ customerLat, customerLng } = {}) {
   const { rows } = await pool.query(
     CUSTOMER_FOOD_SELECT +
-    `WHERE f.is_available = TRUE AND u.is_active = TRUE
+    `WHERE u.is_active = TRUE
      ORDER BY f.created_at DESC`
   );
   return rows.map((r) => _enrichWithETA(r, customerLat, customerLng));

@@ -4,9 +4,10 @@ const ctrl      = require('../controllers/catererController');
 const availCtrl = require('../controllers/catererAvailabilityController');
 const { authenticate, requireRole } = require('../middlewares/authMiddleware');
 
-// Caterer-only availability — must be before /:id to avoid Express treating "me" as an id
-router.get('/me/availability',   authenticate, requireRole('CATERER'), availCtrl.getAvailability);
-router.patch('/me/availability', authenticate, requireRole('CATERER'), availCtrl.setAvailability);
+// Caterer-only routes — must be before /:id to avoid Express treating "me" as an id
+router.get('/me/availability',       authenticate, requireRole('CATERER'), availCtrl.getAvailability);
+router.patch('/me/availability',     authenticate, requireRole('CATERER'), availCtrl.setAvailability);
+router.patch('/me/payment-profile',  authenticate, requireRole('CATERER'), ctrl.updatePaymentProfile);
 
 // Public caterer info
 router.get('/',          ctrl.getCaterers);

@@ -65,7 +65,7 @@ function getActions(status, orderId, busy, onAction) {
       ];
     case "PREPARING":
       return [
-        btn("Mark Ready",     "READY",     <TwoWheelerRoundedIcon />, null, "#1976d2"),
+        btn("Mark Ready",     "READY",     <TwoWheelerRoundedIcon />, null, brand.orange),
         btn("Cancel",         "CANCELLED", <CancelOutlinedIcon />,    "error", null),
       ];
     case "READY":
@@ -178,7 +178,7 @@ export default function CatererOrdersPage() {
               return (
                 <Card key={orderId} elevation={0} sx={{
                   border: isHighlighted ? `2px solid ${brand.orange}` : `1px solid ${brand.border}`,
-                  backgroundColor: isHighlighted ? "#FFF3E0" : undefined,
+                  backgroundColor: isHighlighted ? brand.goldLight : undefined,
                 }}>
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
@@ -190,7 +190,7 @@ export default function CatererOrdersPage() {
                           {isHighlighted && (
                             <Chip label="NEW" size="small"
                               sx={{ height: 16, fontSize: "0.62rem", fontWeight: 800,
-                                backgroundColor: brand.orange, color: "#fff", borderRadius: 1 }} />
+                                backgroundColor: brand.gold, color: brand.text, borderRadius: 1 }} />
                           )}
                         </Stack>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -235,7 +235,7 @@ export default function CatererOrdersPage() {
           /* ─── Desktop table ─── */
           <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
             <Table>
-              <TableHead sx={{ backgroundColor: brand.orangeLight }}>
+              <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
@@ -259,7 +259,7 @@ export default function CatererOrdersPage() {
                       key={orderId}
                       hover
                       sx={isHighlighted ? {
-                        backgroundColor: "#FFF3E0",
+                        backgroundColor: brand.goldLight,
                         outline: `2px solid ${brand.orange}`,
                         outlineOffset: "-2px",
                       } : {}}
@@ -269,7 +269,7 @@ export default function CatererOrdersPage() {
                         {isHighlighted && (
                           <Chip label="NEW" size="small"
                             sx={{ ml: 0.75, height: 16, fontSize: "0.62rem", fontWeight: 800,
-                              backgroundColor: brand.orange, color: "#fff", borderRadius: 1 }} />
+                              backgroundColor: brand.gold, color: brand.text, borderRadius: 1 }} />
                         )}
                       </TableCell>
 

@@ -130,7 +130,7 @@ export default function CustomerDashboard() {
                   borderRadius: 3, backgroundColor: brand.orangeLight,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "background-color 0.15s, transform 0.15s",
-                  "&:hover": { backgroundColor: "#fce4c8", transform: "translateY(-3px)" },
+                  "&:hover": { backgroundColor: brand.greenLight, transform: "translateY(-3px)" },
                 }}
               >
                 {cat.icon}

@@ -67,7 +67,7 @@ export default function FoodSearchPage() {
               flex: 1, display: "flex", alignItems: "center", gap: 1,
               backgroundColor: brand.white, border: `1px solid ${brand.border}`,
               borderRadius: 6, px: 2,
-              "&:focus-within": { borderColor: brand.orange },
+              "&:focus-within": { borderColor: brand.orange, boxShadow: `0 0 0 2px ${brand.greenLight}` },
             }}
           >
             <SearchRoundedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
@@ -82,7 +82,7 @@ export default function FoodSearchPage() {
           <IconButton
             type="submit"
             sx={{ backgroundColor: brand.orange, borderRadius: 2, color: "white",
-              "&:hover": { backgroundColor: "#d2680f" } }}
+              "&:hover": { backgroundColor: brand.orangeMid } }}
           >
             <SearchRoundedIcon />
           </IconButton>
@@ -120,7 +120,7 @@ export default function FoodSearchPage() {
                 >
                   <Box sx={{
                     width: 64, height: 64, flexShrink: 0, borderRadius: 2,
-                    background: `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
+                    background: `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     <DinnerDiningRoundedIcon sx={{ fontSize: 30, color: brand.orange, opacity: 0.8 }} />

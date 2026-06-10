@@ -31,7 +31,7 @@ export default function CommonCard({
         opacity: disabled ? 0.6 : 1,
         transition: "transform 0.15s, box-shadow 0.15s",
         "&:hover": onClick && !disabled
-          ? { transform: "translateY(-3px)", boxShadow: "0 8px 24px rgba(232,117,26,0.15)" }
+          ? { transform: "translateY(-3px)", boxShadow: "0 8px 24px rgba(27,94,32,0.15)" }
           : {},
         ...sx,
       }}
@@ -43,7 +43,7 @@ export default function CommonCard({
           flexShrink: 0,
           background: imageSrc
             ? `url(${imageSrc}) center/cover no-repeat`
-            : `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
+            : `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

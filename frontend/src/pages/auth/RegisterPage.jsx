@@ -10,7 +10,8 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import authService from "../../services/authService";
 import Logo from "../../components/Logo";
 
-const BRAND_ORANGE = "#E8751A";
+import { brand } from "../../theme";
+const BRAND_GREEN = brand.orange;
 
 export default function RegisterPage() {
   const [name, setName]               = useState("");
@@ -179,7 +180,7 @@ export default function RegisterPage() {
                 <Collapse in={isCaterer} unmountOnExit>
                   <Stack spacing={2.5}>
                     <Divider>
-                      <Chip label="Caterer Details" size="small" sx={{ backgroundColor: "#FFF3E0", color: BRAND_ORANGE, fontWeight: 600 }} />
+                      <Chip label="Caterer Details" size="small" sx={{ backgroundColor: brand.goldLight, color: BRAND_GREEN, fontWeight: 600 }} />
                     </Divider>
 
                     <TextField
@@ -203,8 +204,8 @@ export default function RegisterPage() {
                     <Box
                       sx={{
                         p: 1.5, borderRadius: 1, border: `1px solid`,
-                        borderColor: geoStatus === "detected" ? "#4caf50" : "#e0e0e0",
-                        backgroundColor: geoStatus === "detected" ? "#f1f8e9" : "#fafafa",
+                        borderColor: geoStatus === "detected" ? brand.green : brand.border,
+                        backgroundColor: geoStatus === "detected" ? brand.greenLight : brand.bg,
                         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
                       }}
                     >
@@ -220,14 +221,14 @@ export default function RegisterPage() {
                         </Typography>
                       </Box>
                       {geoStatus === "detected" ? (
-                        <CheckCircleRoundedIcon sx={{ color: "#4caf50", flexShrink: 0 }} />
+                        <CheckCircleRoundedIcon sx={{ color: brand.green, flexShrink: 0 }} />
                       ) : (
                         <Button
                           size="small" variant="outlined"
                           startIcon={geoStatus === "detecting" ? <CircularProgress size={12} color="inherit" /> : <MyLocationRoundedIcon />}
                           onClick={detectLocation}
                           disabled={loading || geoStatus === "detecting"}
-                          sx={{ borderColor: BRAND_ORANGE, color: BRAND_ORANGE, fontWeight: 600, flexShrink: 0, fontSize: "0.75rem" }}
+                          sx={{ borderColor: BRAND_GREEN, color: BRAND_GREEN, fontWeight: 600, flexShrink: 0, fontSize: "0.75rem" }}
                         >
                           {geoStatus === "detecting" ? "Detecting…" : "Detect"}
                         </Button>
@@ -236,7 +237,7 @@ export default function RegisterPage() {
                   </Stack>
                 </Collapse>
 
-                <Box sx={{ p: 2, backgroundColor: "#f5f5f5", borderRadius: 1, border: "1px solid #e0e0e0" }}>
+                <Box sx={{ p: 2, backgroundColor: brand.goldLight, borderRadius: 1, border: `1px solid ${brand.border}` }}>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
                     <strong>Customer:</strong> Browse and order food from caterers
                     <br />
@@ -249,11 +250,11 @@ export default function RegisterPage() {
                   onClick={handleSubmit} disabled={loading}
                   sx={{
                     mt: 2,
-                    background: "linear-gradient(135deg, #E8751A 0%, #F5A05A 100%)",
+                    background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
                     textTransform: "none",
                     fontSize: isMobile ? "0.95rem" : "1rem",
                     fontWeight: 600, py: isMobile ? 1.2 : 1.5, borderRadius: 1,
-                    "&:hover": { background: "linear-gradient(135deg, #D2680F 0%, #D2680F 100%)" },
+                    "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
                     "&:disabled": { background: "#ccc" },
                   }}
                 >
@@ -268,8 +269,8 @@ export default function RegisterPage() {
                   sx={{
                     textTransform: "none", fontSize: isMobile ? "0.95rem" : "1rem",
                     fontWeight: 600, py: isMobile ? 1.2 : 1.5, borderRadius: 1,
-                    borderColor: BRAND_ORANGE, color: BRAND_ORANGE,
-                    "&:hover": { backgroundColor: "rgba(232,117,26,0.06)", borderColor: BRAND_ORANGE },
+                    borderColor: BRAND_GREEN, color: BRAND_GREEN,
+                    "&:hover": { backgroundColor: brand.greenLight, borderColor: BRAND_GREEN },
                   }}
                 >
                   Back To Login

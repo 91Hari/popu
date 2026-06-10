@@ -148,7 +148,7 @@ export default function OrdersPage() {
                         <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
                           <Box sx={{
                             width: 36, height: 36, borderRadius: 1.5, flexShrink: 0,
-                            background: `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
+                            background: `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
                             <DinnerDiningRoundedIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
@@ -170,45 +170,45 @@ export default function OrdersPage() {
 
                     {/* Status / ETA row */}
                     {statusKey === "PLACED" && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#FFF8E1", border: "1px solid #FFE082" }}>
-                        <HourglassEmptyRoundedIcon sx={{ fontSize: 15, color: "#F57F17" }} />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: brand.goldLight, border: `1px solid ${brand.gold}` }}>
+                        <HourglassEmptyRoundedIcon sx={{ fontSize: 15, color: brand.gold }} />
                         <Box>
-                          <Typography variant="caption" sx={{ color: "#F57F17", fontWeight: 700, display: "block", lineHeight: 1.2 }}>Order Placed</Typography>
-                          <Typography variant="caption" sx={{ color: "#F57F17" }}>Waiting for caterer confirmation</Typography>
+                          <Typography variant="caption" sx={{ color: "#B8860B", fontWeight: 700, display: "block", lineHeight: 1.2 }}>Order Placed</Typography>
+                          <Typography variant="caption" sx={{ color: "#B8860B" }}>Waiting for caterer confirmation</Typography>
                         </Box>
                       </Box>
                     )}
                     {statusKey === "ACCEPTED" && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#E3F2FD", border: "1px solid #BBDEFB" }}>
-                        <HourglassEmptyRoundedIcon sx={{ fontSize: 15, color: "#1565c0" }} />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
+                        <HourglassEmptyRoundedIcon sx={{ fontSize: 15, color: brand.orange }} />
                         <Box>
-                          <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 700, display: "block", lineHeight: 1.2 }}>Order Accepted</Typography>
-                          <Typography variant="caption" sx={{ color: "#1565c0" }}>Preparation will begin shortly</Typography>
+                          <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>Order Accepted</Typography>
+                          <Typography variant="caption" sx={{ color: brand.orange }}>Preparation will begin shortly</Typography>
                         </Box>
                       </Box>
                     )}
                     {statusKey === "PREPARING" && (
                       hasEta ? (
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#E3F2FD", border: "1px solid #BBDEFB" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                            <DinnerDiningRoundedIcon sx={{ fontSize: 16, color: "#1565c0" }} />
+                            <DinnerDiningRoundedIcon sx={{ fontSize: 16, color: brand.orange }} />
                             <Box>
-                              <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 700, display: "block", lineHeight: 1.2 }}>Preparing Your Order</Typography>
-                              <Typography variant="caption" sx={{ color: "#1565c0" }}>Estimated Delivery: {etaRange(Number(order.eta_minutes))}</Typography>
+                              <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>Preparing Your Order</Typography>
+                              <Typography variant="caption" sx={{ color: brand.orange }}>Estimated Delivery: {etaRange(Number(order.eta_minutes))}</Typography>
                             </Box>
                           </Box>
                           {arrival && (
                             <Box sx={{ textAlign: "right" }}>
-                              <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 700, display: "block", lineHeight: 1.2 }}>Expected Arrival</Typography>
+                              <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>Expected Arrival</Typography>
                               <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, justifyContent: "flex-end" }}>
-                                <AccessTimeRoundedIcon sx={{ fontSize: 12, color: "#1565c0" }} />
-                                <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 700 }}>{arrival}</Typography>
+                                <AccessTimeRoundedIcon sx={{ fontSize: 12, color: brand.orange }} />
+                                <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700 }}>{arrival}</Typography>
                               </Box>
                             </Box>
                           )}
                         </Box>
                       ) : (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#FFF3E0", border: "1px solid #FFCC80" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
                           <DinnerDiningRoundedIcon sx={{ fontSize: 15, color: brand.orange }} />
                           <Box>
                             <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>Preparing Your Order</Typography>

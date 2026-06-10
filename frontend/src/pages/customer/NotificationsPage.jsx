@@ -139,9 +139,9 @@ export default function NotificationsPage() {
                     sx={{
                       py: 2,
                       px: 2.5,
-                      backgroundColor: n.is_read ? "transparent" : `${brand.orangeLight}`,
+                      backgroundColor: n.is_read ? "transparent" : brand.greenLight,
                       cursor: n.is_read ? "default" : "pointer",
-                      "&:hover": { backgroundColor: n.is_read ? "action.hover" : "#fce4d0" },
+                      "&:hover": { backgroundColor: n.is_read ? "action.hover" : brand.border },
                     }}
                     onClick={() => !n.is_read && handleMarkRead(n.id)}
                   >
@@ -157,7 +157,7 @@ export default function NotificationsPage() {
                             {n.title}
                           </Typography>
                           {!n.is_read && (
-                            <Chip label="New" size="small" sx={{ height: 18, fontSize: 10, backgroundColor: brand.orange, color: "white" }} />
+                            <Chip label="New" size="small" sx={{ height: 18, fontSize: 10, backgroundColor: brand.gold, color: brand.text }} />
                           )}
                         </Stack>
                       }

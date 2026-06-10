@@ -55,7 +55,7 @@ export default function FoodCard({ food = {}, onClick }) {
           <Chip
             label={category}
             size="small"
-            sx={{ height: 18, fontSize: "0.6rem", backgroundColor: brand.orangeLight, color: brand.orange }}
+            sx={{ height: 18, fontSize: "0.6rem", backgroundColor: brand.goldLight, color: brand.text }}
           />
         )}
         {!isAvailable && (
@@ -71,8 +71,8 @@ export default function FoodCard({ food = {}, onClick }) {
       {eta != null && isAvailable && (
         <Tooltip title={`Prep + delivery: ~${eta} min`} placement="top">
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, mt: 0.5 }}>
-            <AccessTimeRoundedIcon sx={{ fontSize: 11, color: "#1565c0" }} />
-            <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 600, fontSize: "0.65rem" }}>
+            <AccessTimeRoundedIcon sx={{ fontSize: 11, color: brand.orange }} />
+            <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 600, fontSize: "0.65rem" }}>
               {etaRange || `${eta} mins`}
             </Typography>
           </Box>
@@ -105,7 +105,7 @@ export default function FoodCard({ food = {}, onClick }) {
         } : {
           borderColor: brand.orange,
           color: brand.orange,
-          "&:hover": { backgroundColor: brand.orangeLight },
+          "&:hover": { backgroundColor: brand.greenLight },
         }),
       }}
     >

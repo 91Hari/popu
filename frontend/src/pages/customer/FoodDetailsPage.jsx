@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   useTheme,
   Alert,
+  Chip,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
@@ -60,6 +61,8 @@ export default function FoodDetailsPage() {
 
     if (id) fetchFood();
   }, [id, customerCoords]);
+
+  const isAvailable = food ? (food.is_available ?? true) : true;
 
   const increase = () => setQty((q) => Math.min(q + 1, 99));
   const decrease = () => setQty((q) => Math.max(q - 1, 1));
@@ -143,7 +146,7 @@ export default function FoodDetailsPage() {
             sx={{
               width: isMobile ? "100%" : "42%",
               minHeight: isMobile ? 220 : 320,
-              background: `linear-gradient(135deg, ${brand.orangeLight}, #FFD0A0)`,
+              background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -156,9 +159,22 @@ export default function FoodDetailsPage() {
           </Box>
 
           <CardContent sx={{ flex: 1, p: { xs: 2.5, md: 3 } }}>
-            <Typography variant="h5" component="h1" sx={{ fontWeight: 800, color: brand.dark }}>
-              {food.food_name}
-            </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="flex-start" flexWrap="wrap" useFlexGap>
+              <Typography variant="h5" component="h1" sx={{ fontWeight: 800, color: brand.dark }}>
+                {food.food_name}
+              </Typography>
+              <Chip
+                label={isAvailable ? "AVAILABLE" : "UNAVAILABLE"}
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.65rem",
+                  mt: "3px",
+                  backgroundColor: isAvailable ? brand.greenLight : "#FFEBEE",
+                  color: isAvailable ? brand.green : "#C62828",
+                }}
+              />
+            </Stack>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
               <PersonPinRoundedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
@@ -172,24 +188,24 @@ export default function FoodDetailsPage() {
               <Box
                 sx={{
                   display: "flex", alignItems: "center", gap: 2, mt: 1.5, p: 1.5,
-                  borderRadius: 2, backgroundColor: "#E3F2FD", border: "1px solid #BBDEFB",
+                  borderRadius: 2, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}`,
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                  <DirectionsBikeRoundedIcon sx={{ color: "#1565c0", fontSize: 20 }} />
+                  <DirectionsBikeRoundedIcon sx={{ color: brand.orange, fontSize: 20 }} />
                   <Box>
-                    <Typography variant="caption" sx={{ color: "#1565c0", fontWeight: 700, display: "block", lineHeight: 1.2 }}>
+                    <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>
                       Estimated Delivery
                     </Typography>
-                    <Typography variant="subtitle2" sx={{ color: "#1565c0", fontWeight: 800 }}>
+                    <Typography variant="subtitle2" sx={{ color: brand.orange, fontWeight: 800 }}>
                       {food.etaRange || `${food.estimatedDeliveryTime} mins`}
                     </Typography>
                   </Box>
                 </Box>
                 {food.distanceKm != null && (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <AccessTimeRoundedIcon sx={{ color: "#1565c0", fontSize: 16 }} />
-                    <Typography variant="caption" sx={{ color: "#1565c0" }}>
+                    <AccessTimeRoundedIcon sx={{ color: brand.orange, fontSize: 16 }} />
+                    <Typography variant="caption" sx={{ color: brand.orange }}>
                       {food.distanceKm} km away
                     </Typography>
                   </Box>
@@ -201,19 +217,26 @@ export default function FoodDetailsPage() {
               {food.description}
             </Typography>
 
+            {!isAvailable && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                This item is currently unavailable and cannot be ordered.
+              </Alert>
+            )}
+
             <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 3, mb: 2 }}>
               <Typography variant="h5" sx={{ fontWeight: 900, color: brand.orange }}>
                 ₹{food.price}
               </Typography>
 
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, opacity: isAvailable ? 1 : 0.4 }}>
                 <IconButton
                   onClick={decrease}
                   size="small"
+                  disabled={!isAvailable}
                   sx={{
-                    backgroundColor: brand.orangeLight,
+                    backgroundColor: brand.greenLight,
                     color: brand.orange,
-                    "&:hover": { backgroundColor: "#fce4c8" },
+                    "&:hover": { backgroundColor: brand.border },
                   }}
                 >
                   <RemoveRoundedIcon fontSize="small" />
@@ -222,6 +245,7 @@ export default function FoodDetailsPage() {
                 <TextField
                   value={qty}
                   onChange={handleQtyChange}
+                  disabled={!isAvailable}
                   inputProps={{
                     inputMode: "numeric",
                     pattern: "[0-9]*",
@@ -234,10 +258,11 @@ export default function FoodDetailsPage() {
                 <IconButton
                   onClick={increase}
                   size="small"
+                  disabled={!isAvailable}
                   sx={{
                     backgroundColor: brand.orange,
                     color: "white",
-                    "&:hover": { backgroundColor: "#d2680f" },
+                    "&:hover": { backgroundColor: brand.orangeMid },
                   }}
                 >
                   <AddRoundedIcon fontSize="small" />
@@ -256,13 +281,13 @@ export default function FoodDetailsPage() {
               size="large"
               fullWidth={isMobile}
               onClick={handlePlaceOrder}
-              disabled={placing}
+              disabled={placing || !isAvailable}
               sx={{ fontWeight: 700, px: 4, py: 1.25 }}
             >
               {placing ? (
                 <CircularProgress size={18} sx={{ color: "white", mr: 1 }} />
               ) : null}
-              Place Order
+              {isAvailable ? "Place Order" : "Item Unavailable"}
             </Button>
           </CardContent>
         </Card>

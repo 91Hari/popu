@@ -119,7 +119,7 @@ export default function CatererDetailPage() {
                         icon={<AccessTimeRoundedIcon sx={{ fontSize: "14px !important" }} />}
                         label={`~${formatEta(eta)} delivery`}
                         size="small"
-                        sx={{ height: 26, backgroundColor: "#E3F2FD", color: "#1565c0", "& .MuiChip-icon": { color: "#1565c0" }, fontSize: "0.75rem" }}
+                        sx={{ height: 26, backgroundColor: brand.greenLight, color: brand.orange, "& .MuiChip-icon": { color: brand.orange }, fontSize: "0.75rem" }}
                       />
                     </>
                   )}
@@ -127,7 +127,7 @@ export default function CatererDetailPage() {
                     icon={<RestaurantMenuRoundedIcon sx={{ fontSize: "14px !important" }} />}
                     label={`${available.length} item${available.length !== 1 ? "s" : ""} available`}
                     size="small"
-                    sx={{ height: 26, backgroundColor: brand.orangeLight, color: brand.orange, fontSize: "0.75rem" }}
+                    sx={{ height: 26, backgroundColor: brand.goldLight, color: brand.text, fontSize: "0.75rem" }}
                   />
                 </Stack>
               </Box>

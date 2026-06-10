@@ -17,6 +17,8 @@ const OffersPage         = React.lazy(() => import("../pages/customer/OffersPage
 const CustomerOrdersPage = React.lazy(() => import("../pages/customer/OrdersPage"));
 const NotificationsPage  = React.lazy(() => import("../pages/customer/NotificationsPage"));
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
+const SplitCheckoutPage  = React.lazy(() => import("../pages/customer/SplitCheckoutPage"));
+const MasterOrdersPage   = React.lazy(() => import("../pages/customer/MasterOrdersPage"));
 
 // Services
 const ServicesPage      = React.lazy(() => import("../pages/services/ServicesPage"));
@@ -31,9 +33,11 @@ const TrainingPage      = React.lazy(() => import("../pages/services/TrainingPag
 const CatererDashboard        = React.lazy(() => import("../pages/caterer/CatererDashboard"));
 const AddFoodPage              = React.lazy(() => import("../pages/caterer/AddFoodPage"));
 const FoodListPage             = React.lazy(() => import("../pages/caterer/FoodListPage"));
-const CatererOrdersPage        = React.lazy(() => import("../pages/caterer/CatererOrdersPage"));
-const AvailabilityPage         = React.lazy(() => import("../pages/caterer/AvailabilityPage"));
-const CatererNotificationsPage = React.lazy(() => import("../pages/caterer/CatererNotificationsPage"));
+const CatererOrdersPage          = React.lazy(() => import("../pages/caterer/CatererOrdersPage"));
+const AvailabilityPage           = React.lazy(() => import("../pages/caterer/AvailabilityPage"));
+const CatererNotificationsPage   = React.lazy(() => import("../pages/caterer/CatererNotificationsPage"));
+const CatererSubOrdersPage       = React.lazy(() => import("../pages/caterer/CatererSubOrdersPage"));
+const CatererPaymentReviewPage   = React.lazy(() => import("../pages/caterer/CatererPaymentReviewPage"));
 
 // Admin
 const AdminDashboard       = React.lazy(() => import("../pages/admin/AdminDashboard"));
@@ -41,9 +45,10 @@ const CustomersPage        = React.lazy(() => import("../pages/admin/CustomersPa
 const AdminCaterersPage    = React.lazy(() => import("../pages/admin/CaterersPage"));
 const AdminFoodsPage       = React.lazy(() => import("../pages/admin/AdminFoodsPage"));
 const AdminOrdersPage      = React.lazy(() => import("../pages/admin/AdminOrdersPage"));
-const AdminNotifPage       = React.lazy(() => import("../pages/admin/AdminNotificationsPage"));
-const ReportsPage          = React.lazy(() => import("../pages/admin/ReportsPage"));
-const SettingsPage         = React.lazy(() => import("../pages/admin/SettingsPage"));
+const AdminNotifPage         = React.lazy(() => import("../pages/admin/AdminNotificationsPage"));
+const ReportsPage            = React.lazy(() => import("../pages/admin/ReportsPage"));
+const SettingsPage           = React.lazy(() => import("../pages/admin/SettingsPage"));
+const AdminMasterOrdersPage  = React.lazy(() => import("../pages/admin/AdminMasterOrdersPage"));
 
 function isAuthenticated() {
   try { return !!localStorage.getItem("token"); } catch { return false; }
@@ -100,8 +105,10 @@ export default function AppRoutes() {
           <Route path="/customer/orders"        element={<ErrorBoundary><C allowed={CUST} element={<CustomerOrdersPage />} /></ErrorBoundary>} />
           <Route path="/customer/profile"       element={<ErrorBoundary><C allowed={CUST} element={<ProfilePage />} /></ErrorBoundary>} />
           <Route path="/customer/offers"        element={<ErrorBoundary><C allowed={CUST} element={<OffersPage />} /></ErrorBoundary>} />
-          <Route path="/customer/notifications" element={<ErrorBoundary><C allowed={CUST} element={<NotificationsPage />} /></ErrorBoundary>} />
-          <Route path="/cart"                   element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
+          <Route path="/customer/notifications"   element={<ErrorBoundary><C allowed={CUST} element={<NotificationsPage />} /></ErrorBoundary>} />
+          <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
+          <Route path="/checkout/split"           element={<ErrorBoundary><C allowed={CUST} element={<SplitCheckoutPage />} /></ErrorBoundary>} />
+          <Route path="/customer/master-orders"   element={<ErrorBoundary><C allowed={CUST} element={<MasterOrdersPage />} /></ErrorBoundary>} />
 
           {/* Services */}
           <Route path="/services"               element={<ErrorBoundary><C allowed={CUST} element={<ServicesPage />} /></ErrorBoundary>} />
@@ -119,6 +126,8 @@ export default function AppRoutes() {
           <Route path="/caterer/orders"             element={<C allowed={CATR} element={<CatererOrdersPage />} />} />
           <Route path="/caterer/availability"       element={<C allowed={CATR} element={<AvailabilityPage />} />} />
           <Route path="/caterer/notifications"      element={<C allowed={CATR} element={<CatererNotificationsPage />} />} />
+          <Route path="/caterer/sub-orders"         element={<C allowed={CATR} element={<CatererSubOrdersPage />} />} />
+          <Route path="/caterer/payment-review"     element={<C allowed={CATR} element={<CatererPaymentReviewPage />} />} />
 
           {/* Admin */}
           <Route path="/admin"               element={<C allowed={ADMIN} element={<AdminDashboard />} />} />
@@ -127,8 +136,9 @@ export default function AppRoutes() {
           <Route path="/admin/foods"         element={<C allowed={ADMIN} element={<AdminFoodsPage />} />} />
           <Route path="/admin/orders"        element={<C allowed={ADMIN} element={<AdminOrdersPage />} />} />
           <Route path="/admin/notifications" element={<C allowed={ADMIN} element={<AdminNotifPage />} />} />
-          <Route path="/admin/reports"       element={<C allowed={ADMIN} element={<ReportsPage />} />} />
-          <Route path="/admin/settings"      element={<C allowed={ADMIN} element={<SettingsPage />} />} />
+          <Route path="/admin/reports"         element={<C allowed={ADMIN} element={<ReportsPage />} />} />
+          <Route path="/admin/settings"       element={<C allowed={ADMIN} element={<SettingsPage />} />} />
+          <Route path="/admin/master-orders"  element={<C allowed={ADMIN} element={<AdminMasterOrdersPage />} />} />
 
           <Route path="/" element={<Navigate to="/customer" replace />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />
