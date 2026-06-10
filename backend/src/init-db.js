@@ -10,7 +10,7 @@ const pool = new Pool({
 
 (async () => {
   try {
-    const sql = fs.readFileSync("./Schema.sql", "utf8");
+    const sql = fs.readFileSync("./schema.sql", "utf8");
     await pool.query(sql);
     console.log("Schema created successfully");
     process.exit(0);
