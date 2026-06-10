@@ -1,21 +1,22 @@
-// backend/src/init-db.js
-
 const fs = require("fs");
-const { Pool } = require("pg");
+const path = require("path");
+const pool = require("./config/db");
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-
-(async () => {
+async function init() {
   try {
-    const sql = fs.readFileSync("schema.sql", "utf8");
+    const sql = fs.readFileSync(
+      path.join(__dirname, "../schema.sql"),
+      "utf8"
+    );
+
     await pool.query(sql);
+
     console.log("Schema created successfully");
     process.exit(0);
   } catch (err) {
-    console.error(err);
+    console.error("Schema creation failed:", err);
     process.exit(1);
   }
-})();
+}
+
+init();
