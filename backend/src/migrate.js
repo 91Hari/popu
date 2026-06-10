@@ -18,7 +18,8 @@ const fs   = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../database/migrations');
+const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR
+  || path.resolve(__dirname, '../migrations');
 
 const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
