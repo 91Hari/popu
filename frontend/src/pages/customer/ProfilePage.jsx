@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box,
   Container,
   Typography,
   Avatar,
@@ -10,6 +10,8 @@ import {
   ListItemIcon,
   ListItemText,
   Card,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -21,6 +23,7 @@ import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
 import BackButton from "../../components/BackButton";
+import LogoutConfirmationDialog from "../../components/LogoutConfirmationDialog";
 
 const MENU = [
   { label: "My Bookings", to: "/customer/orders", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
@@ -42,10 +45,15 @@ export default function ProfilePage() {
     }
   })();
 
-  const handleLogout = () => {
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [toastOpen,  setToastOpen]  = useState(false);
+
+  const handleLogoutConfirm = () => {
+    setLogoutOpen(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    setToastOpen(true);
+    setTimeout(() => navigate("/login"), 1500);
   };
 
   return (
@@ -97,7 +105,7 @@ export default function ProfilePage() {
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText
                 primary={item.label}
-                primaryTypographyProps={{ fontSize: "0.95rem", fontWeight: 500 }}
+                slotProps={{ primary: { style: { fontSize: "0.95rem", fontWeight: 500 } } }}
               />
               <ChevronRightRoundedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
             </ListItemButton>
@@ -108,12 +116,29 @@ export default function ProfilePage() {
           fullWidth
           variant="outlined"
           startIcon={<LogoutRoundedIcon />}
-          onClick={handleLogout}
-          sx={{ mt: 3 }}
+          onClick={() => setLogoutOpen(true)}
+          sx={{ mt: 3, borderColor: brand.border, color: "text.secondary", textTransform: "none", fontWeight: 600 }}
         >
           Log Out
         </Button>
       </Container>
+
+      <LogoutConfirmationDialog
+        open={logoutOpen}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={handleLogoutConfirm}
+      />
+
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={2500}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" variant="filled" sx={{ fontWeight: 600 }}>
+          Thank you for visiting PO.PU. See you again soon!
+        </Alert>
+      </Snackbar>
     </AppLayout>
   );
 }
