@@ -9,7 +9,6 @@ import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
-import LockRoundedIcon           from "@mui/icons-material/LockRounded";
 import masterOrderService from "../../services/masterOrderService";
 import riderService from "../../services/riderService";
 import AppLayout from "../../components/AppLayout";
@@ -236,18 +235,6 @@ export default function CatererSubOrdersPage() {
                             New order waiting for your response
                           </Typography>
                         </Box>
-                      </Box>
-                    )}
-
-                    {/* Confirmation code for assigned orders */}
-                    {order.delivery_confirmation_code && ["ASSIGNED_TO_RIDER", "OUT_FOR_DELIVERY"].includes(statusKey) && (
-                      <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: brand.goldLight, border: `1px solid ${brand.gold}` }}>
-                        <Stack direction="row" alignItems="center" gap={0.75}>
-                          <LockRoundedIcon sx={{ fontSize: 14, color: "#B8860B" }} />
-                          <Typography variant="caption" sx={{ color: "#B8860B", fontWeight: 700 }}>
-                            Delivery Code: {order.delivery_confirmation_code} · Share with rider
-                          </Typography>
-                        </Stack>
                       </Box>
                     )}
 
