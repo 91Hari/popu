@@ -11,7 +11,7 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-async function register({ name, email, password, role, business_name, location, address, latitude, longitude }) {
+async function register({ name, email, password, role, phone, business_name, location, address, latitude, longitude }) {
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
   if (existing.rows.length > 0) {
     const err = new Error('Email already registered');
@@ -24,11 +24,12 @@ async function register({ name, email, password, role, business_name, location, 
   const isCaterer  = upperRole === 'CATERER';
 
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password_hash, role, business_name, location, address, latitude, longitude)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO users (name, email, password_hash, role, phone, business_name, location, address, latitude, longitude)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id, name, email, role, is_active, created_at`,
     [
       name, email, password_hash, upperRole,
+      phone || null,
       isCaterer ? (business_name || null) : null,
       isCaterer ? (location || address || null) : null,
       isCaterer ? (address || null) : null,

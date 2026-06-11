@@ -34,8 +34,8 @@ export default function CatererNotificationsPage() {
     refresh();
     setNotifs((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n));
     const dest = notif.reference_id
-      ? `/caterer/orders?highlight=${notif.reference_id}`
-      : "/caterer/orders";
+      ? `/caterer/sub-orders?highlight=${notif.reference_id}`
+      : "/caterer/sub-orders";
     navigate(dest);
   };
 

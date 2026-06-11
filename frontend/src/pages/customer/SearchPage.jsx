@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Container, Box, Toolbar, InputBase, Card, Chip,
+  Container, Box, InputBase, Card,
   Typography, CircularProgress, IconButton, Grid,
 } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -9,6 +9,7 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
+import EmptyState from "../../components/EmptyState";
 import foodService from "../../services/foodService";
 
 export default function FoodSearchPage() {
@@ -100,12 +101,7 @@ export default function FoodSearchPage() {
             <CircularProgress sx={{ color: brand.orange }} />
           </Box>
         ) : foods.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: "center", maxWidth: 400 }}>
-            <SearchRoundedIcon sx={{ fontSize: 48, color: brand.border, mb: 1 }} />
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              No results found
-            </Typography>
-          </Card>
+          <EmptyState />
         ) : (
           <Grid container spacing={2}>
             {foods.map((food) => (

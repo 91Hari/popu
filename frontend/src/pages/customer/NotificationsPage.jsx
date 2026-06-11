@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Container,
-  Toolbar,
   Typography,
   List,
   ListItem,
@@ -22,6 +21,7 @@ import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import notificationService from "../../services/notificationService";
 import { useNotifications } from "../../contexts/NotificationContext";
 import AppLayout from "../../components/AppLayout";
+import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
 
 export default function NotificationsPage() {
@@ -85,6 +85,7 @@ export default function NotificationsPage() {
     <AppLayout>
 
       <Container maxWidth="md" sx={{ pt: 3, pb: 4 }}>
+        <BackButton sx={{ mb: 1 }} />
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <NotificationsActiveRoundedIcon sx={{ color: brand.orange, fontSize: 28 }} />

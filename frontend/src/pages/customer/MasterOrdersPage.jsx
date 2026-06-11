@@ -12,6 +12,7 @@ import ExpandLessRoundedIcon     from "@mui/icons-material/ExpandLessRounded";
 import UploadFileRoundedIcon     from "@mui/icons-material/UploadFileRounded";
 import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
+import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
@@ -45,7 +46,7 @@ export default function MasterOrdersPage() {
   const [orders, setOrders]         = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
-  const [expandedOrder, setExpanded] = useState(null);
+  const [expandedOrders, setExpanded] = useState(new Set());
   const [cancelDialog, setCancelDialog] = useState({ open: false, catererOrderId: null, reason: "" });
   const [proofDialog, setProofDialog]   = useState({ open: false, catererOrderId: null, url: "", ref: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -130,13 +131,13 @@ export default function MasterOrdersPage() {
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               Your orders will appear here after checkout.
             </Typography>
-            <Button variant="contained" onClick={() => navigate("/services/tiffins")}>Browse Food</Button>
+            <Button variant="contained" onClick={() => navigate("/services/food-marketplace")}>Browse Food</Button>
           </Card>
         ) : (
           <Stack spacing={2}>
             {orders.map((masterOrder) => {
               const catererOrders = Array.isArray(masterOrder.caterer_orders) ? masterOrder.caterer_orders : [];
-              const isExpanded    = expandedOrder === masterOrder.id;
+              const isExpanded    = expandedOrders.has(masterOrder.id);
 
               return (
                 <Card key={masterOrder.id} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
@@ -144,7 +145,11 @@ export default function MasterOrdersPage() {
                     {/* Master order header */}
                     <Box
                       sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer" }}
-                      onClick={() => setExpanded(isExpanded ? null : masterOrder.id)}
+                      onClick={() => setExpanded((prev) => {
+                        const next = new Set(prev);
+                        isExpanded ? next.delete(masterOrder.id) : next.add(masterOrder.id);
+                        return next;
+                      })}
                     >
                       <Box>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
@@ -192,6 +197,7 @@ export default function MasterOrdersPage() {
 
                           return (
                             <Box key={co.id} sx={{ p: 1.5, border: `1px solid ${brand.border}`, borderRadius: 2 }}>
+                              {/* Sub-order header */}
                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
                                 <Box>
                                   <Typography variant="body2" sx={{ fontWeight: 700 }}>{co.caterer_name}</Typography>
@@ -208,6 +214,36 @@ export default function MasterOrdersPage() {
                                   />
                                 </Stack>
                               </Box>
+
+                              {/* Item list */}
+                              {Array.isArray(co.items) && co.items.length > 0 && (
+                                <Box sx={{ mb: 1.25, pl: 0.5 }}>
+                                  <Divider sx={{ mb: 1 }} />
+                                  <Stack spacing={0.6}>
+                                    {co.items.map((it, idx) => (
+                                      <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                        <Box sx={{
+                                          width: 28, height: 28, borderRadius: 1, flexShrink: 0,
+                                          backgroundColor: brand.orangeLight,
+                                          display: "flex", alignItems: "center", justifyContent: "center",
+                                        }}>
+                                          <DinnerDiningRoundedIcon sx={{ fontSize: 15, color: brand.orange }} />
+                                        </Box>
+                                        <Typography variant="caption" sx={{ flex: 1, fontWeight: 600 }}>
+                                          {it.food_name}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
+                                          {it.quantity} × ₹{Number(it.unit_price || 0).toFixed(0)}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange, whiteSpace: "nowrap", minWidth: 48, textAlign: "right" }}>
+                                          ₹{Number(it.total_price || 0).toFixed(2)}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </Stack>
+                                  <Divider sx={{ mt: 1 }} />
+                                </Box>
+                              )}
 
                               {co.status !== "CANCELLED" && (
                                 <Stack direction="row" spacing={1} sx={{ mt: 1 }}>

@@ -6,6 +6,7 @@ import {
   DialogTitle, DialogContent, DialogActions, TextField,
 } from "@mui/material";
 import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
+import BackButton from "../../components/BackButton";
 import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import AccessTimeRoundedIcon     from "@mui/icons-material/AccessTimeRounded";
@@ -100,6 +101,7 @@ export default function OrdersPage() {
   return (
     <AppLayout>
       <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
+        <BackButton sx={{ mb: 1 }} />
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <Inventory2RoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>My Bookings</Typography>

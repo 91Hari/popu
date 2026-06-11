@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Box, Container, Toolbar, Typography } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
@@ -19,9 +19,9 @@ const SERVICES = [
   },
   {
     icon: <LunchDiningRoundedIcon sx={{ fontSize: 28, color: brand.orange }} />,
-    title: "Tiffins",
+    title: "Food Marketplace",
     subtitle: "Daily fresh meals delivered to your door",
-    to: "/services/tiffins",
+    to: "/services/food-marketplace",
     comingSoon: false,
   },
   {

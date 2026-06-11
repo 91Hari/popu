@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Box, Container, Toolbar, Typography, Grid, CircularProgress,
-  Alert, IconButton, Chip, Stack, Paper,
+  Box, Container, Typography, Grid, CircularProgress,
+  Alert, Chip, Stack, Paper,
 } from "@mui/material";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import BackButton from "../../components/BackButton";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
@@ -53,9 +53,7 @@ export default function CatererDetailPage() {
     <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
-        <IconButton size="small" onClick={() => navigate("/services/catering")} sx={{ color: brand.muted, mb: 2 }}>
-          <ArrowBackRoundedIcon />
-        </IconButton>
+        <BackButton sx={{ mb: 2 }} />
 
         {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
 

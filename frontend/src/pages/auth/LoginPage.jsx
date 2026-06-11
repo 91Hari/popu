@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   Box,
   Card,
@@ -20,7 +20,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const registered = location.state?.registered === true;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +59,7 @@ export default function LoginPage() {
       <Card sx={{ width: "100%", maxWidth: 420, boxShadow: 3, borderRadius: 2 }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-            <Logo size={44} showTagline />
+            <Logo size={60} showTagline />
           </Box>
 
           <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
@@ -67,6 +69,11 @@ export default function LoginPage() {
             Login to continue
           </Typography>
 
+          {registered && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              Account created successfully. Please log in.
+            </Alert>
+          )}
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
