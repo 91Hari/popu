@@ -178,14 +178,15 @@ async function getMasterOrders(user) {
        (
          SELECT json_agg(
            json_build_object(
-             'id',             co.id,
-             'caterer_id',     co.caterer_id,
-             'caterer_name',   cu.name,
-             'status',         co.status,
-             'subtotal',       co.subtotal,
-             'payment_status', co.payment_status,
-             'rider_id',       co.rider_id,
-             'created_at',     co.created_at,
+             'id',                        co.id,
+             'caterer_id',                co.caterer_id,
+             'caterer_name',              cu.name,
+             'status',                    co.status,
+             'subtotal',                  co.subtotal,
+             'payment_status',            co.payment_status,
+             'rider_id',                  co.rider_id,
+             'delivery_confirmation_code',co.delivery_confirmation_code,
+             'created_at',                co.created_at,
              'items', (
                SELECT json_agg(
                  json_build_object(

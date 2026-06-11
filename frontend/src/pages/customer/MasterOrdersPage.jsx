@@ -14,6 +14,7 @@ import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
+import LockRoundedIcon           from "@mui/icons-material/LockRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
@@ -245,6 +246,26 @@ export default function MasterOrdersPage() {
                                     ))}
                                   </Stack>
                                   <Divider sx={{ mt: 1 }} />
+                                </Box>
+                              )}
+
+                              {/* Delivery confirmation code — shown to customer so they can share with rider */}
+                              {co.delivery_confirmation_code && ["ASSIGNED_TO_RIDER", "OUT_FOR_DELIVERY"].includes(co.status) && (
+                                <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: "#FFF3E0", border: "1px solid #FFB74D" }}>
+                                  <Stack direction="row" alignItems="center" gap={0.75}>
+                                    <LockRoundedIcon sx={{ fontSize: 14, color: "#E65100" }} />
+                                    <Box>
+                                      <Typography variant="caption" sx={{ color: "#E65100", fontWeight: 700, display: "block" }}>
+                                        Your Delivery Code
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ color: "#E65100", fontWeight: 900, letterSpacing: "0.25em", lineHeight: 1.2 }}>
+                                        {co.delivery_confirmation_code}
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ color: "#E65100", opacity: 0.8 }}>
+                                        Share this with your rider to confirm delivery
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
                                 </Box>
                               )}
 
