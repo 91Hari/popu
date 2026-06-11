@@ -34,7 +34,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await authService.login({ email, password });
-      const user = { ...data.user, role: data.user.role.toLowerCase() };
+      const user = {
+        ...data.user,
+        role: data.user.role.toLowerCase(),
+        latitude: data.user.latitude ?? null,
+        longitude: data.user.longitude ?? null,
+      };
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(user));
       navigate(
