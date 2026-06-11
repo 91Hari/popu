@@ -160,7 +160,10 @@ async function getCateringBookingsByCustomer(customer_id) {
 
 async function getCateringBookingsByCaterer(caterer_id) {
   const { rows } = await pool.query(
-    `SELECT cb.*, uu.name AS customer_name, uu.email AS customer_email
+    `SELECT cb.*,
+            uu.name  AS customer_name,
+            uu.email AS customer_email,
+            uu.phone AS customer_phone
      FROM catering_bookings cb
      JOIN users uu ON uu.id = cb.customer_id
      WHERE cb.caterer_id = $1

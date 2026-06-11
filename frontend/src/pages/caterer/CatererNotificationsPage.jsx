@@ -33,10 +33,9 @@ export default function CatererNotificationsPage() {
     try { await catererNotifService.markRead(notif.id); } catch { /* ignore */ }
     refresh();
     setNotifs((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n));
-    const dest = notif.reference_id
-      ? `/caterer/sub-orders?highlight=${notif.reference_id}`
-      : "/caterer/sub-orders";
-    navigate(dest);
+    const isCateringNotif = notif.notification_type?.startsWith('CATERING_') || notif.notification_type === 'NEW_CATERING_BOOKING';
+    const base = isCateringNotif ? "/caterer/catering-bookings" : "/caterer/sub-orders";
+    navigate(base);
   };
 
   const handleMarkAll = async () => {

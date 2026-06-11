@@ -321,7 +321,7 @@ export default function AppLayout({ children }) {
             </>
           )}
 
-          <Box sx={{ flex: 1 }}>{children}</Box>
+          <Box sx={{ minHeight: "100vh" }}>{children}</Box>
           <Footer />
         </Box>
       </Box>

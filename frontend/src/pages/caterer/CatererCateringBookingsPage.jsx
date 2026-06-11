@@ -9,6 +9,7 @@ import EventRoundedIcon       from "@mui/icons-material/EventRounded";
 import CheckRoundedIcon       from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon       from "@mui/icons-material/CloseRounded";
 import TaskAltRoundedIcon     from "@mui/icons-material/TaskAltRounded";
+import PhoneRoundedIcon       from "@mui/icons-material/PhoneRounded";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import cateringService from "../../services/cateringService";
@@ -152,6 +153,23 @@ export default function CatererCateringBookingsPage() {
                         Booked: {fmtDate(b.created_at)}
                       </Typography>
                     </Stack>
+
+                    {/* Customer contact — shown after confirmation */}
+                    {b.status !== "PENDING" && b.status !== "REJECTED" && (
+                      <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: "#E8F5E9", border: "1px solid #A5D6A7" }}>
+                        <Stack direction="row" alignItems="center" gap={0.75}>
+                          <PhoneRoundedIcon sx={{ fontSize: 15, color: "#2E7D32" }} />
+                          <Box>
+                            <Typography variant="caption" sx={{ color: "#2E7D32", fontWeight: 700, display: "block" }}>
+                              Customer Contact
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 800, color: "#1B5E20" }}>
+                              {b.customer_phone || "Phone not provided"}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    )}
 
                     {/* Special requests */}
                     {(b.special_food_request || b.special_instructions) && (
