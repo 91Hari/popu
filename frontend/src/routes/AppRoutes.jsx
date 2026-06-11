@@ -14,7 +14,6 @@ const SearchPage         = React.lazy(() => import("../pages/customer/SearchPage
 const FoodDetailsPage    = React.lazy(() => import("../pages/customer/FoodDetailsPage"));
 const ProfilePage        = React.lazy(() => import("../pages/customer/ProfilePage"));
 const OffersPage         = React.lazy(() => import("../pages/customer/OffersPage"));
-const CustomerOrdersPage = React.lazy(() => import("../pages/customer/OrdersPage"));
 const NotificationsPage  = React.lazy(() => import("../pages/customer/NotificationsPage"));
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
 const SplitCheckoutPage  = React.lazy(() => import("../pages/customer/SplitCheckoutPage"));
@@ -102,7 +101,7 @@ export default function AppRoutes() {
           <Route path="/customer/search"        element={<ErrorBoundary><C allowed={CUST} element={<SearchPage />} /></ErrorBoundary>} />
           <Route path="/customer/services"      element={<Navigate to="/services" replace />} />
           <Route path="/customer/food/:id"      element={<ErrorBoundary><C allowed={CUST} element={<FoodDetailsPage />} /></ErrorBoundary>} />
-          <Route path="/customer/orders"        element={<ErrorBoundary><C allowed={CUST} element={<CustomerOrdersPage />} /></ErrorBoundary>} />
+          <Route path="/customer/orders"        element={<Navigate to="/customer/master-orders" replace />} />
           <Route path="/customer/profile"       element={<ErrorBoundary><C allowed={CUST} element={<ProfilePage />} /></ErrorBoundary>} />
           <Route path="/customer/offers"        element={<ErrorBoundary><C allowed={CUST} element={<OffersPage />} /></ErrorBoundary>} />
           <Route path="/customer/notifications"   element={<ErrorBoundary><C allowed={CUST} element={<NotificationsPage />} /></ErrorBoundary>} />

@@ -38,7 +38,7 @@ const CUSTOMER_NAV = [
   { label: "Services",      path: "/services",                    icon: <RoomServiceRoundedIcon />,            exact: true  },
   { label: "Food Marketplace", path: "/services/food-marketplace",icon: <LunchDiningRoundedIcon />,            exact: false },
   { label: "My Cart",       path: "/cart",                        icon: <ShoppingCartRoundedIcon />,           cartBadge: true  },
-  { label: "My Orders",     path: "/customer/orders",             icon: <ReceiptLongRoundedIcon /> },
+  { label: "My Orders",     path: "/customer/master-orders",       icon: <ReceiptLongRoundedIcon /> },
   { label: "Notifications", path: "/customer/notifications",      icon: <NotificationsNoneRoundedIcon />,      notifBadge: true },
   { label: "Profile",       path: "/customer/profile",            icon: <PersonRoundedIcon /> },
 ];
