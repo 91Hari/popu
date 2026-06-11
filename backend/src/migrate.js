@@ -26,15 +26,13 @@ const CANDIDATE_DIRS = [
   path.resolve(process.cwd(), 'database/migrations'), // run from repo root
 ].filter(Boolean);
 
-console.log('[migrate] dir:', MIGRATIONS_DIR);
-
 const MIGRATIONS_DIR = CANDIDATE_DIRS.find((d) => fs.existsSync(d));
 if (!MIGRATIONS_DIR) {
   console.error('[migrate] Searched:', CANDIDATE_DIRS);
   console.error('[migrate] No migrations directory found.');
   process.exit(1);
 }
-console.log('[migrate] Using dir  :', MIGRATIONS_DIR);
+console.log('[migrate] dir:', MIGRATIONS_DIR);
 
 const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
