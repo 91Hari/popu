@@ -82,7 +82,7 @@ function SidebarContent({ navItems, cartCount, unreadCount, onClose, onLogoutReq
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Brand */}
       <Box sx={{ px: 2.5, py: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Logo size={36} showWordmark={false} />
+        <Logo size={36} showWordmark={false} blendMode="multiply" />
         <Typography variant="h6" sx={{ fontWeight: 900, color: brand.goldLight, letterSpacing: "-0.03em" }}>
           PO.PU
         </Typography>

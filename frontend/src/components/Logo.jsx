@@ -10,6 +10,7 @@ export default function Logo({
   showWordmark = true,
   showTagline = false,
   color = brand.orange,
+  blendMode,
 }) {
   const imgHeight = height ?? size;
   const imgWidth  = width  ?? size;
@@ -27,6 +28,7 @@ export default function Logo({
         display: "block",
         flexShrink: 0,
         imageRendering: "high-quality",
+        ...(blendMode && { mixBlendMode: blendMode }),
       }}
     />
   );
