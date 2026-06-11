@@ -42,6 +42,7 @@ const CUSTOMER_NAV = [
   { label: "Food Marketplace", path: "/services/food-marketplace",icon: <LunchDiningRoundedIcon />,            exact: false },
   { label: "My Cart",       path: "/cart",                        icon: <ShoppingCartRoundedIcon />,           cartBadge: true  },
   { label: "My Orders",     path: "/customer/master-orders",       icon: <ReceiptLongRoundedIcon /> },
+  { label: "My Bookings",   path: "/customer/catering-bookings",   icon: <EventRoundedIcon /> },
   { label: "Notifications", path: "/customer/notifications",      icon: <NotificationsNoneRoundedIcon />,      notifBadge: true },
   { label: "Profile",       path: "/customer/profile",            icon: <PersonRoundedIcon /> },
 ];

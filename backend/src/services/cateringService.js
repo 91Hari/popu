@@ -24,6 +24,7 @@ async function getCateringServicesByCaterer(caterer_id) {
 async function createCateringService(caterer_id, {
   occasion_name, price_per_person,
   minimum_people = 10, maximum_people = 500, advance_booking_days = 7,
+  menu_items = null,
 }) {
   if (!occasion_name || !price_per_person) {
     const e = new Error('occasion_name and price_per_person are required');
@@ -31,9 +32,9 @@ async function createCateringService(caterer_id, {
   }
   const { rows } = await pool.query(
     `INSERT INTO catering_services
-       (caterer_id, occasion_name, price_per_person, minimum_people, maximum_people, advance_booking_days)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [caterer_id, occasion_name, price_per_person, minimum_people, maximum_people, advance_booking_days]
+       (caterer_id, occasion_name, price_per_person, minimum_people, maximum_people, advance_booking_days, menu_items)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [caterer_id, occasion_name, price_per_person, minimum_people, maximum_people, advance_booking_days, menu_items || null]
   );
   await pool.query(`UPDATE users SET catering_available = TRUE WHERE id = $1`, [caterer_id]);
   return rows[0];
@@ -41,6 +42,15 @@ async function createCateringService(caterer_id, {
 
 async function updateCateringService(id, caterer_id, fields) {
   const { occasion_name, price_per_person, minimum_people, maximum_people, advance_booking_days, status } = fields;
+  const params = [
+    occasion_name || null, price_per_person || null,
+    minimum_people || null, maximum_people || null,
+    advance_booking_days || null, status || null,
+    id, caterer_id,
+  ];
+  const menuItemsClause = 'menu_items' in fields
+    ? (params.push(fields.menu_items || null), `menu_items = $${params.length},`)
+    : '';
   const { rows } = await pool.query(
     `UPDATE catering_services
      SET occasion_name        = COALESCE($1, occasion_name),
@@ -49,15 +59,11 @@ async function updateCateringService(id, caterer_id, fields) {
          maximum_people       = COALESCE($4, maximum_people),
          advance_booking_days = COALESCE($5, advance_booking_days),
          status               = COALESCE($6, status),
+         ${menuItemsClause}
          updated_at           = NOW()
      WHERE id = $7 AND caterer_id = $8
      RETURNING *`,
-    [
-      occasion_name || null, price_per_person || null,
-      minimum_people || null, maximum_people || null,
-      advance_booking_days || null, status || null,
-      id, caterer_id,
-    ]
+    params
   );
   if (!rows[0]) { const e = new Error('Service not found'); e.status = 404; throw e; }
   return rows[0];
