@@ -28,6 +28,12 @@ const CANDIDATE_DIRS = [
 
 console.log('[migrate] __dirname  :', __dirname);
 console.log('[migrate] cwd        :', process.cwd());
+try {
+  console.log('[migrate] /app contents     :', fs.readdirSync('/app').join(', '));
+} catch (e) { console.log('[migrate] /app not readable:', e.message); }
+try {
+  console.log('[migrate] cwd contents      :', fs.readdirSync(process.cwd()).join(', '));
+} catch (e) { console.log('[migrate] cwd not readable :', e.message); }
 
 const MIGRATIONS_DIR = CANDIDATE_DIRS.find((d) => fs.existsSync(d));
 if (!MIGRATIONS_DIR) {
