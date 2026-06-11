@@ -15,5 +15,9 @@ router.patch('/caterers/:id/status',     ctrl.setCatererStatus);
 router.patch('/foods/:id/status',        ctrl.setFoodStatus);
 router.patch('/orders/:id/status',       ctrl.updateOrderStatus);
 router.post('/notifications',            ctrl.broadcastNotification);
+router.post('/users',                    ctrl.createUser);
+router.delete('/users/:id',              ctrl.deleteUser);
+router.get('/catering-bookings',         ctrl.getCateringBookings);
+router.get('/riders',                    ctrl.getAllRiders);
 
 module.exports = router;

@@ -13,18 +13,21 @@ import UploadFileRoundedIcon     from "@mui/icons-material/UploadFileRounded";
 import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
+import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 const STATUS_CFG = {
-  PLACED:    { label: "Placed",           color: "info"    },
-  ACCEPTED:  { label: "Accepted",         color: "primary" },
-  PREPARING: { label: "Preparing",        color: "warning" },
-  READY:     { label: "Out for Delivery", color: "success" },
-  DELIVERED: { label: "Delivered",        color: "success" },
-  CANCELLED: { label: "Cancelled",        color: "default" },
+  PLACED:            { label: "Placed",           color: "info"    },
+  ACCEPTED:          { label: "Accepted",         color: "primary" },
+  PREPARING:         { label: "Preparing",        color: "warning" },
+  READY:             { label: "Ready",            color: "success" },
+  ASSIGNED_TO_RIDER: { label: "Rider Assigned",   color: "info"    },
+  OUT_FOR_DELIVERY:  { label: "Out for Delivery", color: "warning" },
+  DELIVERED:         { label: "Delivered",        color: "success" },
+  CANCELLED:         { label: "Cancelled",        color: "default" },
 };
 
 const PAY_CFG = {
@@ -246,7 +249,15 @@ export default function MasterOrdersPage() {
                               )}
 
                               {co.status !== "CANCELLED" && (
-                                <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                                <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                                  {co.status === "OUT_FOR_DELIVERY" && co.rider_id && (
+                                    <Chip
+                                      icon={<TwoWheelerRoundedIcon fontSize="small" />}
+                                      label="On the way to you!"
+                                      size="small"
+                                      sx={{ backgroundColor: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: "0.7rem" }}
+                                    />
+                                  )}
                                   {needsProof && (
                                     <Button
                                       size="small" variant="outlined"

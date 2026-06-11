@@ -173,7 +173,47 @@ async function broadcastNotification({ title, message, target_role, admin_id }) 
   return { ok: true };
 }
 
+async function createUser({ name, email, password, role, phone, business_name, address }) {
+  const bcrypt = require('bcrypt');
+  const validRoles = ['CUSTOMER', 'CATERER'];
+  if (!name || !email || !password || !role) {
+    const e = new Error('name, email, password, and role are required'); e.status = 400; throw e;
+  }
+  if (!validRoles.includes(role.toUpperCase())) {
+    const e = new Error('role must be CUSTOMER or CATERER'); e.status = 400; throw e;
+  }
+  const { rows: existing } = await pool.query(`SELECT id FROM users WHERE email = $1`, [email.toLowerCase()]);
+  if (existing[0]) { const e = new Error('Email already in use'); e.status = 409; throw e; }
+  const hash = await bcrypt.hash(password, 12);
+  const { rows } = await pool.query(
+    `INSERT INTO users (name, email, password_hash, role, phone, business_name, address, is_active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+     RETURNING id, name, email, role, is_active, created_at`,
+    [name, email.toLowerCase(), hash, role.toUpperCase(), phone || null, business_name || null, address || null]
+  );
+  return rows[0];
+}
+
+async function deleteUser(id) {
+  const { rows } = await pool.query(`SELECT id, role FROM users WHERE id = $1`, [id]);
+  if (!rows[0]) { const e = new Error('User not found'); e.status = 404; throw e; }
+  if (rows[0].role === 'ADMIN') { const e = new Error('Cannot delete admin users'); e.status = 403; throw e; }
+  await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
+  return { ok: true };
+}
+
+async function getCateringBookings({ page = 1, limit = 20, status } = {}) {
+  const cateringService = require('./cateringService');
+  return cateringService.getAllCateringBookings({ page, limit, status });
+}
+
+async function getAllRiders({ search, page = 1, limit = 20 } = {}) {
+  const riderService = require('./riderService');
+  return riderService.getAllRiders({ search, page, limit });
+}
+
 module.exports = {
   getDashboardStats, getCustomers, getCaterers, getFoods, getOrders,
   setUserStatus, setFoodStatus, updateOrderStatus, broadcastNotification,
+  createUser, deleteUser, getCateringBookings, getAllRiders,
 };

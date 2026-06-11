@@ -57,17 +57,19 @@ async function getCatererById(id) {
        u.latitude,
        u.longitude,
        u.email,
-       u.availability_status AS "availabilityStatus",
+       u.availability_status  AS "availabilityStatus",
+       u.catering_available   AS "cateringAvailable",
        u.upi_id,
        u.payment_name,
        u.qr_code_image_url,
        u.bank_account_name,
-       COUNT(f.id)::int      AS "foodCount"
+       COUNT(f.id)::int       AS "foodCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
      WHERE u.id = $1 AND u.role = 'CATERER' AND u.is_active = TRUE
      GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude,
-              u.email, u.availability_status, u.upi_id, u.payment_name, u.qr_code_image_url, u.bank_account_name`,
+              u.email, u.availability_status, u.catering_available,
+              u.upi_id, u.payment_name, u.qr_code_image_url, u.bank_account_name`,
     [id]
   );
   return rows[0] || null;
@@ -90,7 +92,8 @@ async function updatePaymentProfile(caterer_id, { upi_id, payment_name, qr_code_
 
 async function getCatererFoods(caterer_id) {
   const { rows: catererRows } = await pool.query(
-    `SELECT id, name AS "catererName", business_name AS "businessName", location, address, latitude, longitude, email
+    `SELECT id, name AS "catererName", business_name AS "businessName",
+            location, address, latitude, longitude, email, catering_available AS "cateringAvailable"
      FROM users WHERE id = $1 AND role = 'CATERER' AND is_active = TRUE`,
     [caterer_id]
   );

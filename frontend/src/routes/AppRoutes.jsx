@@ -38,6 +38,19 @@ const CatererNotificationsPage   = React.lazy(() => import("../pages/caterer/Cat
 const CatererSubOrdersPage       = React.lazy(() => import("../pages/caterer/CatererSubOrdersPage"));
 const CatererPaymentReviewPage   = React.lazy(() => import("../pages/caterer/CatererPaymentReviewPage"));
 
+// Caterer extras
+const CatererCateringServicesPage = React.lazy(() => import("../pages/caterer/CatererCateringServicesPage"));
+const CatererRidersPage           = React.lazy(() => import("../pages/caterer/CatererRidersPage"));
+
+// Customer extras
+const BookCateringPage             = React.lazy(() => import("../pages/customer/BookCateringPage"));
+const CustomerCateringBookingsPage = React.lazy(() => import("../pages/customer/CustomerCateringBookingsPage"));
+
+// Rider portal
+const RiderDashboard       = React.lazy(() => import("../pages/rider/RiderDashboard"));
+const RiderOrderLookupPage = React.lazy(() => import("../pages/rider/RiderOrderLookupPage"));
+const RiderDeliveryPage    = React.lazy(() => import("../pages/rider/RiderDeliveryPage"));
+
 // Admin
 const AdminDashboard       = React.lazy(() => import("../pages/admin/AdminDashboard"));
 const CustomersPage        = React.lazy(() => import("../pages/admin/CustomersPage"));
@@ -47,7 +60,9 @@ const AdminOrdersPage      = React.lazy(() => import("../pages/admin/AdminOrders
 const AdminNotifPage         = React.lazy(() => import("../pages/admin/AdminNotificationsPage"));
 const ReportsPage            = React.lazy(() => import("../pages/admin/ReportsPage"));
 const SettingsPage           = React.lazy(() => import("../pages/admin/SettingsPage"));
-const AdminMasterOrdersPage  = React.lazy(() => import("../pages/admin/AdminMasterOrdersPage"));
+const AdminMasterOrdersPage      = React.lazy(() => import("../pages/admin/AdminMasterOrdersPage"));
+const AdminRidersPage            = React.lazy(() => import("../pages/admin/AdminRidersPage"));
+const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/AdminCateringBookingsPage"));
 
 function isAuthenticated() {
   try { return !!localStorage.getItem("token"); } catch { return false; }
@@ -66,7 +81,8 @@ function RequireRole({ allowed = [], children }) {
   if (!role || !allowed.includes(role)) {
     if (isAuthenticated()) {
       if (role === "caterer") return <Navigate to="/caterer" replace />;
-      if (role === "admin")   return <Navigate to="/admin" replace />;
+      if (role === "admin")   return <Navigate to="/admin"   replace />;
+      if (role === "rider")   return <Navigate to="/rider"   replace />;
       return <Navigate to="/customer" replace />;
     }
     return <Navigate to="/login" replace />;
@@ -81,6 +97,7 @@ function C({ allowed, element }) {
 const CUST  = ["customer"];
 const CATR  = ["caterer"];
 const ADMIN = ["admin"];
+const RIDER = ["rider"];
 
 const Loader = () => (
   <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
@@ -128,6 +145,17 @@ export default function AppRoutes() {
           <Route path="/caterer/notifications"      element={<C allowed={CATR} element={<CatererNotificationsPage />} />} />
           <Route path="/caterer/sub-orders"         element={<C allowed={CATR} element={<CatererSubOrdersPage />} />} />
           <Route path="/caterer/payment-review"     element={<C allowed={CATR} element={<CatererPaymentReviewPage />} />} />
+          <Route path="/caterer/catering"           element={<C allowed={CATR} element={<CatererCateringServicesPage />} />} />
+          <Route path="/caterer/riders"             element={<C allowed={CATR} element={<CatererRidersPage />} />} />
+
+          {/* Customer catering */}
+          <Route path="/customer/catering-booking/:catererId" element={<ErrorBoundary><C allowed={CUST} element={<BookCateringPage />} /></ErrorBoundary>} />
+          <Route path="/customer/catering-bookings"           element={<ErrorBoundary><C allowed={CUST} element={<CustomerCateringBookingsPage />} /></ErrorBoundary>} />
+
+          {/* Rider portal */}
+          <Route path="/rider"                element={<C allowed={RIDER} element={<RiderDashboard />} />} />
+          <Route path="/rider/lookup"         element={<C allowed={RIDER} element={<RiderOrderLookupPage />} />} />
+          <Route path="/rider/delivery/:id"   element={<C allowed={RIDER} element={<RiderDeliveryPage />} />} />
 
           {/* Admin */}
           <Route path="/admin"               element={<C allowed={ADMIN} element={<AdminDashboard />} />} />
@@ -138,7 +166,9 @@ export default function AppRoutes() {
           <Route path="/admin/notifications" element={<C allowed={ADMIN} element={<AdminNotifPage />} />} />
           <Route path="/admin/reports"         element={<C allowed={ADMIN} element={<ReportsPage />} />} />
           <Route path="/admin/settings"       element={<C allowed={ADMIN} element={<SettingsPage />} />} />
-          <Route path="/admin/master-orders"  element={<C allowed={ADMIN} element={<AdminMasterOrdersPage />} />} />
+          <Route path="/admin/master-orders"      element={<C allowed={ADMIN} element={<AdminMasterOrdersPage />} />} />
+          <Route path="/admin/riders"             element={<C allowed={ADMIN} element={<AdminRidersPage />} />} />
+          <Route path="/admin/catering-bookings"  element={<C allowed={ADMIN} element={<AdminCateringBookingsPage />} />} />
 
           <Route path="/" element={<Navigate to="/customer" replace />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />

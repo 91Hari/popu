@@ -39,6 +39,22 @@ const adminService = {
   async broadcastNotification({ title, message, target_role }) {
     return api.request("/admin/notifications", { method: "POST", body: JSON.stringify({ title, message, target_role }) });
   },
+  async createUser(data) {
+    return api.request("/admin/users", { method: "POST", body: JSON.stringify(data) });
+  },
+  async deleteUser(id) {
+    return api.request(`/admin/users/${id}`, { method: "DELETE" });
+  },
+  async getCateringBookings({ page = 1, limit = 20, status } = {}) {
+    const p = new URLSearchParams({ page, limit });
+    if (status) p.set("status", status);
+    return api.request(`/admin/catering-bookings?${p}`);
+  },
+  async getAllRiders({ search, page = 1, limit = 20 } = {}) {
+    const p = new URLSearchParams({ page, limit });
+    if (search) p.set("search", search);
+    return api.request(`/admin/riders?${p}`);
+  },
 };
 
 export default adminService;

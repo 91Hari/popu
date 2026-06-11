@@ -12,6 +12,9 @@ async function register(req, res, next) {
     if (!validRoles.includes(role.toUpperCase())) {
       return res.status(400).json({ error: 'role must be CUSTOMER or CATERER' });
     }
+    if (role.toUpperCase() === 'RIDER') {
+      return res.status(400).json({ error: 'Rider accounts must be created by a caterer' });
+    }
 
     if (password.length < 8) {
       return res.status(400).json({ error: 'password must be at least 8 characters' });

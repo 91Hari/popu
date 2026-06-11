@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box, Container, Typography, Grid, CircularProgress,
-  Alert, Chip, Stack, Paper,
+  Alert, Chip, Stack, Paper, Button,
 } from "@mui/material";
 import BackButton from "../../components/BackButton";
-import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
+import EventRoundedIcon       from "@mui/icons-material/EventRounded";
+import LocationOnRoundedIcon  from "@mui/icons-material/LocationOnRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
@@ -128,6 +129,20 @@ export default function CatererDetailPage() {
                     sx={{ height: 26, backgroundColor: brand.goldLight, color: brand.text, fontSize: "0.75rem" }}
                   />
                 </Stack>
+                {caterer.cateringAvailable && (
+                  <Button
+                    variant="contained"
+                    startIcon={<EventRoundedIcon />}
+                    onClick={() => navigate(`/customer/catering-booking/${id}`)}
+                    sx={{
+                      mt: 1.5,
+                      background: `linear-gradient(135deg, ${brand.orange}, ${brand.orangeMid})`,
+                      textTransform: "none", fontWeight: 700,
+                    }}
+                  >
+                    Book Catering for an Event
+                  </Button>
+                )}
               </Box>
             </Paper>
 

@@ -37,7 +37,12 @@ export default function LoginPage() {
       const user = { ...data.user, role: data.user.role.toLowerCase() };
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(user));
-      navigate(user.role === "caterer" ? "/caterer" : "/customer");
+      navigate(
+        user.role === "rider"   ? "/rider"   :
+        user.role === "caterer" ? "/caterer" :
+        user.role === "admin"   ? "/admin"   :
+        "/customer"
+      );
     } catch (err) {
       setError("Invalid email or password");
     } finally {

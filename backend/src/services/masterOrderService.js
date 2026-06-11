@@ -184,6 +184,7 @@ async function getMasterOrders(user) {
              'status',         co.status,
              'subtotal',       co.subtotal,
              'payment_status', co.payment_status,
+             'rider_id',       co.rider_id,
              'created_at',     co.created_at,
              'items', (
                SELECT json_agg(
@@ -279,7 +280,7 @@ const CATERER_VALID_TRANSITIONS = {
   PLACED:    ['ACCEPTED', 'CANCELLED'],
   ACCEPTED:  ['PREPARING', 'CANCELLED'],
   PREPARING: ['READY', 'CANCELLED'],
-  READY:     ['DELIVERED'],
+  READY:     ['DELIVERED', 'CANCELLED'],
 };
 
 async function updateCatererOrderStatus(id, status, user) {
