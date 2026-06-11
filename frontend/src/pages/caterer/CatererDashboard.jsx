@@ -16,7 +16,7 @@ import FiberNewRoundedIcon             from "@mui/icons-material/FiberNewRounded
 import CheckCircleOutlineRoundedIcon   from "@mui/icons-material/CheckCircleOutlineRounded";
 
 import foodService                  from "../../services/foodService";
-import orderService                 from "../../services/orderService";
+import masterOrderService           from "../../services/masterOrderService";
 import catererService               from "../../services/catererService";
 import catererNotifService          from "../../services/catererNotificationService";
 import AppLayout                    from "../../components/AppLayout";
@@ -26,8 +26,8 @@ import { brand } from "../../theme";
 
 const STAT_CARDS = [
   { key: "foods",   label: "Total Foods",   hint: "Manage menu",    href: "/caterer/foods",  icon: <RestaurantMenuRoundedIcon sx={{ color: brand.orange, fontSize: 32 }} /> },
-  { key: "orders",  label: "Total Orders",  hint: "View all orders", href: "/caterer/orders", icon: <ListAltRoundedIcon sx={{ color: brand.orange, fontSize: 32 }} /> },
-  { key: "revenue", label: "Revenue",       hint: "View orders",     href: "/caterer/orders", prefix: "₹", icon: <AttachMoneyRoundedIcon sx={{ color: brand.orange, fontSize: 32 }} /> },
+  { key: "orders",  label: "Total Orders",  hint: "View all orders", href: "/caterer/sub-orders", icon: <ListAltRoundedIcon sx={{ color: brand.orange, fontSize: 32 }} /> },
+  { key: "revenue", label: "Revenue",       hint: "View orders",     href: "/caterer/sub-orders", prefix: "₹", icon: <AttachMoneyRoundedIcon sx={{ color: brand.orange, fontSize: 32 }} /> },
 ];
 
 export default function CatererDashboard() {
@@ -50,7 +50,7 @@ export default function CatererDashboard() {
       setLoading(true);
       const [allFoods, ordersData, availData] = await Promise.all([
         foodService.getFoods(),
-        orderService.getOrders(),
+        masterOrderService.getCatererSubOrders(),
         catererService.getMyAvailability(),
       ]);
 
@@ -93,8 +93,8 @@ export default function CatererDashboard() {
   const handleNotifClick = async (notif) => {
     try { await catererNotifService.markRead(notif.id); } catch { /* ignore */ }
     const dest = notif.reference_id
-      ? `/caterer/orders?highlight=${notif.reference_id}`
-      : "/caterer/orders";
+      ? `/caterer/sub-orders?highlight=${notif.reference_id}`
+      : "/caterer/sub-orders";
     navigate(dest);
   };
 
@@ -194,7 +194,7 @@ export default function CatererDashboard() {
             Manage Menu
           </Button>
           <Button variant="outlined" size="large" startIcon={<ReceiptLongRoundedIcon />}
-            onClick={() => navigate("/caterer/orders")}
+            onClick={() => navigate("/caterer/sub-orders")}
             sx={{ borderColor: brand.orange, color: brand.orange, fontWeight: 700, px: 3 }}>
             View Orders
           </Button>

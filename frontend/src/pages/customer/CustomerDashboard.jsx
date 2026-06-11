@@ -19,7 +19,7 @@ import { useCustomerGeo } from "../../utils/geoUtils";
 
 const CATEGORIES = [
   { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,  label: "Catering",  to: "/services/catering" },
-  { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Tiffins",   to: "/services/tiffins" },
+  { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",      to: "/services/food-marketplace" },
   { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,    label: "Book Cook", to: "/services/book-cook" },
   { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,         label: "Home Food", to: "/services/home-food" },
   { icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,       label: "Training",  to: "/services/training" },
