@@ -5,9 +5,10 @@ import {
   CircularProgress, Alert, TextField, Chip, Stepper, Step, StepLabel,
   Snackbar,
 } from "@mui/material";
-import EventRoundedIcon       from "@mui/icons-material/EventRounded";
-import PeopleAltRoundedIcon   from "@mui/icons-material/PeopleAltRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import EventRoundedIcon          from "@mui/icons-material/EventRounded";
+import PeopleAltRoundedIcon      from "@mui/icons-material/PeopleAltRounded";
+import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
+import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import AppLayout from "../../components/AppLayout";
 import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
@@ -227,6 +228,19 @@ export default function BookCateringPage() {
                     Any special requirements?
                   </Typography>
                   <Stack spacing={2}>
+                    {selected?.menu_items && (
+                      <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: brand.bg, border: `1px solid ${brand.border}` }}>
+                        <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 0.75 }}>
+                          <RestaurantMenuRoundedIcon sx={{ fontSize: 15, color: brand.orange }} />
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange }}>
+                            Menu included for {selected.occasion_name}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption" sx={{ color: "text.primary", whiteSpace: "pre-wrap", lineHeight: 1.7 }}>
+                          {selected.menu_items}
+                        </Typography>
+                      </Box>
+                    )}
                     <TextField
                       fullWidth size="small" multiline rows={3}
                       label="Special Food Requests"

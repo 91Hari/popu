@@ -145,7 +145,10 @@ async function createCateringBooking(customer_id, {
 
 async function getCateringBookingsByCustomer(customer_id) {
   const { rows } = await pool.query(
-    `SELECT cb.*, uc.name AS caterer_name, uc.business_name AS caterer_business_name
+    `SELECT cb.*,
+            uc.name          AS caterer_name,
+            uc.business_name AS caterer_business_name,
+            uc.phone         AS caterer_phone
      FROM catering_bookings cb
      JOIN users uc ON uc.id = cb.caterer_id
      WHERE cb.customer_id = $1
@@ -179,11 +182,23 @@ async function updateCateringBookingStatus(id, caterer_id, status) {
 
   setImmediate(async () => {
     try {
+      let confirmedPhone = null;
+      if (status === 'CONFIRMED') {
+        const { rows: phoneRows } = await pool.query(
+          `SELECT phone FROM users WHERE id = $1`, [caterer_id]
+        );
+        confirmedPhone = phoneRows[0]?.phone || null;
+      }
       const notifMsg = {
-        CONFIRMED:  { title: 'Catering Confirmed',   message: 'Your catering booking has been confirmed by the caterer.' },
-        REJECTED:   { title: 'Catering Rejected',    message: 'Your catering booking was rejected. Please try another caterer.' },
-        CANCELLED:  { title: 'Catering Cancelled',   message: 'Your catering booking has been cancelled.' },
-        COMPLETED:  { title: 'Catering Completed',   message: 'Your catering event has been marked as completed.' },
+        CONFIRMED: {
+          title:   'Catering Confirmed',
+          message: confirmedPhone
+            ? `Your catering booking has been confirmed! Reach the caterer at: ${confirmedPhone}`
+            : 'Your catering booking has been confirmed by the caterer.',
+        },
+        REJECTED:  { title: 'Catering Rejected',  message: 'Your catering booking was rejected. Please try another caterer.' },
+        CANCELLED: { title: 'Catering Cancelled',  message: 'Your catering booking has been cancelled.' },
+        COMPLETED: { title: 'Catering Completed',  message: 'Your catering event has been marked as completed.' },
       }[status];
       if (notifMsg) {
         await notifyUser(rows[0].customer_id, {

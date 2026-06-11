@@ -4,8 +4,9 @@ import {
   Box, Container, Typography, Card, CardContent, Stack, Chip,
   Button, CircularProgress, Alert, Divider,
 } from "@mui/material";
-import EventRoundedIcon from "@mui/icons-material/EventRounded";
+import EventRoundedIcon    from "@mui/icons-material/EventRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
+import PhoneRoundedIcon     from "@mui/icons-material/PhoneRounded";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import cateringService from "../../services/cateringService";
@@ -107,6 +108,22 @@ export default function CustomerCateringBookingsPage() {
                         </Typography>
                       </Box>
                     </Stack>
+
+                    {b.status === "CONFIRMED" && b.caterer_phone && (
+                      <Box sx={{ mt: 1, p: 1.25, borderRadius: 1.5, backgroundColor: "#E8F5E9", border: "1px solid #A5D6A7" }}>
+                        <Stack direction="row" alignItems="center" gap={0.75}>
+                          <PhoneRoundedIcon sx={{ fontSize: 15, color: "#2E7D32" }} />
+                          <Box>
+                            <Typography variant="caption" sx={{ color: "#2E7D32", fontWeight: 700, display: "block" }}>
+                              Caterer Contact
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 800, color: "#1B5E20" }}>
+                              {b.caterer_phone}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    )}
 
                     {b.special_food_request && (
                       <Box sx={{ mt: 1, p: 1, borderRadius: 1.5, backgroundColor: brand.orangeLight }}>

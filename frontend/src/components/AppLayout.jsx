@@ -26,6 +26,7 @@ import SettingsRoundedIcon          from "@mui/icons-material/SettingsRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
+import EventNoteRoundedIcon         from "@mui/icons-material/EventNoteRounded";
 import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
 import Logo from "./Logo";
 import { brand } from "../theme";
@@ -52,8 +53,9 @@ const CATERER_NAV = [
   { label: "Food Management",  path: "/caterer/foods",            icon: <RestaurantMenuRoundedIcon /> },
   { label: "Add Food",         path: "/caterer/add-food",         icon: <AddCircleOutlineRoundedIcon /> },
   { label: "Orders",           path: "/caterer/sub-orders",       icon: <ListAltRoundedIcon /> },
-  { label: "Catering Services",path: "/caterer/catering",         icon: <EventRoundedIcon /> },
-  { label: "My Riders",        path: "/caterer/riders",           icon: <TwoWheelerRoundedIcon /> },
+  { label: "Catering Services",path: "/caterer/catering",          icon: <EventRoundedIcon /> },
+  { label: "Event Bookings",   path: "/caterer/catering-bookings", icon: <EventNoteRoundedIcon /> },
+  { label: "My Riders",        path: "/caterer/riders",            icon: <TwoWheelerRoundedIcon /> },
   { label: "Notifications",    path: "/caterer/notifications",    icon: <NotificationsNoneRoundedIcon />, notifBadge: true },
   { label: "Availability",     path: "/caterer/availability",     icon: <CircleRoundedIcon /> },
   { label: "Profile",          path: "/caterer/profile",          icon: <PersonRoundedIcon /> },
