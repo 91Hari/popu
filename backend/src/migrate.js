@@ -18,8 +18,30 @@ const fs   = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 
-const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR
-  || path.resolve(__dirname, '../migrations');
+const CANDIDATE_DIRS = [
+  process.env.MIGRATIONS_DIR,
+  path.resolve(__dirname, '../migrations'),           // Render: backend/migrations
+  path.resolve(__dirname, '../../database/migrations'), // local monorepo
+  path.resolve(process.cwd(), 'migrations'),          // run from backend root
+  path.resolve(process.cwd(), 'database/migrations'), // run from repo root
+].filter(Boolean);
+
+console.log('[migrate] __dirname  :', __dirname);
+console.log('[migrate] cwd        :', process.cwd());
+try {
+  console.log('[migrate] /app contents     :', fs.readdirSync('/app').join(', '));
+} catch (e) { console.log('[migrate] /app not readable:', e.message); }
+try {
+  console.log('[migrate] cwd contents      :', fs.readdirSync(process.cwd()).join(', '));
+} catch (e) { console.log('[migrate] cwd not readable :', e.message); }
+
+const MIGRATIONS_DIR = CANDIDATE_DIRS.find((d) => fs.existsSync(d));
+if (!MIGRATIONS_DIR) {
+  console.error('[migrate] Searched:', CANDIDATE_DIRS);
+  console.error('[migrate] No migrations directory found.');
+  process.exit(1);
+}
+console.log('[migrate] Using dir  :', MIGRATIONS_DIR);
 
 const pool = new Pool({
   host:     process.env.DB_HOST     || 'localhost',
