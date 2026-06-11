@@ -3,11 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box, Drawer, AppBar, Toolbar, IconButton, Typography,
   List, ListItemButton, ListItemIcon, ListItemText,
-  Divider, Badge, Avatar, useTheme, useMediaQuery,
+  Divider, Badge, Snackbar, Alert, useTheme, useMediaQuery,
 } from "@mui/material";
 import MenuRoundedIcon              from "@mui/icons-material/MenuRounded";
 import HomeRoundedIcon              from "@mui/icons-material/HomeRounded";
-import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
 import ReceiptLongRoundedIcon       from "@mui/icons-material/ReceiptLongRounded";
 import PersonRoundedIcon            from "@mui/icons-material/PersonRounded";
 import DashboardRoundedIcon         from "@mui/icons-material/DashboardRounded";
@@ -18,10 +17,10 @@ import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneR
 import ShoppingCartRoundedIcon      from "@mui/icons-material/ShoppingCartRounded";
 import LogoutRoundedIcon            from "@mui/icons-material/LogoutRounded";
 import RoomServiceRoundedIcon       from "@mui/icons-material/RoomServiceRounded";
+import StorefrontRoundedIcon        from "@mui/icons-material/StorefrontRounded";
 import LunchDiningRoundedIcon       from "@mui/icons-material/LunchDiningRounded";
 import CircleRoundedIcon            from "@mui/icons-material/CircleRounded";
 import PeopleRoundedIcon            from "@mui/icons-material/PeopleRounded";
-import StorefrontRoundedIcon        from "@mui/icons-material/StorefrontRounded";
 import AssessmentRoundedIcon        from "@mui/icons-material/AssessmentRounded";
 import SettingsRoundedIcon          from "@mui/icons-material/SettingsRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
@@ -29,31 +28,33 @@ import Logo from "./Logo";
 import { brand } from "../theme";
 import { useCart }          from "../contexts/CartContext";
 import { useNotifications } from "../contexts/NotificationContext";
+import LogoutConfirmationDialog from "./LogoutConfirmationDialog";
+import Footer from "./Footer";
 
 export const DRAWER_WIDTH = 240;
 
 const CUSTOMER_NAV = [
-  { label: "Dashboard",     path: "/customer",               icon: <HomeRoundedIcon /> },
-  { label: "Services",      path: "/services",               icon: <RoomServiceRoundedIcon /> },
-  { label: "Tiffins",       path: "/services/tiffins",       icon: <LunchDiningRoundedIcon /> },
-  { label: "My Cart",       path: "/cart",                   icon: <ShoppingCartRoundedIcon />, cartBadge: true },
-  { label: "My Orders",     path: "/customer/orders",        icon: <ReceiptLongRoundedIcon /> },
-  { label: "Notifications", path: "/customer/notifications", icon: <NotificationsNoneRoundedIcon />, notifBadge: true },
-  { label: "Profile",       path: "/customer/profile",       icon: <PersonRoundedIcon /> },
+  { label: "Dashboard",     path: "/customer",                    icon: <HomeRoundedIcon />,                   exact: true  },
+  { label: "Services",      path: "/services",                    icon: <RoomServiceRoundedIcon />,            exact: true  },
+  { label: "Food Marketplace", path: "/services/food-marketplace",icon: <LunchDiningRoundedIcon />,            exact: false },
+  { label: "My Cart",       path: "/cart",                        icon: <ShoppingCartRoundedIcon />,           cartBadge: true  },
+  { label: "My Orders",     path: "/customer/orders",             icon: <ReceiptLongRoundedIcon /> },
+  { label: "Notifications", path: "/customer/notifications",      icon: <NotificationsNoneRoundedIcon />,      notifBadge: true },
+  { label: "Profile",       path: "/customer/profile",            icon: <PersonRoundedIcon /> },
 ];
 
 const CATERER_NAV = [
-  { label: "Dashboard",       path: "/caterer",                  icon: <DashboardRoundedIcon /> },
-  { label: "Food Management", path: "/caterer/foods",            icon: <RestaurantMenuRoundedIcon /> },
-  { label: "Add Food",        path: "/caterer/add-food",         icon: <AddCircleOutlineRoundedIcon /> },
-  { label: "Orders",          path: "/caterer/orders",           icon: <ListAltRoundedIcon /> },
-  { label: "Notifications",   path: "/caterer/notifications",    icon: <NotificationsNoneRoundedIcon />, notifBadge: true },
-  { label: "Availability",    path: "/caterer/availability",     icon: <CircleRoundedIcon /> },
-  { label: "Profile",         path: "/caterer/profile",          icon: <PersonRoundedIcon /> },
+  { label: "Dashboard",       path: "/caterer",               icon: <DashboardRoundedIcon />,         exact: true  },
+  { label: "Food Management", path: "/caterer/foods",         icon: <RestaurantMenuRoundedIcon /> },
+  { label: "Add Food",        path: "/caterer/add-food",      icon: <AddCircleOutlineRoundedIcon /> },
+  { label: "Orders",          path: "/caterer/sub-orders",    icon: <ListAltRoundedIcon /> },
+  { label: "Notifications",   path: "/caterer/notifications", icon: <NotificationsNoneRoundedIcon />, notifBadge: true },
+  { label: "Availability",    path: "/caterer/availability",  icon: <CircleRoundedIcon /> },
+  { label: "Profile",         path: "/caterer/profile",       icon: <PersonRoundedIcon /> },
 ];
 
 const ADMIN_NAV = [
-  { label: "Dashboard",    path: "/admin",              icon: <DashboardRoundedIcon /> },
+  { label: "Dashboard",    path: "/admin",              icon: <DashboardRoundedIcon />,         exact: true },
   { label: "Customers",    path: "/admin/customers",    icon: <PeopleRoundedIcon /> },
   { label: "Caterers",     path: "/admin/caterers",     icon: <StorefrontRoundedIcon /> },
   { label: "Food Catalog", path: "/admin/foods",        icon: <RestaurantMenuRoundedIcon /> },
@@ -63,24 +64,18 @@ const ADMIN_NAV = [
   { label: "Settings",     path: "/admin/settings",     icon: <SettingsRoundedIcon /> },
 ];
 
-function matchActive(path, currentPath) {
-  if (["/customer", "/caterer", "/admin"].includes(path)) return currentPath === path;
-  return currentPath.startsWith(path);
+function matchActive(item, currentPath) {
+  if (item.exact) return currentPath === item.path;
+  return currentPath === item.path || currentPath.startsWith(item.path + "/");
 }
 
-function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose }) {
+function SidebarContent({ navItems, cartCount, unreadCount, onClose, onLogoutRequest }) {
   const location = useLocation();
   const navigate  = useNavigate();
 
   const go = (path) => {
     navigate(path);
     if (onClose) onClose();
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
   };
 
   return (
@@ -94,22 +89,50 @@ function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose 
       </Box>
       <Divider sx={{ borderColor: "rgba(255,255,255,0.15)" }} />
 
+      {/* Logout — immediately below brand for easy access */}
+      <List sx={{ px: 1, pt: 1, pb: 0.5 }}>
+        <ListItemButton
+          onClick={onLogoutRequest}
+          sx={{
+            borderRadius: 2, px: 1.5,
+            color: "rgba(255,255,255,0.85)",
+            "& .MuiListItemIcon-root": { color: "rgba(255,255,255,0.7)", minWidth: 38 },
+            "&:hover": {
+              backgroundColor: brand.orangeMid,
+              color: "white",
+              "& .MuiListItemIcon-root": { color: "white" },
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 38 }}><LogoutRoundedIcon /></ListItemIcon>
+          <ListItemText
+            primary="Log Out"
+            slotProps={{ primary: { style: { fontSize: "0.88rem", fontWeight: 500 } } }}
+          />
+        </ListItemButton>
+      </List>
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.15)" }} />
+
       {/* Nav items */}
-      <List sx={{ flex: 1, pt: 1, px: 1 }}>
+      <List sx={{ flex: 1, pt: 1, px: 1, overflowY: "auto" }}>
         {navItems.map((item) => {
-          const active = matchActive(item.path, location.pathname);
+          const active = matchActive(item, location.pathname);
           let icon = item.icon;
           if (item.cartBadge && cartCount > 0) {
-            icon = <Badge badgeContent={cartCount} color="primary" max={99}
-              sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
-              {item.icon}
-            </Badge>;
+            icon = (
+              <Badge badgeContent={cartCount} max={99}
+                sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
+                {item.icon}
+              </Badge>
+            );
           }
           if (item.notifBadge && unreadCount > 0) {
-            icon = <Badge badgeContent={unreadCount} max={99}
-              sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
-              {item.icon}
-            </Badge>;
+            icon = (
+              <Badge badgeContent={unreadCount} max={99}
+                sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
+                {item.icon}
+              </Badge>
+            );
           }
           return (
             <ListItemButton
@@ -133,40 +156,22 @@ function SidebarContent({ navItems, onNavigate, cartCount, unreadCount, onClose 
               <ListItemIcon sx={{ minWidth: 38 }}>{icon}</ListItemIcon>
               <ListItemText
                 primary={item.label}
-                primaryTypographyProps={{ fontWeight: active ? 700 : 500, fontSize: "0.88rem" }}
+                slotProps={{ primary: { style: { fontWeight: active ? 700 : 500, fontSize: "0.88rem" } } }}
               />
             </ListItemButton>
           );
         })}
-      </List>
-
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.15)" }} />
-      {/* Logout */}
-      <List sx={{ px: 1, pb: 1 }}>
-        <ListItemButton
-          onClick={handleLogout}
-          sx={{
-            borderRadius: 2, px: 1.5,
-            color: "rgba(255,255,255,0.65)",
-            "& .MuiListItemIcon-root": { color: "rgba(255,255,255,0.65)", minWidth: 38 },
-            "&:hover": {
-              backgroundColor: "rgba(244,180,0,0.15)",
-              color: brand.goldLight,
-              "& .MuiListItemIcon-root": { color: brand.goldLight },
-            },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 38 }}><LogoutRoundedIcon /></ListItemIcon>
-          <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: "0.88rem" }} />
-        </ListItemButton>
       </List>
     </Box>
   );
 }
 
 export default function AppLayout({ children }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen,   setMobileOpen]   = useState(false);
+  const [logoutOpen,   setLogoutOpen]   = useState(false);
+  const [toastOpen,    setToastOpen]    = useState(false);
   const location  = useLocation();
+  const navigate  = useNavigate();
   const theme     = useTheme();
   const isMobile  = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -183,7 +188,17 @@ export default function AppLayout({ children }) {
   else if (path.startsWith("/caterer") || role === "caterer") navItems = CATERER_NAV;
   else navItems = CUSTOMER_NAV;
 
-  const sidebarProps = { navItems, cartCount, unreadCount };
+  const handleLogoutRequest = () => setLogoutOpen(true);
+
+  const handleLogoutConfirm = () => {
+    setLogoutOpen(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setToastOpen(true);
+    setTimeout(() => navigate("/login"), 1500);
+  };
+
+  const sidebarProps = { navItems, cartCount, unreadCount, onLogoutRequest: handleLogoutRequest };
 
   const drawerSx = {
     width: DRAWER_WIDTH, boxSizing: "border-box",
@@ -192,88 +207,126 @@ export default function AppLayout({ children }) {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: brand.bg }}>
-      {/* Permanent sidebar — desktop */}
-      {!isMobile && (
-        <Drawer
-          variant="permanent"
+    <Box sx={{ display: "flex", minHeight: "100vh", flexDirection: "column", bgcolor: brand.bg }}>
+      <Box sx={{ display: "flex", flex: 1 }}>
+        {/* Permanent sidebar — desktop */}
+        {!isMobile && (
+          <Drawer
+            variant="permanent"
+            sx={{
+              width: DRAWER_WIDTH, flexShrink: 0,
+              "& .MuiDrawer-paper": drawerSx,
+            }}
+          >
+            <SidebarContent {...sidebarProps} />
+          </Drawer>
+        )}
+
+        {/* Temporary drawer — mobile */}
+        {isMobile && (
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            ModalProps={{ keepMounted: true }}
+            sx={{ "& .MuiDrawer-paper": { ...drawerSx, width: DRAWER_WIDTH } }}
+          >
+            <SidebarContent {...sidebarProps} onClose={() => setMobileOpen(false)} />
+          </Drawer>
+        )}
+
+        {/* Main content */}
+        <Box
+          component="main"
           sx={{
-            width: DRAWER_WIDTH, flexShrink: 0,
-            "& .MuiDrawer-paper": drawerSx,
+            flexGrow: 1,
+            minWidth: 0,
+            maxWidth: "100%",
+            overflowX: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            bgcolor: brand.bg,
           }}
         >
-          <SidebarContent {...sidebarProps} />
-        </Drawer>
-      )}
-
-      {/* Temporary drawer — mobile */}
-      {isMobile && (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          sx={{ "& .MuiDrawer-paper": drawerSx }}
-        >
-          <SidebarContent {...sidebarProps} onClose={() => setMobileOpen(false)} />
-        </Drawer>
-      )}
-
-      {/* Main content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          minWidth: 0,
-          bgcolor: brand.bg,
-        }}
-      >
-        {/* Mobile top bar */}
-        {isMobile && (
-          <>
-            <AppBar
-              position="fixed"
-              elevation={0}
-              sx={{
-                bgcolor: brand.white,
-                borderBottom: `1px solid ${brand.border}`,
-                color: brand.text,
-                zIndex: theme.zIndex.drawer + 1,
-              }}
-            >
-              <Toolbar sx={{ justifyContent: "space-between", minHeight: 56 }}>
-                <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
-                  <MenuRoundedIcon />
-                </IconButton>
-                <Logo size={32} showWordmark={false} />
-                <Box sx={{ display: "flex", gap: 0.5 }}>
-                  {navItems === CUSTOMER_NAV && (
-                    <>
-                      <IconButton size="small" sx={{ color: brand.orange }}>
+          {/* Mobile top bar */}
+          {isMobile && (
+            <>
+              <AppBar
+                position="fixed"
+                elevation={0}
+                sx={{
+                  bgcolor: brand.white,
+                  borderBottom: `1px solid ${brand.border}`,
+                  color: brand.text,
+                  zIndex: theme.zIndex.drawer + 1,
+                }}
+              >
+                <Toolbar sx={{ justifyContent: "space-between", minHeight: 56 }}>
+                  <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
+                    <MenuRoundedIcon />
+                  </IconButton>
+                  <Logo size={32} showWordmark={false} />
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
+                    {navItems === CUSTOMER_NAV && (
+                      <>
+                        <IconButton size="small" sx={{ color: brand.orange }}
+                          onClick={() => navigate("/customer/notifications")}>
+                          <Badge badgeContent={unreadCount > 0 ? unreadCount : null} max={99}
+                            sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
+                            <NotificationsNoneRoundedIcon fontSize="small" />
+                          </Badge>
+                        </IconButton>
+                        <IconButton size="small" sx={{ color: brand.orange }}
+                          onClick={() => navigate("/cart")}>
+                          <Badge badgeContent={cartCount > 0 ? cartCount : null} max={99}
+                            sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
+                            <ShoppingCartRoundedIcon fontSize="small" />
+                          </Badge>
+                        </IconButton>
+                      </>
+                    )}
+                    {navItems === CATERER_NAV && (
+                      <IconButton size="small" sx={{ color: brand.orange }}
+                        onClick={() => navigate("/caterer/notifications")}>
                         <Badge badgeContent={unreadCount > 0 ? unreadCount : null} max={99}
                           sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
                           <NotificationsNoneRoundedIcon fontSize="small" />
                         </Badge>
                       </IconButton>
-                      <IconButton size="small" sx={{ color: brand.orange }}>
-                        <Badge badgeContent={cartCount > 0 ? cartCount : null} max={99}
-                          sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
-                          <ShoppingCartRoundedIcon fontSize="small" />
-                        </Badge>
-                      </IconButton>
-                    </>
-                  )}
-                  {navItems === ADMIN_NAV && (
-                    <AdminPanelSettingsRoundedIcon sx={{ color: brand.orange }} />
-                  )}
-                </Box>
-              </Toolbar>
-            </AppBar>
-            <Toolbar sx={{ minHeight: "56px !important" }} />
-          </>
-        )}
-        {children}
+                    )}
+                    {navItems === ADMIN_NAV && (
+                      <AdminPanelSettingsRoundedIcon sx={{ color: brand.orange }} />
+                    )}
+                  </Box>
+                </Toolbar>
+              </AppBar>
+              <Toolbar sx={{ minHeight: "56px !important" }} />
+            </>
+          )}
+
+          <Box sx={{ flex: 1 }}>{children}</Box>
+          <Footer />
+        </Box>
       </Box>
+
+      {/* Logout confirmation dialog */}
+      <LogoutConfirmationDialog
+        open={logoutOpen}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={handleLogoutConfirm}
+      />
+
+      {/* Post-logout toast */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={2500}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" variant="filled" sx={{ fontWeight: 600 }}>
+          Thank you for visiting PO.PU. See you again soon!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

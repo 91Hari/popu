@@ -114,7 +114,8 @@ export default function AppRoutes() {
           <Route path="/services"               element={<ErrorBoundary><C allowed={CUST} element={<ServicesPage />} /></ErrorBoundary>} />
           <Route path="/services/catering"      element={<ErrorBoundary><C allowed={CUST} element={<CateringPage />} /></ErrorBoundary>} />
           <Route path="/services/catering/:id"  element={<ErrorBoundary><C allowed={CUST} element={<CatererDetailPage />} /></ErrorBoundary>} />
-          <Route path="/services/tiffins"       element={<ErrorBoundary><C allowed={CUST} element={<TiffinsPage />} /></ErrorBoundary>} />
+          <Route path="/services/food-marketplace" element={<ErrorBoundary><C allowed={CUST} element={<TiffinsPage />} /></ErrorBoundary>} />
+          <Route path="/services/tiffins"         element={<Navigate to="/services/food-marketplace" replace />} />
           <Route path="/services/book-cook"     element={<ErrorBoundary><C allowed={CUST} element={<BookCookPage />} /></ErrorBoundary>} />
           <Route path="/services/home-food"     element={<ErrorBoundary><C allowed={CUST} element={<HomeFoodPage />} /></ErrorBoundary>} />
           <Route path="/services/training"      element={<ErrorBoundary><C allowed={CUST} element={<TrainingPage />} /></ErrorBoundary>} />

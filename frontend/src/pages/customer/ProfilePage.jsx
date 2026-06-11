@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
-  Toolbar,
   Typography,
   Avatar,
   Button,
@@ -21,6 +20,7 @@ import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
+import BackButton from "../../components/BackButton";
 
 const MENU = [
   { label: "My Bookings", to: "/customer/orders", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
@@ -52,6 +52,7 @@ export default function ProfilePage() {
     <AppLayout>
 
       <Container maxWidth="sm" sx={{ pt: 3, pb: 4 }}>
+        <BackButton sx={{ mb: 1 }} />
         {/* Avatar card */}
         <Card sx={{ textAlign: "center", p: 3, mb: 2 }}>
           <Avatar

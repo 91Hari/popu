@@ -16,6 +16,7 @@ const BRAND_GREEN = brand.orange;
 export default function RegisterPage() {
   const [name, setName]               = useState("");
   const [email, setEmail]             = useState("");
+  const [phone, setPhone]             = useState("");
   const [password, setPassword]       = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole]               = useState("customer");
@@ -62,6 +63,9 @@ export default function RegisterPage() {
     if (!email.trim())             e.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Invalid email format";
 
+    if (!phone.trim())             e.phone = "Mobile number is required";
+    else if (!/^[+]?[\d\s\-]{10,15}$/.test(phone.trim())) e.phone = "Enter a valid mobile number";
+
     if (!password.trim())          e.password = "Password is required";
     else if (password.length < 6)  e.password = "Password must be at least 6 characters";
 
@@ -91,6 +95,7 @@ export default function RegisterPage() {
       await authService.register({
         name,
         email,
+        phone,
         password,
         role,
         ...(isCaterer && {
@@ -100,7 +105,7 @@ export default function RegisterPage() {
           longitude,
         }),
       });
-      navigate("/login");
+      navigate("/login", { state: { registered: true } });
     } catch (err) {
       setApiError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -145,6 +150,13 @@ export default function RegisterPage() {
                   value={email} onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors({ ...errors, email: "" }); }}
                   error={!!errors.email} helperText={errors.email}
                   placeholder="example@email.com" disabled={loading} autoComplete="email" sx={fieldSx}
+                />
+
+                <TextField
+                  fullWidth label="Mobile Number" type="tel"
+                  value={phone} onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors({ ...errors, phone: "" }); }}
+                  error={!!errors.phone} helperText={errors.phone}
+                  placeholder="e.g. 9876543210" disabled={loading} autoComplete="tel" sx={fieldSx}
                 />
 
                 <TextField

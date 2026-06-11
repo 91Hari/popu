@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Toolbar, Typography, InputBase, IconButton,
+  Box, Container, Typography, InputBase, IconButton,
   Grid, CircularProgress, Alert, Select, MenuItem, FormControl,
   Stack, ToggleButton, ToggleButtonGroup,
 } from "@mui/material";
@@ -12,6 +12,7 @@ import SortRoundedIcon from "@mui/icons-material/SortRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
+import EmptyState from "../../components/EmptyState";
 import foodService from "../../services/foodService";
 import { useCustomerGeo } from "../../utils/geoUtils";
 
@@ -93,7 +94,7 @@ export default function TiffinsPage() {
           </IconButton>
           <LunchDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Tiffins</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Food Marketplace</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {displayed.length} item{displayed.length !== 1 ? "s" : ""} available
               {customerCoords && " · showing ETA"}
@@ -161,11 +162,12 @@ export default function TiffinsPage() {
             <CircularProgress sx={{ color: brand.orange }} />
           </Box>
         ) : displayed.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 8 }}>
-            <LunchDiningRoundedIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>No items found</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>Try a different search or caterer filter</Typography>
-          </Box>
+          <EmptyState
+            icon={<LunchDiningRoundedIcon sx={{ fontSize: 64, color: brand.border, mb: 0.5 }} />}
+            title="0 Results Found"
+            message="No food items match your search."
+            hint="Try another food name, caterer, or adjust your filters."
+          />
         ) : (
           <Grid container spacing={2}>
             {displayed.map((food) => (
