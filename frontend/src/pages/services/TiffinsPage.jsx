@@ -171,7 +171,7 @@ export default function TiffinsPage() {
         ) : (
           <Grid container spacing={2}>
             {displayed.map((food) => (
-              <Grid item key={food.foodId || food.id} xs={6} sm={4} md={3} lg={2}>
+              <Grid item key={food.foodId || food.id} xs={6} sm={4} md={3} lg={3}>
                 <FoodCard
                   food={food}
                   onClick={() => navigate(`/customer/food/${food.foodId || food.id}`)}

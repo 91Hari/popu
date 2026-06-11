@@ -9,7 +9,6 @@ export const CARD_TOTAL_HEIGHT = CARD_IMG_HEIGHT + CARD_BODY_HEIGHT + CARD_BTN_H
 
 export default function CommonCard({
   imageSrc,
-  imageAlt,
   placeholderIcon,
   title,
   subtitle,
@@ -25,8 +24,11 @@ export default function CommonCard({
       onClick={!disabled && onClick ? onClick : undefined}
       sx={{
         height: CARD_TOTAL_HEIGHT,
+        minHeight: CARD_TOTAL_HEIGHT,
+        maxHeight: CARD_TOTAL_HEIGHT,
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
         cursor: onClick && !disabled ? "pointer" : "default",
         opacity: disabled ? 0.6 : 1,
         transition: "transform 0.15s, box-shadow 0.15s",
@@ -40,7 +42,10 @@ export default function CommonCard({
       <Box
         sx={{
           height: CARD_IMG_HEIGHT,
+          minHeight: CARD_IMG_HEIGHT,
+          maxHeight: CARD_IMG_HEIGHT,
           flexShrink: 0,
+          overflow: "hidden",
           background: imageSrc
             ? `url(${imageSrc}) center/cover no-repeat`
             : `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
@@ -87,19 +92,19 @@ export default function CommonCard({
         </Tooltip>
 
         {subtitle && (
-          <Typography
-            variant="caption"
+          <Box
             sx={{
+              fontSize: "0.75rem",
               color: "text.secondary",
               overflow: "hidden",
               whiteSpace: "nowrap",
               textOverflow: "ellipsis",
-              display: "block",
               mb: 0.25,
+              lineHeight: 1.4,
             }}
           >
             {subtitle}
-          </Typography>
+          </Box>
         )}
 
         {meta && (
