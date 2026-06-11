@@ -1,8 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { brand } from "../theme";
 
-const logoImg = "/popuLogo.png";
-
 export default function Logo({
   size = 64,
   width,
@@ -10,7 +8,7 @@ export default function Logo({
   showWordmark = true,
   showTagline = false,
   color = brand.orange,
-  blendMode,
+  src = "/popuLogo.png",
 }) {
   const imgHeight = height ?? size;
   const imgWidth  = width  ?? size;
@@ -18,7 +16,7 @@ export default function Logo({
   const mark = (
     <Box
       component="img"
-      src={logoImg}
+      src={src}
       alt="PO.PU"
       loading="lazy"
       sx={{
@@ -28,7 +26,6 @@ export default function Logo({
         display: "block",
         flexShrink: 0,
         imageRendering: "high-quality",
-        ...(blendMode && { mixBlendMode: blendMode }),
       }}
     />
   );

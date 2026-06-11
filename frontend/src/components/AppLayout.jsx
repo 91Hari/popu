@@ -82,7 +82,7 @@ function SidebarContent({ navItems, cartCount, unreadCount, onClose, onLogoutReq
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Brand */}
       <Box sx={{ px: 2.5, py: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Logo size={36} showWordmark={false} blendMode="multiply" />
+        <Logo size={36} showWordmark={false} src="/popuLogoHomePage.png" />
         <Typography variant="h6" sx={{ fontWeight: 900, color: brand.goldLight, letterSpacing: "-0.03em" }}>
           PO.PU
         </Typography>
@@ -265,7 +265,7 @@ export default function AppLayout({ children }) {
                   <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
                     <MenuRoundedIcon />
                   </IconButton>
-                  <Logo size={32} showWordmark={false} />
+                  <Logo size={32} showWordmark={false} src="/popuLogoHomePage.png" />
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     {navItems === CUSTOMER_NAV && (
                       <>
