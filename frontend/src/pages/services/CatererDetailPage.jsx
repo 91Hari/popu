@@ -2,15 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box, Container, Typography, Grid, CircularProgress,
-  Alert, Chip, Stack, Paper,
+  Alert, Chip, Stack, Paper, Button, Divider,
 } from "@mui/material";
 import BackButton from "../../components/BackButton";
-import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
+import EventRoundedIcon       from "@mui/icons-material/EventRounded";
+import LocationOnRoundedIcon  from "@mui/icons-material/LocationOnRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import api from "../../services/api";
+import reviewService from "../../services/reviewService";
 import FoodCard from "../../components/FoodCard";
+import ReviewsList from "../../components/ReviewsList";
+import { StarDisplay } from "../../components/StarRating";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import { useCustomerGeo, haversineKm, etaMinutes, formatDistance, formatEta } from "../../utils/geoUtils";
@@ -22,6 +26,7 @@ export default function CatererDetailPage() {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
+  const [reviewSummary, setReviewSummary] = useState({ avg_rating: null, total: 0 });
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +41,13 @@ export default function CatererDetailPage() {
       }
     };
     if (id) load();
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    reviewService.getReviews("caterer", id, { limit: 1 })
+      .then((d) => setReviewSummary({ avg_rating: d?.avg_rating ?? null, total: d?.total ?? 0 }))
+      .catch(() => {});
   }, [id]);
 
   const caterer   = data?.caterer;
@@ -127,7 +139,26 @@ export default function CatererDetailPage() {
                     size="small"
                     sx={{ height: 26, backgroundColor: brand.goldLight, color: brand.text, fontSize: "0.75rem" }}
                   />
+                  {reviewSummary.avg_rating != null && (
+                    <Box sx={{ display: "flex", alignItems: "center", height: 26 }}>
+                      <StarDisplay rating={Number(reviewSummary.avg_rating)} count={reviewSummary.total} size={14} />
+                    </Box>
+                  )}
                 </Stack>
+                {caterer.cateringAvailable && (
+                  <Button
+                    variant="contained"
+                    startIcon={<EventRoundedIcon />}
+                    onClick={() => navigate(`/customer/catering-booking/${id}`)}
+                    sx={{
+                      mt: 1.5,
+                      background: `linear-gradient(135deg, ${brand.orange}, ${brand.orangeMid})`,
+                      textTransform: "none", fontWeight: 700,
+                    }}
+                  >
+                    Book Catering for an Event
+                  </Button>
+                )}
               </Box>
             </Paper>
 
@@ -137,7 +168,7 @@ export default function CatererDetailPage() {
                 <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>
                   Available Now
                 </Typography>
-                <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
                   {available.map((food) => (
                     <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
                       <FoodCard
@@ -156,7 +187,7 @@ export default function CatererDetailPage() {
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.secondary", mb: 1.5 }}>
                   Currently Unavailable
                 </Typography>
-                <Grid container spacing={2}>
+                <Grid container spacing={2} alignItems="flex-start">
                   {unavailable.map((food) => (
                     <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
                       <FoodCard
@@ -175,6 +206,13 @@ export default function CatererDetailPage() {
                 <Typography variant="h6" sx={{ color: "text.secondary" }}>No food items yet</Typography>
               </Box>
             )}
+
+            {/* Caterer Reviews */}
+            <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5, mt: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>Caterer Reviews</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <ReviewsList subjectType="caterer" subjectId={id} />
+            </Paper>
           </>
         )}
       </Container>

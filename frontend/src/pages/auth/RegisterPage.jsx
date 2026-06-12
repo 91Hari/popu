@@ -98,11 +98,11 @@ export default function RegisterPage() {
         phone,
         password,
         role,
+        latitude,
+        longitude,
         ...(isCaterer && {
           business_name: businessName,
           address,
-          latitude,
-          longitude,
         }),
       });
       navigate("/login", { state: { registered: true } });
@@ -188,6 +188,41 @@ export default function RegisterPage() {
                   )}
                 </FormControl>
 
+                {/* GPS location capture — all roles */}
+                <Box
+                  sx={{
+                    p: 1.5, borderRadius: 1, border: `1px solid`,
+                    borderColor: geoStatus === "detected" ? brand.green : brand.border,
+                    backgroundColor: geoStatus === "detected" ? brand.greenLight : brand.bg,
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
+                  }}
+                >
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 600, display: "block" }}>
+                      {isCaterer ? "Business Location (GPS)" : "Your Delivery Location (GPS)"}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      {geoStatus === "idle"      && (isCaterer ? "Used to show delivery distance to customers" : "Used to calculate accurate delivery time for your orders")}
+                      {geoStatus === "detecting" && "Detecting your location…"}
+                      {geoStatus === "detected"  && `Detected — lat ${latitude?.toFixed(4)}, lng ${longitude?.toFixed(4)}`}
+                      {geoStatus === "denied"    && (isCaterer ? "Location access denied — customers won't see distance" : "Location access denied — delivery time estimates may be less accurate")}
+                    </Typography>
+                  </Box>
+                  {geoStatus === "detected" ? (
+                    <CheckCircleRoundedIcon sx={{ color: brand.green, flexShrink: 0 }} />
+                  ) : (
+                    <Button
+                      size="small" variant="outlined"
+                      startIcon={geoStatus === "detecting" ? <CircularProgress size={12} color="inherit" /> : <MyLocationRoundedIcon />}
+                      onClick={detectLocation}
+                      disabled={loading || geoStatus === "detecting"}
+                      sx={{ borderColor: BRAND_GREEN, color: BRAND_GREEN, fontWeight: 600, flexShrink: 0, fontSize: "0.75rem" }}
+                    >
+                      {geoStatus === "detecting" ? "Detecting…" : "Detect"}
+                    </Button>
+                  )}
+                </Box>
+
                 {/* Caterer-specific fields */}
                 <Collapse in={isCaterer} unmountOnExit>
                   <Stack spacing={2.5}>
@@ -211,41 +246,6 @@ export default function RegisterPage() {
                       placeholder="e.g. 12 MG Road, Banjara Hills, Hyderabad 500034"
                       disabled={loading} sx={fieldSx}
                     />
-
-                    {/* GPS capture */}
-                    <Box
-                      sx={{
-                        p: 1.5, borderRadius: 1, border: `1px solid`,
-                        borderColor: geoStatus === "detected" ? brand.green : brand.border,
-                        backgroundColor: geoStatus === "detected" ? brand.greenLight : brand.bg,
-                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="caption" sx={{ fontWeight: 600, display: "block" }}>
-                          Business Location (GPS)
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          {geoStatus === "idle"      && "Used to show delivery distance to customers"}
-                          {geoStatus === "detecting" && "Detecting your location…"}
-                          {geoStatus === "detected"  && `Detected — lat ${latitude?.toFixed(4)}, lng ${longitude?.toFixed(4)}`}
-                          {geoStatus === "denied"    && "Location access denied — customers won't see distance"}
-                        </Typography>
-                      </Box>
-                      {geoStatus === "detected" ? (
-                        <CheckCircleRoundedIcon sx={{ color: brand.green, flexShrink: 0 }} />
-                      ) : (
-                        <Button
-                          size="small" variant="outlined"
-                          startIcon={geoStatus === "detecting" ? <CircularProgress size={12} color="inherit" /> : <MyLocationRoundedIcon />}
-                          onClick={detectLocation}
-                          disabled={loading || geoStatus === "detecting"}
-                          sx={{ borderColor: BRAND_GREEN, color: BRAND_GREEN, fontWeight: 600, flexShrink: 0, fontSize: "0.75rem" }}
-                        >
-                          {geoStatus === "detecting" ? "Detecting…" : "Detect"}
-                        </Button>
-                      )}
-                    </Box>
                   </Stack>
                 </Collapse>
 

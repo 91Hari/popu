@@ -82,7 +82,40 @@ async function broadcastNotification(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function createUser(req, res, next) {
+  try {
+    res.status(201).json(await adminService.createUser(req.body));
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function deleteUser(req, res, next) {
+  try {
+    res.json(await adminService.deleteUser(req.params.id));
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function getCateringBookings(req, res, next) {
+  try {
+    const { page, limit, status } = req.query;
+    res.json(await adminService.getCateringBookings({ page, limit, status }));
+  } catch (err) { next(err); }
+}
+
+async function getAllRiders(req, res, next) {
+  try {
+    const { search, page, limit } = req.query;
+    res.json(await adminService.getAllRiders({ search, page, limit }));
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getDashboard, getCustomers, getCaterers, getFoods, getOrders,
   setCustomerStatus, setCatererStatus, setFoodStatus, updateOrderStatus, broadcastNotification,
+  createUser, deleteUser, getCateringBookings, getAllRiders,
 };

@@ -26,12 +26,12 @@ import BackButton from "../../components/BackButton";
 import LogoutConfirmationDialog from "../../components/LogoutConfirmationDialog";
 
 const MENU = [
-  { label: "My Bookings", to: "/customer/orders", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: "My Orders", to: "/customer/orders", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: "My Addresses", to: null, icon: <LocationOnRoundedIcon fontSize="small" /> },
-  { label: "Payment Methods", to: null, icon: <PaymentRoundedIcon fontSize="small" /> },
-  { label: "Wallet & Offers", to: "/customer/offers", icon: <LocalOfferRoundedIcon fontSize="small" /> },
-  { label: "Settings", to: null, icon: <SettingsRoundedIcon fontSize="small" /> },
+  { label: "My Bookings",     to: "/customer/catering-bookings",      icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: "My Orders",       to: "/customer/master-orders",          icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: "My Addresses",    to: "/customer/profile/addresses",      icon: <LocationOnRoundedIcon fontSize="small" /> },
+  { label: "Payment Methods", to: "/customer/profile/payment-methods",icon: <PaymentRoundedIcon fontSize="small" /> },
+  { label: "Wallet & Offers", to: "/customer/offers",                 icon: <LocalOfferRoundedIcon fontSize="small" /> },
+  { label: "Settings",        to: "/customer/profile/settings",       icon: <SettingsRoundedIcon fontSize="small" /> },
 ];
 
 export default function ProfilePage() {

@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Box, Button, Chip, CircularProgress, Tooltip, Typography } from "@mui/material";
 import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRounded";
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
-import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import CommonCard from "./CommonCard";
 import { useCart } from "../contexts/CartContext";
 import { brand } from "../theme";
 
 export default function FoodCard({ food = {}, onClick }) {
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded]   = useState(false);
+  const [adding, setAdding]       = useState(false);
+  const [addedCount, setAddedCount] = useState(0);
+  const resetRef = useRef(null);
   const { addToCart } = useCart();
+
+  useEffect(() => () => { if (resetRef.current) clearTimeout(resetRef.current); }, []);
 
   const id          = food.foodId  || food.id;
   const name        = food.foodName || food.food_name || food.name || "Food Item";
@@ -20,8 +22,8 @@ export default function FoodCard({ food = {}, onClick }) {
   const isAvailable = food.available ?? food.is_available ?? true;
   const imgSrc      = food.imageUrl || food.image_url;
   const category    = food.category;
-  const eta         = food.estimatedDeliveryTime; // minutes, from backend
-  const etaRange    = food.etaRange;              // e.g. "35-45 mins"
+  const eta         = food.estimatedDeliveryTime;
+  const etaRange    = food.etaRange;
 
   const handleAddToCart = async (e) => {
     e.stopPropagation();
@@ -29,8 +31,12 @@ export default function FoodCard({ food = {}, onClick }) {
     setAdding(true);
     try {
       await addToCart(id, 1);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1800);
+      setAddedCount((prev) => {
+        const next = prev + 1;
+        if (resetRef.current) clearTimeout(resetRef.current);
+        resetRef.current = setTimeout(() => setAddedCount(0), 2000);
+        return next;
+      });
     } catch (err) {
       console.error("Add to cart failed:", err);
     } finally {
@@ -67,7 +73,6 @@ export default function FoodCard({ food = {}, onClick }) {
         )}
       </Box>
 
-      {/* ETA chip — only shown when backend supplies it */}
       {eta != null && isAvailable && (
         <Tooltip title={`Prep + delivery: ~${eta} min`} placement="top">
           <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, mt: 0.5 }}>
@@ -81,36 +86,66 @@ export default function FoodCard({ food = {}, onClick }) {
     </Box>
   );
 
+  const isAdded = addedCount > 0;
+
   const action = (
-    <Button
-      fullWidth
-      size="small"
-      variant={added ? "contained" : "outlined"}
-      disabled={!isAvailable || adding}
-      onClick={handleAddToCart}
-      startIcon={
-        adding ? <CircularProgress size={12} /> :
-        added  ? <CheckRoundedIcon fontSize="small" /> :
-                 <AddShoppingCartRoundedIcon fontSize="small" />
-      }
-      sx={{
-        fontSize: "0.72rem",
-        fontWeight: 700,
-        height: 30,
-        ...(added ? {
-          backgroundColor: brand.green,
-          borderColor: brand.green,
-          color: "white",
-          "&:hover": { backgroundColor: brand.green },
-        } : {
-          borderColor: brand.orange,
-          color: brand.orange,
-          "&:hover": { backgroundColor: brand.greenLight },
-        }),
-      }}
-    >
-      {added ? "Added!" : "Add to Cart"}
-    </Button>
+    <Box sx={{ position: "relative", width: "100%" }}>
+      {/* Floating "+1" burst on each add */}
+      {isAdded && (
+        <Box
+          key={addedCount}
+          sx={{
+            position: "absolute",
+            top: -22,
+            right: 8,
+            fontSize: "0.8rem",
+            fontWeight: 900,
+            color: brand.green,
+            pointerEvents: "none",
+            zIndex: 10,
+            "@keyframes floatUp": {
+              "0%":   { opacity: 1, transform: "translateY(0) scale(1.2)" },
+              "60%":  { opacity: 1, transform: "translateY(-10px) scale(1)" },
+              "100%": { opacity: 0, transform: "translateY(-20px) scale(0.8)" },
+            },
+            animation: "floatUp 0.65s ease forwards",
+          }}
+        >
+          +1
+        </Box>
+      )}
+
+      <Button
+        fullWidth
+        size="small"
+        variant={isAdded ? "contained" : "outlined"}
+        disabled={!isAvailable || adding}
+        onClick={handleAddToCart}
+        startIcon={
+          adding ? <CircularProgress size={12} /> :
+          <AddShoppingCartRoundedIcon fontSize="small" />
+        }
+        sx={{
+          fontSize: "0.72rem",
+          fontWeight: 800,
+          height: 30,
+          transition: "all 0.2s ease",
+          ...(isAdded ? {
+            backgroundColor: brand.green,
+            borderColor: brand.green,
+            color: "white",
+            "&:hover": { backgroundColor: brand.green },
+            "&:disabled": { backgroundColor: brand.green, color: "white" },
+          } : {
+            borderColor: brand.orange,
+            color: brand.orange,
+            "&:hover": { backgroundColor: brand.greenLight },
+          }),
+        }}
+      >
+        {adding ? "Adding…" : isAdded ? `+${addedCount} Added` : "Add to Cart"}
+      </Button>
+    </Box>
   );
 
   return (

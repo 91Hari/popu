@@ -23,7 +23,14 @@ import CircleRoundedIcon            from "@mui/icons-material/CircleRounded";
 import PeopleRoundedIcon            from "@mui/icons-material/PeopleRounded";
 import AssessmentRoundedIcon        from "@mui/icons-material/AssessmentRounded";
 import SettingsRoundedIcon          from "@mui/icons-material/SettingsRounded";
+import TuneRoundedIcon              from "@mui/icons-material/TuneRounded";
+import PaymentsRoundedIcon          from "@mui/icons-material/PaymentsRounded";
+import CurrencyExchangeRoundedIcon  from "@mui/icons-material/CurrencyExchangeRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
+import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
+import EventRoundedIcon             from "@mui/icons-material/EventRounded";
+import EventNoteRoundedIcon         from "@mui/icons-material/EventNoteRounded";
+import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
 import Logo from "./Logo";
 import { brand } from "../theme";
 import { useCart }          from "../contexts/CartContext";
@@ -39,29 +46,44 @@ const CUSTOMER_NAV = [
   { label: "Food Marketplace", path: "/services/food-marketplace",icon: <LunchDiningRoundedIcon />,            exact: false },
   { label: "My Cart",       path: "/cart",                        icon: <ShoppingCartRoundedIcon />,           cartBadge: true  },
   { label: "My Orders",     path: "/customer/master-orders",       icon: <ReceiptLongRoundedIcon /> },
+  { label: "My Bookings",   path: "/customer/catering-bookings",   icon: <EventRoundedIcon /> },
   { label: "Notifications", path: "/customer/notifications",      icon: <NotificationsNoneRoundedIcon />,      notifBadge: true },
   { label: "Profile",       path: "/customer/profile",            icon: <PersonRoundedIcon /> },
 ];
 
 const CATERER_NAV = [
-  { label: "Dashboard",       path: "/caterer",               icon: <DashboardRoundedIcon />,         exact: true  },
-  { label: "Food Management", path: "/caterer/foods",         icon: <RestaurantMenuRoundedIcon /> },
-  { label: "Add Food",        path: "/caterer/add-food",      icon: <AddCircleOutlineRoundedIcon /> },
-  { label: "Orders",          path: "/caterer/sub-orders",    icon: <ListAltRoundedIcon /> },
-  { label: "Notifications",   path: "/caterer/notifications", icon: <NotificationsNoneRoundedIcon />, notifBadge: true },
-  { label: "Availability",    path: "/caterer/availability",  icon: <CircleRoundedIcon /> },
-  { label: "Profile",         path: "/caterer/profile",       icon: <PersonRoundedIcon /> },
+  { label: "Dashboard",        path: "/caterer",                  icon: <DashboardRoundedIcon />,         exact: true  },
+  { label: "Food Management",  path: "/caterer/foods",            icon: <RestaurantMenuRoundedIcon /> },
+  { label: "Add Food",         path: "/caterer/add-food",         icon: <AddCircleOutlineRoundedIcon /> },
+  { label: "Orders",           path: "/caterer/sub-orders",       icon: <ListAltRoundedIcon /> },
+  { label: "Catering Services",path: "/caterer/catering",          icon: <EventRoundedIcon /> },
+  { label: "Event Bookings",   path: "/caterer/catering-bookings", icon: <EventNoteRoundedIcon /> },
+  { label: "My Riders",        path: "/caterer/riders",            icon: <TwoWheelerRoundedIcon /> },
+  { label: "Notifications",    path: "/caterer/notifications",    icon: <NotificationsNoneRoundedIcon />, notifBadge: true },
+  { label: "Availability",     path: "/caterer/availability",     icon: <CircleRoundedIcon /> },
+  { label: "Profile",          path: "/caterer/profile",          icon: <PersonRoundedIcon /> },
 ];
 
 const ADMIN_NAV = [
-  { label: "Dashboard",    path: "/admin",              icon: <DashboardRoundedIcon />,         exact: true },
-  { label: "Customers",    path: "/admin/customers",    icon: <PeopleRoundedIcon /> },
-  { label: "Caterers",     path: "/admin/caterers",     icon: <StorefrontRoundedIcon /> },
-  { label: "Food Catalog", path: "/admin/foods",        icon: <RestaurantMenuRoundedIcon /> },
-  { label: "Orders",       path: "/admin/orders",       icon: <ReceiptLongRoundedIcon /> },
-  { label: "Notifications",path: "/admin/notifications",icon: <NotificationsNoneRoundedIcon /> },
-  { label: "Reports",      path: "/admin/reports",      icon: <AssessmentRoundedIcon /> },
-  { label: "Settings",     path: "/admin/settings",     icon: <SettingsRoundedIcon /> },
+  { label: "Dashboard",         path: "/admin",                    icon: <DashboardRoundedIcon />,         exact: true },
+  { label: "Customers",         path: "/admin/customers",          icon: <PeopleRoundedIcon /> },
+  { label: "Caterers",          path: "/admin/caterers",           icon: <StorefrontRoundedIcon /> },
+  { label: "Food Catalog",      path: "/admin/foods",              icon: <RestaurantMenuRoundedIcon /> },
+  { label: "Orders",            path: "/admin/orders",             icon: <ReceiptLongRoundedIcon /> },
+  { label: "Riders",            path: "/admin/riders",             icon: <TwoWheelerRoundedIcon /> },
+  { label: "Catering Bookings", path: "/admin/catering-bookings",  icon: <EventRoundedIcon /> },
+  { label: "Notifications",     path: "/admin/notifications",      icon: <NotificationsNoneRoundedIcon /> },
+  { label: "Reports",            path: "/admin/reports",             icon: <AssessmentRoundedIcon /> },
+  { label: "Platform Settings", path: "/admin/platform-settings",  icon: <TuneRoundedIcon /> },
+  { label: "Payments",          path: "/admin/payments",            icon: <PaymentsRoundedIcon /> },
+  { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },
+  { label: "Settings",          path: "/admin/settings",            icon: <SettingsRoundedIcon /> },
+];
+
+const RIDER_NAV = [
+  { label: "Dashboard",   path: "/rider",         icon: <TwoWheelerRoundedIcon />, exact: true },
+  { label: "Order Lookup",path: "/rider/lookup",  icon: <SearchRoundedIcon /> },
+  { label: "Profile",     path: "/rider/profile", icon: <PersonRoundedIcon /> },
 ];
 
 function matchActive(item, currentPath) {
@@ -184,8 +206,9 @@ export default function AppLayout({ children }) {
   })();
 
   let navItems;
-  if (path.startsWith("/admin") || role === "admin") navItems = ADMIN_NAV;
+  if      (path.startsWith("/admin")   || role === "admin")   navItems = ADMIN_NAV;
   else if (path.startsWith("/caterer") || role === "caterer") navItems = CATERER_NAV;
+  else if (path.startsWith("/rider")   || role === "rider")   navItems = RIDER_NAV;
   else navItems = CUSTOMER_NAV;
 
   const handleLogoutRequest = () => setLogoutOpen(true);
@@ -258,14 +281,13 @@ export default function AppLayout({ children }) {
                   bgcolor: brand.white,
                   borderBottom: `1px solid ${brand.border}`,
                   color: brand.text,
-                  zIndex: theme.zIndex.drawer + 1,
                 }}
               >
                 <Toolbar sx={{ justifyContent: "space-between", minHeight: 56 }}>
                   <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
                     <MenuRoundedIcon />
                   </IconButton>
-                  <Logo size={32} showWordmark={false} src="/popuLogoHomePage.png" />
+                  <Logo size={28} showWordmark src="/popuLogoHomePage.png" />
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     {navItems === CUSTOMER_NAV && (
                       <>
@@ -304,7 +326,7 @@ export default function AppLayout({ children }) {
             </>
           )}
 
-          <Box sx={{ flex: 1 }}>{children}</Box>
+          <Box sx={{ minHeight: "100vh" }}>{children}</Box>
           <Footer />
         </Box>
       </Box>

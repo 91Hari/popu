@@ -14,5 +14,9 @@ router.use('/checkout',               require('./checkoutRoutes'));
 router.use('/master-orders',          require('./masterOrderRoutes'));
 router.use('/caterer-orders',         require('./catererOrderRoutes'));
 router.use('/payment-proofs',         require('./paymentProofRoutes'));
+router.use('/reviews',                require('./reviewRoutes'));
+router.use('/payments',               require('./paymentRoutes'));
+router.use('/webhooks',               require('./webhookRoutes'));
+router.use('/profile',                require('./profileRoutes'));
 
 module.exports = router;

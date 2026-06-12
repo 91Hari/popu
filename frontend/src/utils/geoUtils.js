@@ -52,17 +52,26 @@ export function formatArrivalTime(dateOrIso) {
   return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
-// React hook — resolves once to customer's GPS, silently ignores denial
+// React hook — returns customer's location; prefers saved DB location from localStorage
 export function useCustomerGeo() {
-  const [coords, setCoords] = useState(null);
+  const [coords, setCoords] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("user") || "{}");
+      if (saved.latitude != null && saved.longitude != null) {
+        return { lat: Number(saved.latitude), lng: Number(saved.longitude) };
+      }
+    } catch { /* ignore */ }
+    return null;
+  });
 
   useEffect(() => {
+    if (coords) return; // already have saved location
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     );
-  }, []);
+  }, [coords]);
 
   return coords;
 }

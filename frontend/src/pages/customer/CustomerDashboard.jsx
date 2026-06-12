@@ -154,7 +154,7 @@ export default function CustomerDashboard() {
             <Typography variant="body2" sx={{ color: "text.secondary" }}>No food items available right now.</Typography>
           </Box>
         ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} alignItems="flex-start">
             {foods.map((food) => (
               <Grid item key={food.foodId || food.id} xs={6} sm={4} md={3} lg={3}>
                 <FoodCard
