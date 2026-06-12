@@ -65,6 +65,9 @@ const AdminMasterOrdersPage      = React.lazy(() => import("../pages/admin/Admin
 const AdminRidersPage            = React.lazy(() => import("../pages/admin/AdminRidersPage"));
 const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/AdminCateringBookingsPage"));
 const PlatformSettingsPage       = React.lazy(() => import("../pages/admin/PlatformSettingsPage"));
+const AdminPaymentsPage          = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
+const AdminRefundsPage           = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
+const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
 function isAuthenticated() {
   try { return !!localStorage.getItem("token"); } catch { return false; }
@@ -127,6 +130,7 @@ export default function AppRoutes() {
           <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
           <Route path="/checkout/split"           element={<ErrorBoundary><C allowed={CUST} element={<SplitCheckoutPage />} /></ErrorBoundary>} />
           <Route path="/customer/master-orders"   element={<ErrorBoundary><C allowed={CUST} element={<MasterOrdersPage />} /></ErrorBoundary>} />
+          <Route path="/payment/callback"          element={<ErrorBoundary><C allowed={CUST} element={<PaymentCallbackPage />} /></ErrorBoundary>} />
 
           {/* Services */}
           <Route path="/services"               element={<ErrorBoundary><C allowed={CUST} element={<ServicesPage />} /></ErrorBoundary>} />
@@ -173,6 +177,8 @@ export default function AppRoutes() {
           <Route path="/admin/riders"             element={<C allowed={ADMIN} element={<AdminRidersPage />} />} />
           <Route path="/admin/catering-bookings"   element={<C allowed={ADMIN} element={<AdminCateringBookingsPage />} />} />
           <Route path="/admin/platform-settings"  element={<C allowed={ADMIN} element={<PlatformSettingsPage />} />} />
+          <Route path="/admin/payments"            element={<C allowed={ADMIN} element={<AdminPaymentsPage />} />} />
+          <Route path="/admin/refunds"             element={<C allowed={ADMIN} element={<AdminRefundsPage />} />} />
 
           <Route path="/" element={<Navigate to="/customer" replace />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />

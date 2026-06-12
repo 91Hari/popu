@@ -375,6 +375,33 @@ async function cancelCatererOrder(id, user, cancel_reason) {
     `UPDATE caterer_orders SET status = 'CANCELLED', cancelled_at = NOW(), cancel_reason = $1 WHERE id = $2 RETURNING *`,
     [cancel_reason || null, id]
   );
+
+  // Trigger PhonePe refund if this order was paid online
+  setImmediate(async () => {
+    try {
+      const { rows: payRows } = await pool.query(
+        `SELECT p.* FROM payments p
+         WHERE p.master_order_id = $1 AND p.payment_status = 'SUCCESS'
+         LIMIT 1`,
+        [catererOrder.master_order_id]
+      );
+      if (!payRows.length) return;
+      const payment = payRows[0];
+
+      const refundService = require('./refundService');
+      await refundService.initiateRefund({
+        paymentId:       payment.id,
+        merchantOrderId: payment.merchant_transaction_id,
+        catererOrderId:  id,
+        masterOrderId:   catererOrder.master_order_id,
+        refundAmount:    parseFloat(catererOrder.subtotal),
+        reason:          `Caterer cancelled sub-order ${id.slice(0, 8).toUpperCase()}`,
+      });
+    } catch (err) {
+      console.error('[MasterOrderService] Refund initiation failed:', err.message);
+    }
+  });
+
   return updated[0];
 }
 

@@ -24,6 +24,8 @@ import PeopleRoundedIcon            from "@mui/icons-material/PeopleRounded";
 import AssessmentRoundedIcon        from "@mui/icons-material/AssessmentRounded";
 import SettingsRoundedIcon          from "@mui/icons-material/SettingsRounded";
 import TuneRoundedIcon              from "@mui/icons-material/TuneRounded";
+import PaymentsRoundedIcon          from "@mui/icons-material/PaymentsRounded";
+import CurrencyExchangeRoundedIcon  from "@mui/icons-material/CurrencyExchangeRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
@@ -73,6 +75,8 @@ const ADMIN_NAV = [
   { label: "Notifications",     path: "/admin/notifications",      icon: <NotificationsNoneRoundedIcon /> },
   { label: "Reports",            path: "/admin/reports",             icon: <AssessmentRoundedIcon /> },
   { label: "Platform Settings", path: "/admin/platform-settings",  icon: <TuneRoundedIcon /> },
+  { label: "Payments",          path: "/admin/payments",            icon: <PaymentsRoundedIcon /> },
+  { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },
   { label: "Settings",          path: "/admin/settings",            icon: <SettingsRoundedIcon /> },
 ];
 

@@ -1,7 +1,9 @@
-const express = require('express');
-const router  = express.Router();
-const ctrl    = require('../controllers/adminController');
-const psCtrl  = require('../controllers/platformSettingsController');
+const express    = require('express');
+const router     = express.Router();
+const ctrl       = require('../controllers/adminController');
+const psCtrl     = require('../controllers/platformSettingsController');
+const payCtrl    = require('../controllers/paymentController');
+const refundCtrl = require('../controllers/refundController');
 const { authenticate, requireRole } = require('../middlewares/authMiddleware');
 
 router.use(authenticate, requireRole('ADMIN'));
@@ -22,5 +24,7 @@ router.post('/users',                    ctrl.createUser);
 router.delete('/users/:id',              ctrl.deleteUser);
 router.get('/catering-bookings',         ctrl.getCateringBookings);
 router.get('/riders',                    ctrl.getAllRiders);
+router.get('/payments',                  payCtrl.adminListPayments);
+router.get('/refunds',                   refundCtrl.adminListRefunds);
 
 module.exports = router;

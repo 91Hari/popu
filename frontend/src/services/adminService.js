@@ -61,6 +61,16 @@ const adminService = {
   async updatePlatformSettings(data) {
     return api.request("/admin/platform-settings", { method: "PUT", body: JSON.stringify(data) });
   },
+  async getPayments({ page = 1, limit = 20, status } = {}) {
+    const p = new URLSearchParams({ page, limit });
+    if (status) p.set("status", status);
+    return api.request(`/admin/payments?${p}`);
+  },
+  async getRefunds({ page = 1, limit = 20, status } = {}) {
+    const p = new URLSearchParams({ page, limit });
+    if (status) p.set("status", status);
+    return api.request(`/admin/refunds?${p}`);
+  },
 };
 
 export default adminService;
