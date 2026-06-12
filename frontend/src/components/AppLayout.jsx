@@ -282,7 +282,7 @@ export default function AppLayout({ children }) {
                   <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
                     <MenuRoundedIcon />
                   </IconButton>
-                  <Logo size={32} showWordmark={false} src="/popuLogoHomePage.png" />
+                  <Logo size={28} showWordmark src="/popuLogoHomePage.png" />
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     {navItems === CUSTOMER_NAV && (
                       <>

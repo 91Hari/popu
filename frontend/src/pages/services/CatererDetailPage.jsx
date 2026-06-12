@@ -152,7 +152,7 @@ export default function CatererDetailPage() {
                 <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>
                   Available Now
                 </Typography>
-                <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
                   {available.map((food) => (
                     <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
                       <FoodCard
@@ -171,7 +171,7 @@ export default function CatererDetailPage() {
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.secondary", mb: 1.5 }}>
                   Currently Unavailable
                 </Typography>
-                <Grid container spacing={2}>
+                <Grid container spacing={2} alignItems="flex-start">
                   {unavailable.map((food) => (
                     <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
                       <FoodCard
