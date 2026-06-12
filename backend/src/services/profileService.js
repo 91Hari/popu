@@ -135,10 +135,29 @@ async function setDefaultAddress(userId, addressId) {
   }
 }
 
+// ─── UPI VPA live lookup ──────────────────────────────────────────────────────
+
+const UPI_FORMAT = /^[\w.\-]+@[\w]+$/;
+
+async function lookupVpa(upi) {
+  if (!UPI_FORMAT.test((upi || '').trim())) {
+    return { valid: false, reason: 'format' };
+  }
+  try {
+    const phonePeService = require('./phonePeService');
+    const result = await phonePeService.validateVpa(upi.trim());
+    if (result.valid) return { valid: true, name: result.name };
+    return { valid: false, reason: 'not_found' };
+  } catch {
+    // PhonePe not configured or API unreachable — degrade gracefully
+    return { valid: null, reason: 'service_unavailable' };
+  }
+}
+
 // ─── Payment methods ─────────────────────────────────────────────────────────
 
 function validateUpi(id) {
-  return /^[\w.\-]+@[\w]+$/.test(id);
+  return UPI_FORMAT.test(id);
 }
 
 async function getPaymentMethods(userId) {
@@ -194,4 +213,5 @@ module.exports = {
   getProfile, updateProfile,
   getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress,
   getPaymentMethods, savePaymentMethod, updatePaymentMethod, deletePaymentMethod,
+  lookupVpa,
 };

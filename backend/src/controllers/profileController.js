@@ -24,6 +24,13 @@ const updateAddress      = handle((req) => svc.updateAddress(req.user.id, req.pa
 const deleteAddress      = handle(async (req) => { await svc.deleteAddress(req.user.id, req.params.id); return { success: true }; });
 const setDefaultAddress  = handle((req) => svc.setDefaultAddress(req.user.id, req.params.id));
 
+// UPI VPA live lookup
+const lookupVpa = handle(async (req) => {
+  const upi = (req.query.upi || '').trim();
+  if (!upi) throw Object.assign(new Error('upi query param required'), { status: 400 });
+  return svc.lookupVpa(upi);
+});
+
 // Payment methods
 const getPaymentMethods    = handle((req) => svc.getPaymentMethods(req.user.id));
 const savePaymentMethod    = handle((req) => svc.savePaymentMethod(req.user.id, req.body));
@@ -34,4 +41,5 @@ module.exports = {
   getProfile, updateProfile,
   getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress,
   getPaymentMethods, savePaymentMethod, updatePaymentMethod, deletePaymentMethod,
+  lookupVpa,
 };

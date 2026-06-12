@@ -5,6 +5,9 @@ const { authenticate } = require('../middlewares/authMiddleware');
 
 router.use(authenticate);
 
+// UPI VPA live lookup (no body, uses ?upi= query param)
+router.get('/validate-upi', ctrl.lookupVpa);
+
 // Profile settings
 router.get('/',    ctrl.getProfile);
 router.put('/',    ctrl.updateProfile);

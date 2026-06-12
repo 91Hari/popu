@@ -179,6 +179,29 @@ async function getRefundStatus(merchantRefundId) {
   return data;
 }
 
+/**
+ * Validate a UPI VPA (Virtual Payment Address).
+ * Returns { valid: boolean, name: string|null }
+ * If PhonePe API is unreachable or not configured, throws so caller can degrade gracefully.
+ */
+async function validateVpa(vpa) {
+  const url     = `${base()}/v2/pg/vpa/validate`;
+  const headers = await authHeaders();
+
+  const res  = await fetch(url, {
+    method:  'POST',
+    headers,
+    body: JSON.stringify({ vpa }),
+  });
+  const data = await res.json();
+
+  // PhonePe returns success:false for unregistered VPAs (not an HTTP error)
+  return {
+    valid: data.success === true && data.data?.valid === true,
+    name:  data.data?.name || null,
+  };
+}
+
 function clearTokenCache() {
   _token   = null;
   _tokenExp = 0;
@@ -189,5 +212,6 @@ module.exports = {
   getOrderStatus,
   createRefund,
   getRefundStatus,
+  validateVpa,
   clearTokenCache,
 };
