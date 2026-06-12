@@ -26,9 +26,6 @@ function PhonePeBadge() {
   );
 }
 
-function buildUpiLink(upiId, name, amount) {
-  return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(name)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent("PO.PU Order")}`;
-}
 
 export default function SplitCheckoutPage() {
   const navigate       = useNavigate();
@@ -128,9 +125,7 @@ export default function SplitCheckoutPage() {
           {catererGroups.map((group) => {
             const profile  = catererProfiles[group.caterer_id];
             const upiId    = profile?.phonepe_id || profile?.upi_id || null;
-            const upiLabel = profile?.payment_name || group.caterer_name;
             const subtotal = group.items.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
-            const upiLink  = upiId ? buildUpiLink(upiId, upiLabel, subtotal) : null;
 
             return (
               <Paper key={group.caterer_id} elevation={0}
@@ -183,41 +178,69 @@ export default function SplitCheckoutPage() {
                     </Box>
                   ) : upiId ? (
                     <Box>
-                      {/* UPI ID display */}
+                      {/* Step instructions */}
                       <Box sx={{
-                        display: "flex", alignItems: "center", gap: 1, mb: 1.25,
-                        p: 1.25, borderRadius: 2,
-                        border: "1px solid #e8e0f7", backgroundColor: "#faf8ff",
+                        mb: 1.5, p: 1.5, borderRadius: 2,
+                        backgroundColor: "#f3f0ff", border: "1px solid #d8d0f7",
                       }}>
-                        <PhonePeBadge />
-                        <Typography variant="body2" sx={{ fontFamily: "monospace", flex: 1, fontWeight: 600 }}>
-                          {upiId}
-                        </Typography>
-                        <Tooltip title={copied === group.caterer_id ? "Copied!" : "Copy UPI ID"}>
-                          <IconButton size="small" onClick={() => handleCopyUpi(group.caterer_id, upiId)}>
-                            {copied === group.caterer_id
-                              ? <CheckRoundedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
-                              : <ContentCopyRoundedIcon sx={{ fontSize: 16 }} />}
-                          </IconButton>
-                        </Tooltip>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                          <PhonePeBadge />
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#5A4EE8" }}>
+                            Pay via PhonePe
+                          </Typography>
+                        </Box>
+                        <Stack spacing={0.4}>
+                          {[
+                            "Open PhonePe → Send Money",
+                            `Enter the UPI ID below`,
+                            `Pay ₹${subtotal.toFixed(2)} to ${group.caterer_name}`,
+                          ].map((step, i) => (
+                            <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                              <Typography variant="caption" sx={{
+                                fontWeight: 800, color: "#5A4EE8", minWidth: 16, lineHeight: 1.6,
+                              }}>{i + 1}.</Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+                                {step}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
                       </Box>
 
-                      {/* Pay button — UPI intent link */}
-                      <Button
-                        fullWidth variant="contained" size="medium"
-                        component="a" href={upiLink} target="_blank" rel="noopener noreferrer"
-                        startIcon={<PhonePeBadge />}
-                        sx={{
-                          background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
-                          fontWeight: 700, textTransform: "none",
-                          "&:hover": { background: "linear-gradient(135deg, #4A3ED8, #6B5CE0)" },
-                        }}
+                      {/* UPI ID — big copy target */}
+                      <Box sx={{
+                        display: "flex", alignItems: "center", gap: 1,
+                        p: 1.5, borderRadius: 2,
+                        border: `2px solid ${copied === group.caterer_id ? "#2e7d32" : "#e8e0f7"}`,
+                        backgroundColor: copied === group.caterer_id ? "#f1f8f1" : "#faf8ff",
+                        transition: "all 0.2s",
+                        cursor: "pointer",
+                      }}
+                        onClick={() => handleCopyUpi(group.caterer_id, upiId)}
                       >
-                        Pay ₹{subtotal.toFixed(2)} to {group.caterer_name} via PhonePe
-                      </Button>
-                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.75, textAlign: "center" }}>
-                        Opens PhonePe / any UPI app · Copy UPI ID above for desktop
-                      </Typography>
+                        <PhonePeBadge />
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1 }}>
+                            UPI ID
+                          </Typography>
+                          <Typography sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.95rem", letterSpacing: 0.3 }}>
+                            {upiId}
+                          </Typography>
+                        </Box>
+                        <Tooltip title={copied === group.caterer_id ? "Copied!" : "Tap to copy"}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            {copied === group.caterer_id
+                              ? <CheckRoundedIcon sx={{ fontSize: 18, color: "#2e7d32" }} />
+                              : <ContentCopyRoundedIcon sx={{ fontSize: 18, color: "#5A4EE8" }} />}
+                            <Typography variant="caption" sx={{
+                              color: copied === group.caterer_id ? "#2e7d32" : "#5A4EE8",
+                              fontWeight: 700,
+                            }}>
+                              {copied === group.caterer_id ? "Copied!" : "Copy"}
+                            </Typography>
+                          </Box>
+                        </Tooltip>
+                      </Box>
                     </Box>
                   ) : (
                     <Alert severity="warning" sx={{ fontSize: "0.8rem", py: 0.5 }}>
