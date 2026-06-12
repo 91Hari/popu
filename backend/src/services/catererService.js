@@ -57,32 +57,47 @@ async function getCatererById(id) {
        u.latitude,
        u.longitude,
        u.email,
-       u.availability_status AS "availabilityStatus",
+       u.availability_status  AS "availabilityStatus",
+       u.catering_available   AS "cateringAvailable",
        u.upi_id,
+       u.phonepe_id,
        u.payment_name,
        u.qr_code_image_url,
        u.bank_account_name,
-       COUNT(f.id)::int      AS "foodCount"
+       COUNT(f.id)::int       AS "foodCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
      WHERE u.id = $1 AND u.role = 'CATERER' AND u.is_active = TRUE
      GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude,
-              u.email, u.availability_status, u.upi_id, u.payment_name, u.qr_code_image_url, u.bank_account_name`,
+              u.email, u.availability_status, u.catering_available,
+              u.upi_id, u.phonepe_id, u.payment_name, u.qr_code_image_url, u.bank_account_name`,
     [id]
   );
   return rows[0] || null;
 }
 
-async function updatePaymentProfile(caterer_id, { upi_id, payment_name, qr_code_image_url, bank_account_name }) {
+async function getMyCatererProfile(caterer_id) {
+  const { rows } = await pool.query(
+    `SELECT id, name, email, phone, business_name, location, address,
+            upi_id, phonepe_id, payment_name, qr_code_image_url, bank_account_name,
+            availability_status, catering_available
+     FROM users WHERE id = $1 AND role = 'CATERER'`,
+    [caterer_id]
+  );
+  return rows[0] || null;
+}
+
+async function updatePaymentProfile(caterer_id, { upi_id, phonepe_id, payment_name, qr_code_image_url, bank_account_name }) {
   const { rows } = await pool.query(
     `UPDATE users
-     SET upi_id            = COALESCE($1, upi_id),
-         payment_name      = COALESCE($2, payment_name),
-         qr_code_image_url = COALESCE($3, qr_code_image_url),
-         bank_account_name = COALESCE($4, bank_account_name)
-     WHERE id = $5 AND role = 'CATERER'
-     RETURNING upi_id, payment_name, qr_code_image_url, bank_account_name`,
-    [upi_id || null, payment_name || null, qr_code_image_url || null, bank_account_name || null, caterer_id]
+     SET upi_id            = $1,
+         phonepe_id        = $2,
+         payment_name      = $3,
+         qr_code_image_url = $4,
+         bank_account_name = $5
+     WHERE id = $6 AND role = 'CATERER'
+     RETURNING upi_id, phonepe_id, payment_name, qr_code_image_url, bank_account_name`,
+    [upi_id || null, phonepe_id || null, payment_name || null, qr_code_image_url || null, bank_account_name || null, caterer_id]
   );
   if (!rows[0]) { const e = new Error('Caterer not found'); e.status = 404; throw e; }
   return rows[0];
@@ -90,7 +105,8 @@ async function updatePaymentProfile(caterer_id, { upi_id, payment_name, qr_code_
 
 async function getCatererFoods(caterer_id) {
   const { rows: catererRows } = await pool.query(
-    `SELECT id, name AS "catererName", business_name AS "businessName", location, address, latitude, longitude, email
+    `SELECT id, name AS "catererName", business_name AS "businessName",
+            location, address, latitude, longitude, email, catering_available AS "cateringAvailable"
      FROM users WHERE id = $1 AND role = 'CATERER' AND is_active = TRUE`,
     [caterer_id]
   );
@@ -109,4 +125,4 @@ async function getCatererFoods(caterer_id) {
   return { caterer: catererRows[0], foods };
 }
 
-module.exports = { getCaterers, getCatererById, getCatererFoods, updatePaymentProfile };
+module.exports = { getCaterers, getCatererById, getMyCatererProfile, getCatererFoods, updatePaymentProfile };

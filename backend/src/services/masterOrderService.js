@@ -2,6 +2,7 @@
 
 const pool = require('../config/db');
 const { notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
+const payCalc = require('./paymentCalculationService');
 
 const CATERER_ORDER_WITH_ITEMS = `
   SELECT
@@ -102,10 +103,14 @@ async function createSplitOrder({ customer_id, items, customer_lat, customer_lng
     const createdCatererOrders = [];
     for (const [caterer_id, lines] of catererGroups) {
       const subtotal = lines.reduce((s, l) => s + l.total_price, 0);
+      const pc = await payCalc.calculate(subtotal);
       const { rows: coRows } = await client.query(
-        `INSERT INTO caterer_orders (master_order_id, caterer_id, subtotal)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [masterOrder.id, caterer_id, subtotal]
+        `INSERT INTO caterer_orders
+           (master_order_id, caterer_id, subtotal,
+            commission_percentage, commission_amount, platform_fee, caterer_payout)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [masterOrder.id, caterer_id, subtotal,
+         pc.commission_percentage, pc.commission_amount, pc.platform_fee, pc.caterer_payout]
       );
       const catererOrder = coRows[0];
 
@@ -178,13 +183,15 @@ async function getMasterOrders(user) {
        (
          SELECT json_agg(
            json_build_object(
-             'id',             co.id,
-             'caterer_id',     co.caterer_id,
-             'caterer_name',   cu.name,
-             'status',         co.status,
-             'subtotal',       co.subtotal,
-             'payment_status', co.payment_status,
-             'created_at',     co.created_at,
+             'id',                        co.id,
+             'caterer_id',                co.caterer_id,
+             'caterer_name',              cu.name,
+             'status',                    co.status,
+             'subtotal',                  co.subtotal,
+             'payment_status',            co.payment_status,
+             'rider_id',                  co.rider_id,
+             'delivery_confirmation_code',co.delivery_confirmation_code,
+             'created_at',                co.created_at,
              'items', (
                SELECT json_agg(
                  json_build_object(
@@ -279,7 +286,7 @@ const CATERER_VALID_TRANSITIONS = {
   PLACED:    ['ACCEPTED', 'CANCELLED'],
   ACCEPTED:  ['PREPARING', 'CANCELLED'],
   PREPARING: ['READY', 'CANCELLED'],
-  READY:     ['DELIVERED'],
+  READY:     ['DELIVERED', 'CANCELLED'],
 };
 
 async function updateCatererOrderStatus(id, status, user) {
@@ -368,6 +375,33 @@ async function cancelCatererOrder(id, user, cancel_reason) {
     `UPDATE caterer_orders SET status = 'CANCELLED', cancelled_at = NOW(), cancel_reason = $1 WHERE id = $2 RETURNING *`,
     [cancel_reason || null, id]
   );
+
+  // Trigger PhonePe refund if this order was paid online
+  setImmediate(async () => {
+    try {
+      const { rows: payRows } = await pool.query(
+        `SELECT p.* FROM payments p
+         WHERE p.master_order_id = $1 AND p.payment_status = 'SUCCESS'
+         LIMIT 1`,
+        [catererOrder.master_order_id]
+      );
+      if (!payRows.length) return;
+      const payment = payRows[0];
+
+      const refundService = require('./refundService');
+      await refundService.initiateRefund({
+        paymentId:       payment.id,
+        merchantOrderId: payment.merchant_transaction_id,
+        catererOrderId:  id,
+        masterOrderId:   catererOrder.master_order_id,
+        refundAmount:    parseFloat(catererOrder.subtotal),
+        reason:          `Caterer cancelled sub-order ${id.slice(0, 8).toUpperCase()}`,
+      });
+    } catch (err) {
+      console.error('[MasterOrderService] Refund initiation failed:', err.message);
+    }
+  });
+
   return updated[0];
 }
 

@@ -103,7 +103,7 @@ export default function CartPage() {
             <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, overflow: "hidden" }}>
               {itemsWithEta.map((item, idx) => (
                 <Box key={item.id}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 2 }}>
+                  <Box sx={{ display: "flex", gap: 1.5, p: 2 }}>
                     {/* Thumbnail */}
                     <Box
                       sx={{
@@ -117,12 +117,20 @@ export default function CartPage() {
                       {!item.image_url && <DinnerDiningRoundedIcon sx={{ fontSize: 28, color: brand.orange, opacity: 0.7 }} />}
                     </Box>
 
-                    {/* Details */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>
-                        {item.food_name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }} noWrap>
+                    {/* Content column */}
+                    <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                      {/* Name + Price */}
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.food_name}
+                        </Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange, flexShrink: 0 }}>
+                          ₹{(Number(item.price) * item.quantity).toFixed(2)}
+                        </Typography>
+                      </Box>
+
+                      {/* Caterer */}
+                      <Typography variant="caption" sx={{ color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {item.caterer_name}
                       </Typography>
 
@@ -137,38 +145,32 @@ export default function CartPage() {
                       )}
 
                       {!item.is_available && (
-                        <Chip label="Unavailable" size="small" color="default" sx={{ height: 18, fontSize: "0.6rem", mt: 0.5 }} />
+                        <Chip label="Unavailable" size="small" color="default" sx={{ height: 18, fontSize: "0.6rem", mt: 0.5, alignSelf: "flex-start" }} />
                       )}
+
+                      {/* Qty controls + Remove */}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: "auto", pt: 0.75 }}>
+                        <IconButton size="small" onClick={() => updateQty(item.id, item.quantity - 1)}
+                          sx={{ width: 30, height: 30, backgroundColor: brand.greenLight, color: brand.orange }}>
+                          <RemoveRoundedIcon fontSize="small" />
+                        </IconButton>
+                        <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 24, textAlign: "center" }}>
+                          {item.quantity}
+                        </Typography>
+                        <IconButton size="small"
+                          disabled={item.is_available === false}
+                          onClick={() => updateQty(item.id, item.quantity + 1)}
+                          sx={{ width: 30, height: 30, backgroundColor: brand.orange, color: "white",
+                            "&.Mui-disabled": { backgroundColor: "#e0e0e0", color: "#bdbdbd" } }}>
+                          <AddRoundedIcon fontSize="small" />
+                        </IconButton>
+                        <Box sx={{ flex: 1 }} />
+                        <IconButton size="small" onClick={() => removeFromCart(item.id)}
+                          sx={{ color: "text.disabled", "&:hover": { color: "error.main" } }}>
+                          <DeleteOutlineRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
                     </Box>
-
-                    {/* Price */}
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange, flexShrink: 0, minWidth: 64, textAlign: "right" }}>
-                      ₹{(Number(item.price) * item.quantity).toFixed(2)}
-                    </Typography>
-
-                    {/* Qty controls */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
-                      <IconButton size="small" onClick={() => updateQty(item.id, item.quantity - 1)}
-                        sx={{ width: 28, height: 28, backgroundColor: brand.greenLight, color: brand.orange }}>
-                        <RemoveRoundedIcon fontSize="small" />
-                      </IconButton>
-                      <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 24, textAlign: "center" }}>
-                        {item.quantity}
-                      </Typography>
-                      <IconButton size="small"
-                        disabled={item.is_available === false}
-                        onClick={() => updateQty(item.id, item.quantity + 1)}
-                        sx={{ width: 28, height: 28, backgroundColor: brand.orange, color: "white",
-                          "&.Mui-disabled": { backgroundColor: "#e0e0e0", color: "#bdbdbd" } }}>
-                        <AddRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-
-                    {/* Remove */}
-                    <IconButton size="small" onClick={() => removeFromCart(item.id)}
-                      sx={{ color: "text.disabled", "&:hover": { color: "error.main" }, flexShrink: 0 }}>
-                      <DeleteOutlineRoundedIcon fontSize="small" />
-                    </IconButton>
                   </Box>
                   {idx < itemsWithEta.length - 1 && <Divider />}
                 </Box>

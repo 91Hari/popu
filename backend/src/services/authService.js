@@ -33,8 +33,8 @@ async function register({ name, email, password, role, phone, business_name, loc
       isCaterer ? (business_name || null) : null,
       isCaterer ? (location || address || null) : null,
       isCaterer ? (address || null) : null,
-      isCaterer ? (latitude  != null ? latitude  : null) : null,
-      isCaterer ? (longitude != null ? longitude : null) : null,
+      latitude  != null ? latitude  : null,
+      longitude != null ? longitude : null,
     ]
   );
 
@@ -43,7 +43,7 @@ async function register({ name, email, password, role, phone, business_name, loc
 
 async function login({ email, password }) {
   const { rows } = await pool.query(
-    'SELECT id, name, email, password_hash, role, is_active FROM users WHERE email = $1',
+    'SELECT id, name, email, password_hash, role, is_active, latitude, longitude FROM users WHERE email = $1',
     [email]
   );
 
@@ -75,7 +75,10 @@ async function login({ email, password }) {
 
   return {
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: {
+      id: user.id, name: user.name, email: user.email, role: user.role,
+      latitude: user.latitude, longitude: user.longitude,
+    },
   };
 }
 

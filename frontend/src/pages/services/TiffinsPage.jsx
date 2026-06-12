@@ -169,7 +169,7 @@ export default function TiffinsPage() {
             hint="Try another food name, caterer, or adjust your filters."
           />
         ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} alignItems="flex-start">
             {displayed.map((food) => (
               <Grid item key={food.foodId || food.id} xs={6} sm={4} md={3} lg={3}>
                 <FoodCard

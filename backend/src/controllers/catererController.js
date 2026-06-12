@@ -30,11 +30,21 @@ async function getCatererFoods(req, res, next) {
   }
 }
 
+async function getMyProfile(req, res, next) {
+  try {
+    const profile = await catererService.getMyCatererProfile(req.user.id);
+    if (!profile) return res.status(404).json({ error: 'Caterer not found' });
+    res.json({ profile });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updatePaymentProfile(req, res, next) {
   try {
-    const { upi_id, payment_name, qr_code_image_url, bank_account_name } = req.body;
+    const { upi_id, phonepe_id, payment_name, qr_code_image_url, bank_account_name } = req.body;
     const profile = await catererService.updatePaymentProfile(req.user.id, {
-      upi_id, payment_name, qr_code_image_url, bank_account_name,
+      upi_id, phonepe_id, payment_name, qr_code_image_url, bank_account_name,
     });
     res.json({ profile });
   } catch (err) {
@@ -43,4 +53,4 @@ async function updatePaymentProfile(req, res, next) {
   }
 }
 
-module.exports = { getCaterers, getCatererById, getCatererFoods, updatePaymentProfile };
+module.exports = { getCaterers, getCatererById, getMyProfile, getCatererFoods, updatePaymentProfile };

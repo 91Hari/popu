@@ -2,22 +2,27 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Box, Container, Typography, Card, CardContent, Stack,
   Chip, Button, CircularProgress, Alert, Divider,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Select, MenuItem, FormControl, InputLabel, Snackbar,
 } from "@mui/material";
 import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
+import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
 import masterOrderService from "../../services/masterOrderService";
+import riderService from "../../services/riderService";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 const STATUS_CFG = {
-  PLACED:    { label: "New Order",     color: "info",    actions: ["ACCEPTED", "CANCELLED"] },
-  ACCEPTED:  { label: "Accepted",      color: "primary", actions: ["PREPARING", "CANCELLED"] },
-  PREPARING: { label: "Preparing",     color: "warning", actions: ["READY"] },
-  READY:     { label: "Ready",         color: "success", actions: ["DELIVERED"] },
-  DELIVERED: { label: "Delivered",     color: "success", actions: [] },
-  CANCELLED: { label: "Cancelled",     color: "default", actions: [] },
+  PLACED:            { label: "New Order",      color: "info",    actions: ["ACCEPTED", "CANCELLED"] },
+  ACCEPTED:          { label: "Accepted",       color: "primary", actions: ["PREPARING", "CANCELLED"] },
+  PREPARING:         { label: "Preparing",      color: "warning", actions: ["READY"] },
+  READY:             { label: "Ready",          color: "success", actions: ["DELIVERED"] },
+  ASSIGNED_TO_RIDER: { label: "Rider Assigned", color: "info",    actions: [] },
+  OUT_FOR_DELIVERY:  { label: "Out for Delivery",color: "warning", actions: [] },
+  DELIVERED:         { label: "Delivered",      color: "success", actions: [] },
+  CANCELLED:         { label: "Cancelled",      color: "default", actions: [] },
 };
 
 const ACTION_LABELS = {
@@ -42,12 +47,16 @@ function fmtDate(ts) {
 }
 
 export default function CatererSubOrdersPage() {
-  const [orders, setOrders]     = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
-  const [updating, setUpdating] = useState({});
-  const [snack, setSnack]       = useState({ open: false, message: "", severity: "success" });
-  const [cancelDialog, setCancelDialog] = useState({ open: false, id: null, reason: "" });
+  const [orders, setOrders]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState("");
+  const [updating, setUpdating]   = useState({});
+  const [snack, setSnack]         = useState({ open: false, message: "", severity: "success" });
+  const [cancelDialog, setCancelDialog]   = useState({ open: false, id: null, reason: "" });
+  const [assignDialog, setAssignDialog]   = useState({ open: false, orderId: null });
+  const [riders, setRiders]               = useState([]);
+  const [selectedRider, setSelectedRider] = useState("");
+  const [assigning, setAssigning]         = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -66,6 +75,32 @@ export default function CatererSubOrdersPage() {
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
   }, [load]);
+
+  const openAssignDialog = async (orderId) => {
+    setAssignDialog({ open: true, orderId });
+    setSelectedRider("");
+    try {
+      const data = await riderService.listMyRiders();
+      setRiders(Array.isArray(data) ? data.filter((r) => r.is_active) : []);
+    } catch {
+      setRiders([]);
+    }
+  };
+
+  const handleAssignConfirm = async () => {
+    if (!selectedRider) return;
+    setAssigning(true);
+    try {
+      const updated = await riderService.assignRider(assignDialog.orderId, selectedRider);
+      setOrders((prev) => prev.map((o) => o.id === assignDialog.orderId ? { ...o, ...updated } : o));
+      setAssignDialog({ open: false, orderId: null });
+      setSnack({ open: true, message: "Rider assigned successfully.", severity: "success" });
+    } catch (err) {
+      setSnack({ open: true, message: err?.message || "Failed to assign rider.", severity: "error" });
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   const handleAction = async (orderId, status) => {
     if (status === "CANCELLED") {
@@ -208,24 +243,33 @@ export default function CatererSubOrdersPage() {
                         ₹{Number(order.subtotal || 0).toFixed(2)}
                       </Typography>
 
-                      {cfg.actions.length > 0 && (
-                        <Stack direction="row" spacing={1}>
-                          {cfg.actions.map((action) => (
-                            <Button
-                              key={action}
-                              size="small"
-                              variant={action === "CANCELLED" ? "outlined" : "contained"}
-                              color={action === "CANCELLED" ? "error" : "primary"}
-                              disabled={isUpdating}
-                              onClick={() => handleAction(order.id, action)}
-                              startIcon={isUpdating ? <CircularProgress size={12} color="inherit" /> : null}
-                              sx={{ fontWeight: 600, fontSize: "0.75rem" }}
-                            >
-                              {ACTION_LABELS[action] || action}
-                            </Button>
-                          ))}
-                        </Stack>
-                      )}
+                      <Stack direction="row" spacing={1}>
+                        {cfg.actions.length > 0 && cfg.actions.map((action) => (
+                          <Button
+                            key={action}
+                            size="small"
+                            variant={action === "CANCELLED" ? "outlined" : "contained"}
+                            color={action === "CANCELLED" ? "error" : "primary"}
+                            disabled={isUpdating}
+                            onClick={() => handleAction(order.id, action)}
+                            startIcon={isUpdating ? <CircularProgress size={12} color="inherit" /> : null}
+                            sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                          >
+                            {ACTION_LABELS[action] || action}
+                          </Button>
+                        ))}
+                        {statusKey === "READY" && (
+                          <Button
+                            size="small" variant="outlined"
+                            startIcon={<TwoWheelerRoundedIcon fontSize="small" />}
+                            disabled={isUpdating}
+                            onClick={() => openAssignDialog(order.id)}
+                            sx={{ fontWeight: 600, fontSize: "0.75rem", color: brand.orange, borderColor: brand.orange }}
+                          >
+                            Assign Rider
+                          </Button>
+                        )}
+                      </Stack>
                     </Box>
                   </CardContent>
                 </Card>
@@ -234,6 +278,44 @@ export default function CatererSubOrdersPage() {
           </Stack>
         )}
       </Container>
+
+      {/* Assign Rider Dialog */}
+      <Dialog open={assignDialog.open} onClose={() => !assigning && setAssignDialog({ open: false, orderId: null })} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Assign Rider to Order</DialogTitle>
+        <DialogContent>
+          {riders.length === 0 ? (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              No active riders found. Add riders in the My Riders page first.
+            </Alert>
+          ) : (
+            <FormControl fullWidth size="small" sx={{ mt: 1.5 }}>
+              <InputLabel>Select Rider</InputLabel>
+              <Select
+                label="Select Rider"
+                value={selectedRider}
+                onChange={(e) => setSelectedRider(e.target.value)}
+              >
+                {riders.map((r) => (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.name}{r.vehicle_type ? ` · ${r.vehicle_type}` : ""}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setAssignDialog({ open: false, orderId: null })} disabled={assigning}>Cancel</Button>
+          <Button
+            variant="contained" onClick={handleAssignConfirm}
+            disabled={assigning || !selectedRider}
+            startIcon={assigning ? <CircularProgress size={14} color="inherit" /> : null}
+            sx={{ background: `linear-gradient(135deg, ${brand.orange}, ${brand.orangeMid})` }}
+          >
+            Assign
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={cancelDialog.open} onClose={() => setCancelDialog((s) => ({ ...s, open: false }))} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Cancel this order?</DialogTitle>

@@ -13,18 +13,24 @@ import UploadFileRoundedIcon     from "@mui/icons-material/UploadFileRounded";
 import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
+import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
+import LockRoundedIcon           from "@mui/icons-material/LockRounded";
+import RateReviewRoundedIcon     from "@mui/icons-material/RateReviewRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
+import ReviewDialog from "../../components/ReviewDialog";
 import { brand } from "../../theme";
 
 const STATUS_CFG = {
-  PLACED:    { label: "Placed",           color: "info"    },
-  ACCEPTED:  { label: "Accepted",         color: "primary" },
-  PREPARING: { label: "Preparing",        color: "warning" },
-  READY:     { label: "Out for Delivery", color: "success" },
-  DELIVERED: { label: "Delivered",        color: "success" },
-  CANCELLED: { label: "Cancelled",        color: "default" },
+  PLACED:            { label: "Placed",           color: "info"    },
+  ACCEPTED:          { label: "Accepted",         color: "primary" },
+  PREPARING:         { label: "Preparing",        color: "warning" },
+  READY:             { label: "Ready",            color: "success" },
+  ASSIGNED_TO_RIDER: { label: "Rider Assigned",   color: "info"    },
+  OUT_FOR_DELIVERY:  { label: "Out for Delivery", color: "warning" },
+  DELIVERED:         { label: "Delivered",        color: "success" },
+  CANCELLED:         { label: "Cancelled",        color: "default" },
 };
 
 const PAY_CFG = {
@@ -51,6 +57,7 @@ export default function MasterOrdersPage() {
   const [proofDialog, setProofDialog]   = useState({ open: false, catererOrderId: null, url: "", ref: "" });
   const [submitting, setSubmitting] = useState(false);
   const [snack, setSnack]           = useState({ open: false, message: "", severity: "success" });
+  const [reviewDialog, setReviewDialog] = useState({ open: false, subjectType: "", subjectId: null, subjectName: "", orderRefId: null });
 
   const load = useCallback(async () => {
     try {
@@ -245,8 +252,36 @@ export default function MasterOrdersPage() {
                                 </Box>
                               )}
 
+                              {/* Delivery confirmation code — shown to customer so they can share with rider */}
+                              {co.delivery_confirmation_code && ["ASSIGNED_TO_RIDER", "OUT_FOR_DELIVERY"].includes(co.status) && (
+                                <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: "#FFF3E0", border: "1px solid #FFB74D" }}>
+                                  <Stack direction="row" alignItems="center" gap={0.75}>
+                                    <LockRoundedIcon sx={{ fontSize: 14, color: "#E65100" }} />
+                                    <Box>
+                                      <Typography variant="caption" sx={{ color: "#E65100", fontWeight: 700, display: "block" }}>
+                                        Your Delivery Code
+                                      </Typography>
+                                      <Typography variant="h6" sx={{ color: "#E65100", fontWeight: 900, letterSpacing: "0.25em", lineHeight: 1.2 }}>
+                                        {co.delivery_confirmation_code}
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ color: "#E65100", opacity: 0.8 }}>
+                                        Share this with your rider to confirm delivery
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                </Box>
+                              )}
+
                               {co.status !== "CANCELLED" && (
-                                <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                                <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                                  {co.status === "OUT_FOR_DELIVERY" && co.rider_id && (
+                                    <Chip
+                                      icon={<TwoWheelerRoundedIcon fontSize="small" />}
+                                      label="On the way to you!"
+                                      size="small"
+                                      sx={{ backgroundColor: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: "0.7rem" }}
+                                    />
+                                  )}
                                   {needsProof && (
                                     <Button
                                       size="small" variant="outlined"
@@ -277,6 +312,46 @@ export default function MasterOrdersPage() {
                                   )}
                                 </Stack>
                               )}
+
+                              {/* Rate section — shown only for DELIVERED orders */}
+                              {co.status === "DELIVERED" && (
+                                <Box sx={{ mt: 1.5 }}>
+                                  <Divider sx={{ mb: 1 }} />
+                                  <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                                    Rate your experience
+                                  </Typography>
+                                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                    <Button
+                                      size="small" variant="outlined"
+                                      startIcon={<RateReviewRoundedIcon fontSize="small" />}
+                                      onClick={() => setReviewDialog({ open: true, subjectType: "caterer", subjectId: co.caterer_id, subjectName: co.caterer_name, orderRefId: co.id })}
+                                      sx={{ fontWeight: 600, fontSize: "0.75rem", borderColor: brand.orange, color: brand.orange }}
+                                    >
+                                      Rate Caterer
+                                    </Button>
+                                    {co.rider_id && (
+                                      <Button
+                                        size="small" variant="outlined"
+                                        startIcon={<TwoWheelerRoundedIcon fontSize="small" />}
+                                        onClick={() => setReviewDialog({ open: true, subjectType: "rider", subjectId: co.rider_id, subjectName: co.rider_name || "Your Rider", orderRefId: co.id })}
+                                        sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                                      >
+                                        Rate Rider
+                                      </Button>
+                                    )}
+                                    {Array.isArray(co.items) && co.items.map((it, idx) => (
+                                      <Button
+                                        key={idx} size="small" variant="outlined"
+                                        startIcon={<DinnerDiningRoundedIcon fontSize="small" />}
+                                        onClick={() => setReviewDialog({ open: true, subjectType: "food", subjectId: it.food_item_id, subjectName: it.food_name, orderRefId: co.id })}
+                                        sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                      >
+                                        {it.food_name}
+                                      </Button>
+                                    ))}
+                                  </Stack>
+                                </Box>
+                              )}
                             </Box>
                           );
                         })}
@@ -289,6 +364,17 @@ export default function MasterOrdersPage() {
           </Stack>
         )}
       </Container>
+
+      {/* Review Dialog */}
+      <ReviewDialog
+        open={reviewDialog.open}
+        onClose={() => setReviewDialog((s) => ({ ...s, open: false }))}
+        onDone={() => setSnack({ open: true, message: "Review saved! Thank you.", severity: "success" })}
+        subjectType={reviewDialog.subjectType}
+        subjectId={reviewDialog.subjectId}
+        subjectName={reviewDialog.subjectName}
+        orderRefId={reviewDialog.orderRefId}
+      />
 
       {/* Cancel Dialog */}
       <Dialog open={cancelDialog.open} onClose={() => !submitting && setCancelDialog((s) => ({ ...s, open: false }))} maxWidth="xs" fullWidth>
