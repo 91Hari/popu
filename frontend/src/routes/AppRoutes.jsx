@@ -1,5 +1,11 @@
-import React, { Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import { CircularProgress, Box } from "@mui/material";
 import { brand } from "../theme";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -113,6 +119,7 @@ const Loader = () => (
 export default function AppRoutes() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/login"    element={<LoginPage />} />
