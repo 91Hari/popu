@@ -2,13 +2,16 @@ import { useState, useEffect } from "react";
 import {
   Container, Box, Typography, Card, CardContent, Stack,
   Switch, FormControlLabel, TextField, Button, CircularProgress,
-  Alert, Divider, Chip, Snackbar, InputAdornment,
+  Alert, Divider, Chip, Snackbar, InputAdornment, MenuItem, IconButton,
 } from "@mui/material";
 import TuneRoundedIcon            from "@mui/icons-material/TuneRounded";
 import PercentRoundedIcon         from "@mui/icons-material/PercentRounded";
 import CurrencyRupeeRoundedIcon   from "@mui/icons-material/CurrencyRupeeRounded";
 import InfoOutlinedIcon           from "@mui/icons-material/InfoOutlined";
 import CheckCircleRoundedIcon     from "@mui/icons-material/CheckCircleRounded";
+import VisibilityRoundedIcon      from "@mui/icons-material/VisibilityRounded";
+import VisibilityOffRoundedIcon   from "@mui/icons-material/VisibilityOffRounded";
+import SaveRoundedIcon            from "@mui/icons-material/SaveRounded";
 import AppLayout from "../../components/AppLayout";
 import platformSettingsService from "../../services/platformSettingsService";
 import { brand } from "../../theme";
@@ -77,18 +80,32 @@ export default function PlatformSettingsPage() {
     platform_fee_enabled:  false,
     platform_fee_amount:   0,
   });
-  const [loading, setSaving]    = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [snack, setSnack]       = useState({ open: false, message: "", severity: "success" });
+  const [phonepe, setPhonePe] = useState({
+    client_id: "", client_secret: "", env: "uat", client_version: "1",
+    secret_set: false, showSecret: false,
+  });
+  const [loading,    setSaving]    = useState(false);
+  const [ppSaving,   setPpSaving]  = useState(false);
+  const [fetching,   setFetching]  = useState(true);
+  const [snack,      setSnack]     = useState({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
     platformSettingsService.getSettings()
-      .then((s) => setSettings({
-        commission_enabled:    s.commission_enabled    ?? false,
-        commission_percentage: s.commission_percentage ?? 0,
-        platform_fee_enabled:  s.platform_fee_enabled  ?? false,
-        platform_fee_amount:   s.platform_fee_amount   ?? 0,
-      }))
+      .then((s) => {
+        setSettings({
+          commission_enabled:    s.commission_enabled    ?? false,
+          commission_percentage: s.commission_percentage ?? 0,
+          platform_fee_enabled:  s.platform_fee_enabled  ?? false,
+          platform_fee_amount:   s.platform_fee_amount   ?? 0,
+        });
+        setPhonePe((p) => ({
+          ...p,
+          client_id:      s.phonepe_client_id      || "",
+          env:            s.phonepe_env            || "uat",
+          client_version: s.phonepe_client_version || "1",
+          secret_set:     s.phonepe_secret_set     || false,
+        }));
+      })
       .catch(() => setSnack({ open: true, message: "Failed to load settings.", severity: "error" }))
       .finally(() => setFetching(false));
   }, []);
@@ -111,7 +128,34 @@ export default function PlatformSettingsPage() {
     }
   };
 
+  const handleSavePhonePe = async () => {
+    setPpSaving(true);
+    try {
+      const payload = {
+        phonepe_client_id:      phonepe.client_id,
+        phonepe_client_secret:  phonepe.client_secret, // empty string = keep existing
+        phonepe_env:            phonepe.env,
+        phonepe_client_version: phonepe.client_version || "1",
+      };
+      const updated = await platformSettingsService.updateSettings(payload);
+      setPhonePe((p) => ({
+        ...p,
+        client_id:      updated.phonepe_client_id      || p.client_id,
+        client_secret:  "",   // clear after save
+        env:            updated.phonepe_env            || p.env,
+        client_version: updated.phonepe_client_version || p.client_version,
+        secret_set:     updated.phonepe_secret_set     ?? p.secret_set,
+      }));
+      setSnack({ open: true, message: "PhonePe credentials saved.", severity: "success" });
+    } catch (err) {
+      setSnack({ open: true, message: err?.message || "Failed to save PhonePe credentials.", severity: "error" });
+    } finally {
+      setPpSaving(false);
+    }
+  };
+
   const set = (key) => (val) => setSettings((s) => ({ ...s, [key]: val }));
+  const setPp = (key) => (e) => setPhonePe((p) => ({ ...p, [key]: e.target.value }));
 
   if (fetching) {
     return (
@@ -248,6 +292,84 @@ export default function PlatformSettingsPage() {
                 feeEnabled={settings.platform_fee_enabled}
                 feeAmount={settings.platform_fee_amount}
               />
+            </CardContent>
+          </Card>
+
+          {/* PhonePe Credentials */}
+          <Card elevation={0} sx={{ border: `2px solid #e8e0f7`, borderRadius: 2 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+                <Box sx={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "0.6rem" }}>Pe</Typography>
+                </Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>PhonePe API Credentials</Typography>
+                {phonepe.secret_set && !phonepe.client_secret && (
+                  <Chip label="Configured" size="small" color="success" sx={{ fontWeight: 700, fontSize: "0.65rem" }} />
+                )}
+              </Box>
+              <Typography variant="body2" sx={{ color: "text.secondary", mb: 2.5 }}>
+                Stored in the database — no server restart or Render env vars needed.
+              </Typography>
+
+              <Stack spacing={2}>
+                <TextField
+                  fullWidth size="small" label="Client ID"
+                  placeholder="e.g. PGTESTPAYUAT"
+                  value={phonepe.client_id}
+                  onChange={setPp("client_id")}
+                />
+                <TextField
+                  fullWidth size="small" label="Client Secret"
+                  type={phonepe.showSecret ? "text" : "password"}
+                  placeholder={phonepe.secret_set ? "Secret saved — type to replace" : "Enter client secret"}
+                  value={phonepe.client_secret}
+                  onChange={setPp("client_secret")}
+                  helperText="Leave blank to keep the existing secret."
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setPhonePe((p) => ({ ...p, showSecret: !p.showSecret }))}>
+                          {phonepe.showSecret ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Stack direction="row" spacing={2}>
+                  <TextField
+                    size="small" select label="Environment"
+                    value={phonepe.env}
+                    onChange={setPp("env")}
+                    sx={{ minWidth: 160 }}
+                  >
+                    <MenuItem value="uat">UAT (Test)</MenuItem>
+                    <MenuItem value="production">Production</MenuItem>
+                  </TextField>
+                  <TextField
+                    size="small" label="Client Version"
+                    value={phonepe.client_version}
+                    onChange={setPp("client_version")}
+                    sx={{ width: 120 }}
+                  />
+                </Stack>
+
+                <Box>
+                  <Button
+                    variant="contained" onClick={handleSavePhonePe} disabled={ppSaving}
+                    startIcon={ppSaving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
+                    sx={{
+                      background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                      fontWeight: 700, textTransform: "none",
+                    }}
+                  >
+                    {ppSaving ? "Saving…" : "Save PhonePe Credentials"}
+                  </Button>
+                </Box>
+              </Stack>
             </CardContent>
           </Card>
 

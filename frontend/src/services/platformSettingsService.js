@@ -5,10 +5,10 @@ const platformSettingsService = {
     return api.request("/admin/platform-settings");
   },
 
-  async updateSettings({ commission_enabled, commission_percentage, platform_fee_enabled, platform_fee_amount }) {
+  async updateSettings(payload) {
     return api.request("/admin/platform-settings", {
       method: "PUT",
-      body: JSON.stringify({ commission_enabled, commission_percentage, platform_fee_enabled, platform_fee_amount }),
+      body: JSON.stringify(payload),
     });
   },
 };
