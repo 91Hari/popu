@@ -53,6 +53,9 @@ const CatererProfilePage           = React.lazy(() => import("../pages/caterer/C
 // Customer extras
 const BookCateringPage             = React.lazy(() => import("../pages/customer/BookCateringPage"));
 const CustomerCateringBookingsPage = React.lazy(() => import("../pages/customer/CustomerCateringBookingsPage"));
+const AddressManagementPage        = React.lazy(() => import("../pages/customer/AddressManagementPage"));
+const PaymentMethodsPage           = React.lazy(() => import("../pages/customer/PaymentMethodsPage"));
+const ProfileSettingsPage          = React.lazy(() => import("../pages/customer/ProfileSettingsPage"));
 
 // Rider portal
 const RiderDashboard       = React.lazy(() => import("../pages/rider/RiderDashboard"));
@@ -132,7 +135,10 @@ export default function AppRoutes() {
           <Route path="/customer/services"      element={<Navigate to="/services" replace />} />
           <Route path="/customer/food/:id"      element={<ErrorBoundary><C allowed={CUST} element={<FoodDetailsPage />} /></ErrorBoundary>} />
           <Route path="/customer/orders"        element={<Navigate to="/customer/master-orders" replace />} />
-          <Route path="/customer/profile"       element={<ErrorBoundary><C allowed={CUST} element={<ProfilePage />} /></ErrorBoundary>} />
+          <Route path="/customer/profile"                    element={<ErrorBoundary><C allowed={CUST} element={<ProfilePage />} /></ErrorBoundary>} />
+          <Route path="/customer/profile/addresses"        element={<ErrorBoundary><C allowed={CUST} element={<AddressManagementPage />} /></ErrorBoundary>} />
+          <Route path="/customer/profile/payment-methods"  element={<ErrorBoundary><C allowed={CUST} element={<PaymentMethodsPage />} /></ErrorBoundary>} />
+          <Route path="/customer/profile/settings"         element={<ErrorBoundary><C allowed={CUST} element={<ProfileSettingsPage />} /></ErrorBoundary>} />
           <Route path="/customer/offers"        element={<ErrorBoundary><C allowed={CUST} element={<OffersPage />} /></ErrorBoundary>} />
           <Route path="/customer/notifications"   element={<ErrorBoundary><C allowed={CUST} element={<NotificationsPage />} /></ErrorBoundary>} />
           <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
