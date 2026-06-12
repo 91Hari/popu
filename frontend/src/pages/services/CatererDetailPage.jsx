@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box, Container, Typography, Grid, CircularProgress,
-  Alert, Chip, Stack, Paper, Button,
+  Alert, Chip, Stack, Paper, Button, Divider,
 } from "@mui/material";
 import BackButton from "../../components/BackButton";
 import EventRoundedIcon       from "@mui/icons-material/EventRounded";
@@ -11,7 +11,10 @@ import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import api from "../../services/api";
+import reviewService from "../../services/reviewService";
 import FoodCard from "../../components/FoodCard";
+import ReviewsList from "../../components/ReviewsList";
+import { StarDisplay } from "../../components/StarRating";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import { useCustomerGeo, haversineKm, etaMinutes, formatDistance, formatEta } from "../../utils/geoUtils";
@@ -23,6 +26,7 @@ export default function CatererDetailPage() {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
+  const [reviewSummary, setReviewSummary] = useState({ avg_rating: null, total: 0 });
 
   useEffect(() => {
     const load = async () => {
@@ -37,6 +41,13 @@ export default function CatererDetailPage() {
       }
     };
     if (id) load();
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    reviewService.getReviews("caterer", id, { limit: 1 })
+      .then((d) => setReviewSummary({ avg_rating: d?.avg_rating ?? null, total: d?.total ?? 0 }))
+      .catch(() => {});
   }, [id]);
 
   const caterer   = data?.caterer;
@@ -128,6 +139,11 @@ export default function CatererDetailPage() {
                     size="small"
                     sx={{ height: 26, backgroundColor: brand.goldLight, color: brand.text, fontSize: "0.75rem" }}
                   />
+                  {reviewSummary.avg_rating != null && (
+                    <Box sx={{ display: "flex", alignItems: "center", height: 26 }}>
+                      <StarDisplay rating={Number(reviewSummary.avg_rating)} count={reviewSummary.total} size={14} />
+                    </Box>
+                  )}
                 </Stack>
                 {caterer.cateringAvailable && (
                   <Button
@@ -190,6 +206,13 @@ export default function CatererDetailPage() {
                 <Typography variant="h6" sx={{ color: "text.secondary" }}>No food items yet</Typography>
               </Box>
             )}
+
+            {/* Caterer Reviews */}
+            <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5, mt: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>Caterer Reviews</Typography>
+              <Divider sx={{ mb: 2 }} />
+              <ReviewsList subjectType="caterer" subjectId={id} />
+            </Paper>
           </>
         )}
       </Container>

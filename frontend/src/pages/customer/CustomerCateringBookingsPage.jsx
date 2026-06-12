@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Card, CardContent, Stack, Chip,
-  Button, CircularProgress, Alert, Divider,
+  Button, CircularProgress, Alert, Divider, Snackbar,
 } from "@mui/material";
-import EventRoundedIcon    from "@mui/icons-material/EventRounded";
-import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
-import PhoneRoundedIcon     from "@mui/icons-material/PhoneRounded";
+import EventRoundedIcon      from "@mui/icons-material/EventRounded";
+import PeopleAltRoundedIcon  from "@mui/icons-material/PeopleAltRounded";
+import PhoneRoundedIcon      from "@mui/icons-material/PhoneRounded";
+import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
 import AppLayout from "../../components/AppLayout";
+import ReviewDialog from "../../components/ReviewDialog";
 import { brand } from "../../theme";
 import cateringService from "../../services/cateringService";
 
@@ -29,6 +31,8 @@ export default function CustomerCateringBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
+  const [reviewDialog, setReviewDialog] = useState({ open: false, subjectType: "", subjectId: null, subjectName: "", orderRefId: null });
+  const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -132,6 +136,33 @@ export default function CustomerCateringBookingsPage() {
                         </Typography>
                       </Box>
                     )}
+
+                    {b.status === "COMPLETED" && (
+                      <Box sx={{ mt: 1.5 }}>
+                        <Divider sx={{ mb: 1 }} />
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                          Rate your experience
+                        </Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                          <Button
+                            size="small" variant="outlined"
+                            startIcon={<RateReviewRoundedIcon fontSize="small" />}
+                            onClick={() => setReviewDialog({ open: true, subjectType: "caterer", subjectId: b.caterer_id, subjectName: b.caterer_name, orderRefId: b.id })}
+                            sx={{ fontWeight: 600, fontSize: "0.75rem", borderColor: brand.orange, color: brand.orange }}
+                          >
+                            Rate Caterer
+                          </Button>
+                          <Button
+                            size="small" variant="outlined"
+                            startIcon={<EventRoundedIcon fontSize="small" />}
+                            onClick={() => setReviewDialog({ open: true, subjectType: "catering_service", subjectId: b.catering_service_id, subjectName: b.occasion_name, orderRefId: b.id })}
+                            sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                          >
+                            Rate Service
+                          </Button>
+                        </Stack>
+                      </Box>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -139,6 +170,25 @@ export default function CustomerCateringBookingsPage() {
           </Stack>
         )}
       </Container>
+      <ReviewDialog
+        open={reviewDialog.open}
+        onClose={() => setReviewDialog((s) => ({ ...s, open: false }))}
+        onDone={() => setSnack({ open: true, message: "Review saved! Thank you.", severity: "success" })}
+        subjectType={reviewDialog.subjectType}
+        subjectId={reviewDialog.subjectId}
+        subjectName={reviewDialog.subjectName}
+        orderRefId={reviewDialog.orderRefId}
+      />
+
+      <Snackbar
+        open={snack.open} autoHideDuration={3500}
+        onClose={() => setSnack((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity={snack.severity} variant="filled" onClose={() => setSnack((s) => ({ ...s, open: false }))}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </AppLayout>
   );
 }

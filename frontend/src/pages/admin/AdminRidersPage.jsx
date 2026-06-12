@@ -3,9 +3,12 @@ import {
   Box, Container, Typography, Card, Table, TableBody, TableCell,
   TableHead, TableRow, CircularProgress, Alert, Chip, Button,
   TextField, InputAdornment, Stack, Snackbar,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import TwoWheelerRoundedIcon from "@mui/icons-material/TwoWheelerRounded";
 import SearchRoundedIcon     from "@mui/icons-material/SearchRounded";
+import PersonAddRoundedIcon  from "@mui/icons-material/PersonAddRounded";
+import StarRoundedIcon       from "@mui/icons-material/StarRounded";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import adminService from "../../services/adminService";
@@ -15,6 +18,9 @@ export default function AdminRidersPage() {
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState("");
   const [snack, setSnack]       = useState({ open: false, message: "", severity: "success" });
+  const [addDialog, setAddDialog] = useState(false);
+  const [newRider, setNewRider]   = useState({ name: "", email: "", phone: "", password: "", caterer_id: "", vehicle_type: "", vehicle_number: "" });
+  const [adding, setAdding]       = useState(false);
 
   const load = useCallback(async (q = search) => {
     setLoading(true);
@@ -30,6 +36,22 @@ export default function AdminRidersPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const handleAddRider = async () => {
+    if (!newRider.name || !newRider.email || !newRider.password) return;
+    setAdding(true);
+    try {
+      await adminService.createUser({ ...newRider, role: "RIDER" });
+      setSnack({ open: true, message: "Rider created successfully.", severity: "success" });
+      setAddDialog(false);
+      setNewRider({ name: "", email: "", phone: "", password: "", caterer_id: "", vehicle_type: "", vehicle_number: "" });
+      await load();
+    } catch (err) {
+      setSnack({ open: true, message: err?.message || "Failed to create rider.", severity: "error" });
+    } finally {
+      setAdding(false);
+    }
+  };
+
   const handleToggleStatus = async (rider) => {
     try {
       await adminService.setCustomerStatus(rider.id, !rider.is_active);
@@ -43,14 +65,23 @@ export default function AdminRidersPage() {
   return (
     <AppLayout>
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <TwoWheelerRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>Riders</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              {data.total} registered rider{data.total !== 1 ? "s" : ""}
-            </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <TwoWheelerRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>Riders</Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                {data.total} registered rider{data.total !== 1 ? "s" : ""}
+              </Typography>
+            </Box>
           </Box>
+          <Button
+            variant="contained" startIcon={<PersonAddRoundedIcon />}
+            onClick={() => setAddDialog(true)}
+            sx={{ background: `linear-gradient(135deg, ${brand.orange}, ${brand.orangeMid})`, fontWeight: 700, textTransform: "none" }}
+          >
+            Add Rider
+          </Button>
         </Box>
 
         <Stack direction="row" sx={{ mb: 2 }}>
@@ -93,6 +124,7 @@ export default function AdminRidersPage() {
                   <TableCell>Phone</TableCell>
                   <TableCell>Vehicle</TableCell>
                   <TableCell>Caterer</TableCell>
+                  <TableCell align="center">Rating</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -107,6 +139,17 @@ export default function AdminRidersPage() {
                       {r.vehicle_type || "—"} {r.vehicle_number ? `· ${r.vehicle_number}` : ""}
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>{r.caterer_name || "—"}</TableCell>
+                    <TableCell align="center">
+                      {r.avg_rating != null ? (
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}>
+                          <StarRoundedIcon sx={{ fontSize: 13, color: brand.star }} />
+                          <Typography variant="caption" sx={{ fontWeight: 700 }}>{Number(r.avg_rating).toFixed(1)}</Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>({r.review_count})</Typography>
+                        </Box>
+                      ) : (
+                        <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={r.is_active ? "Active" : "Inactive"}
@@ -132,6 +175,30 @@ export default function AdminRidersPage() {
           </Card>
         )}
       </Container>
+
+      {/* Add Rider Dialog */}
+      <Dialog open={addDialog} onClose={() => !adding && setAddDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Add New Rider</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField size="small" label="Full Name *" value={newRider.name} onChange={(e) => setNewRider((s) => ({ ...s, name: e.target.value }))} fullWidth />
+            <TextField size="small" label="Email *" type="email" value={newRider.email} onChange={(e) => setNewRider((s) => ({ ...s, email: e.target.value }))} fullWidth />
+            <TextField size="small" label="Phone" value={newRider.phone} onChange={(e) => setNewRider((s) => ({ ...s, phone: e.target.value }))} fullWidth />
+            <TextField size="small" label="Caterer ID (optional)" value={newRider.caterer_id} onChange={(e) => setNewRider((s) => ({ ...s, caterer_id: e.target.value }))} fullWidth helperText="UUID of the caterer this rider belongs to" />
+            <TextField size="small" label="Vehicle Type" placeholder="e.g. Bike, Scooter" value={newRider.vehicle_type} onChange={(e) => setNewRider((s) => ({ ...s, vehicle_type: e.target.value }))} fullWidth />
+            <TextField size="small" label="Vehicle Number" value={newRider.vehicle_number} onChange={(e) => setNewRider((s) => ({ ...s, vehicle_number: e.target.value }))} fullWidth />
+            <TextField size="small" label="Password *" type="password" value={newRider.password} onChange={(e) => setNewRider((s) => ({ ...s, password: e.target.value }))} fullWidth />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setAddDialog(false)} disabled={adding}>Cancel</Button>
+          <Button variant="contained" onClick={handleAddRider} disabled={adding || !newRider.name || !newRider.email || !newRider.password}
+            startIcon={adding ? <CircularProgress size={14} color="inherit" /> : null}
+            sx={{ background: `linear-gradient(135deg, ${brand.orange}, ${brand.orangeMid})`, fontWeight: 700 }}>
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snack.open} autoHideDuration={3500}

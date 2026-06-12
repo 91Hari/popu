@@ -290,11 +290,15 @@ async function getAllRiders({ search, page = 1, limit = 20 } = {}) {
   const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.phone, u.is_active,
             rp.vehicle_type, rp.vehicle_number, rp.caterer_id,
-            uc.name AS caterer_name
+            uc.name AS caterer_name,
+            ROUND(AVG(rv.rating)::numeric, 1) AS avg_rating,
+            COUNT(rv.id)::int AS review_count
      FROM users u
      LEFT JOIN rider_profiles rp ON rp.user_id = u.id
      LEFT JOIN users uc ON uc.id = rp.caterer_id
+     LEFT JOIN reviews rv ON rv.subject_type = 'rider' AND rv.subject_id = u.id
      WHERE ${where}
+     GROUP BY u.id, rp.vehicle_type, rp.vehicle_number, rp.caterer_id, uc.name
      ORDER BY u.created_at DESC
      LIMIT $${idx++} OFFSET $${idx}`,
     params

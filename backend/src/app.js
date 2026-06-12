@@ -19,6 +19,7 @@ const catererOrderRoutes         = require('./routes/catererOrderRoutes');
 const paymentProofRoutes         = require('./routes/paymentProofRoutes');
 const cateringRoutes             = require('./routes/cateringRoutes');
 const riderRoutes                = require('./routes/riderRoutes');
+const reviewRoutes               = require('./routes/reviewRoutes');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/caterer-orders',         catererOrderRoutes);
 app.use('/api/payment-proofs',         paymentProofRoutes);
 app.use('/api/catering',               cateringRoutes);
 app.use('/api/riders',                 riderRoutes);
+app.use('/api/reviews',                reviewRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not Found' }));
 

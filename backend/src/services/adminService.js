@@ -37,7 +37,7 @@ async function getCustomers({ search, page = 1, limit = 20 } = {}) {
   const offset  = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
-    `SELECT id, name, email, is_active, created_at
+    `SELECT id, name, email, phone, is_active, created_at
      FROM users WHERE ${where}
      ORDER BY created_at DESC
      LIMIT $${idx++} OFFSET $${idx}`,
@@ -49,17 +49,23 @@ async function getCustomers({ search, page = 1, limit = 20 } = {}) {
 async function getCaterers({ search, page = 1, limit = 20 } = {}) {
   const params = [];
   let idx = 1;
-  const conds = [`role = 'CATERER'`];
-  if (search) { conds.push(`(name ILIKE $${idx} OR email ILIKE $${idx} OR business_name ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
+  const conds = [`u.role = 'CATERER'`];
+  if (search) { conds.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx} OR u.business_name ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
   const where = conds.join(' AND ');
-  const { rows: cnt } = await pool.query(`SELECT COUNT(*) FROM users WHERE ${where}`, params);
+  const { rows: cnt } = await pool.query(`SELECT COUNT(*) FROM users u WHERE ${where}`, params);
   const total   = Number(cnt[0].count);
   const offset  = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
-    `SELECT id, name, email, business_name, location, availability_status, is_active, created_at
-     FROM users WHERE ${where}
-     ORDER BY created_at DESC
+    `SELECT u.id, u.name, u.email, u.phone, u.business_name, u.location,
+            u.availability_status, u.is_active, u.created_at,
+            ROUND(AVG(r.rating)::numeric, 1) AS avg_rating,
+            COUNT(r.id)::int AS review_count
+     FROM users u
+     LEFT JOIN reviews r ON r.subject_type = 'caterer' AND r.subject_id = u.id
+     WHERE ${where}
+     GROUP BY u.id
+     ORDER BY u.created_at DESC
      LIMIT $${idx++} OFFSET $${idx}`,
     params
   );
@@ -173,25 +179,45 @@ async function broadcastNotification({ title, message, target_role, admin_id }) 
   return { ok: true };
 }
 
-async function createUser({ name, email, password, role, phone, business_name, address }) {
+async function createUser({ name, email, password, role, phone, business_name, address, caterer_id, vehicle_type, vehicle_number }) {
   const bcrypt = require('bcrypt');
-  const validRoles = ['CUSTOMER', 'CATERER'];
+  const upperRole = (role || '').toUpperCase();
+  const validRoles = ['CUSTOMER', 'CATERER', 'RIDER'];
   if (!name || !email || !password || !role) {
     const e = new Error('name, email, password, and role are required'); e.status = 400; throw e;
   }
-  if (!validRoles.includes(role.toUpperCase())) {
-    const e = new Error('role must be CUSTOMER or CATERER'); e.status = 400; throw e;
+  if (!validRoles.includes(upperRole)) {
+    const e = new Error('role must be CUSTOMER, CATERER, or RIDER'); e.status = 400; throw e;
   }
   const { rows: existing } = await pool.query(`SELECT id FROM users WHERE email = $1`, [email.toLowerCase()]);
   if (existing[0]) { const e = new Error('Email already in use'); e.status = 409; throw e; }
+
   const hash = await bcrypt.hash(password, 12);
-  const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password_hash, role, phone, business_name, address, is_active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
-     RETURNING id, name, email, role, is_active, created_at`,
-    [name, email.toLowerCase(), hash, role.toUpperCase(), phone || null, business_name || null, address || null]
-  );
-  return rows[0];
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `INSERT INTO users (name, email, password_hash, role, phone, business_name, address, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+       RETURNING id, name, email, role, is_active, created_at`,
+      [name, email.toLowerCase(), hash, upperRole, phone || null, business_name || null, address || null]
+    );
+    const user = rows[0];
+    if (upperRole === 'RIDER') {
+      await client.query(
+        `INSERT INTO rider_profiles (user_id, caterer_id, vehicle_type, vehicle_number)
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, caterer_id || null, vehicle_type || null, vehicle_number || null]
+      );
+    }
+    await client.query('COMMIT');
+    return user;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function deleteUser(id) {
