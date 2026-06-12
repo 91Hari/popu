@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   Container,
   Box,
-  Toolbar,
   Card,
   CardContent,
   Typography,
@@ -16,9 +15,7 @@ import {
   useTheme,
   Alert,
   Chip,
-  Divider,
 } from "@mui/material";
-import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
@@ -29,11 +26,8 @@ import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded
 import foodService from "../../services/foodService";
 import orderService from "../../services/orderService";
 import AppLayout from "../../components/AppLayout";
-import ReviewDialog from "../../components/ReviewDialog";
-import ReviewsList from "../../components/ReviewsList";
-import { StarDisplay } from "../../components/StarRating";
 import { brand } from "../../theme";
-import { useCustomerGeo, etaRange } from "../../utils/geoUtils";
+import { useCustomerGeo } from "../../utils/geoUtils";
 
 export default function FoodDetailsPage() {
   const { id }         = useParams();
@@ -44,12 +38,8 @@ export default function FoodDetailsPage() {
   const [error, setError]     = useState("");
   const [qty, setQty]         = useState(1);
   const [placing, setPlacing] = useState(false);
-  const [reviewOpen, setReviewOpen]   = useState(false);
-  const [reviewKey,  setReviewKey]    = useState(0);
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const currentUser = (() => { try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; } })();
-  const isCustomer  = currentUser?.role === "customer";
 
   useEffect(() => {
     const fetchFood = async () => {
@@ -150,21 +140,36 @@ export default function FoodDetailsPage() {
             overflow: "hidden",
           }}
         >
-          {/* Food image placeholder */}
+          {/* Food image */}
           <Box
             sx={{
               width: isMobile ? "100%" : "42%",
               minHeight: isMobile ? 220 : 320,
+              flexShrink: 0,
+              position: "relative",
+              overflow: "hidden",
               background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              flexShrink: 0,
             }}
           >
-            <DinnerDiningRoundedIcon
-              sx={{ fontSize: isMobile ? 72 : 100, color: brand.orange, opacity: 0.6 }}
-            />
+            {food.imageUrl ? (
+              <Box
+                component="img"
+                src={food.imageUrl}
+                alt={food.food_name}
+                sx={{
+                  position: "absolute", inset: 0,
+                  width: "100%", height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              <DinnerDiningRoundedIcon
+                sx={{ fontSize: isMobile ? 72 : 100, color: brand.orange, opacity: 0.6 }}
+              />
+            )}
           </Box>
 
           <CardContent sx={{ flex: 1, p: { xs: 2.5, md: 3 } }}>
@@ -300,35 +305,6 @@ export default function FoodDetailsPage() {
             </Button>
           </CardContent>
         </Card>
-        {/* Reviews section */}
-        <Card elevation={0} sx={{ mt: 3, border: `1px solid ${brand.border}` }}>
-          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800 }}>Customer Reviews</Typography>
-              {isCustomer && (
-                <Button
-                  size="small" variant="outlined"
-                  startIcon={<RateReviewRoundedIcon fontSize="small" />}
-                  onClick={() => setReviewOpen(true)}
-                  sx={{ fontWeight: 600, fontSize: "0.75rem", borderColor: brand.orange, color: brand.orange }}
-                >
-                  Write a Review
-                </Button>
-              )}
-            </Box>
-            <Divider sx={{ mb: 2 }} />
-            <ReviewsList subjectType="food" subjectId={food?.id} refreshKey={reviewKey} />
-          </CardContent>
-        </Card>
-
-        <ReviewDialog
-          open={reviewOpen}
-          onClose={() => setReviewOpen(false)}
-          onDone={() => { setReviewOpen(false); setReviewKey((k) => k + 1); }}
-          subjectType="food"
-          subjectId={food?.id}
-          subjectName={food?.food_name}
-        />
       </Container>
     </AppLayout>
   );

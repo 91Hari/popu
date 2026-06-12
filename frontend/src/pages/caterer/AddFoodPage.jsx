@@ -63,6 +63,7 @@ export default function AddFoodPage() {
         price:                   Number(price),
         available:               !!available,
         preparation_time_minutes: parseInt(prepTime, 10),
+        image_url:               imagePreview || null,
       });
       setSuccess("Food saved successfully.");
       setTimeout(() => navigate("/caterer/foods"), 900);
