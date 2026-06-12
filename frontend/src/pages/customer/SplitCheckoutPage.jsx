@@ -1,61 +1,98 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Button, CircularProgress,
-  Alert, Stack, Paper, Divider,
+  Alert, Stack, Paper, Divider, IconButton, Tooltip,
 } from "@mui/material";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import DinnerDiningRoundedIcon         from "@mui/icons-material/DinnerDiningRounded";
-import LockRoundedIcon                 from "@mui/icons-material/LockRounded";
-import { useCart }         from "../../contexts/CartContext";
-import paymentService      from "../../services/paymentService";
-import AppLayout           from "../../components/AppLayout";
-import { brand }           from "../../theme";
-import { useCustomerGeo }  from "../../utils/geoUtils";
+import ContentCopyRoundedIcon          from "@mui/icons-material/ContentCopyRounded";
+import CheckRoundedIcon                from "@mui/icons-material/CheckRounded";
+import { useCart }        from "../../contexts/CartContext";
+import AppLayout          from "../../components/AppLayout";
+import { brand }          from "../../theme";
+import { useCustomerGeo } from "../../utils/geoUtils";
+import api                from "../../services/api";
+
+function PhonePeBadge() {
+  return (
+    <Box sx={{
+      width: 22, height: 22, borderRadius: "50%",
+      background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+    }}>
+      <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "0.55rem", lineHeight: 1 }}>Pe</Typography>
+    </Box>
+  );
+}
+
+function buildUpiLink(upiId, name, amount) {
+  return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(name)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent("PO.PU Order")}`;
+}
 
 export default function SplitCheckoutPage() {
   const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
-  const { items, total } = useCart();
+  const { items, total, clearCart } = useCart();
 
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
+  const [catererProfiles, setCatererProfiles] = useState({});
+  const [loading,         setLoading]         = useState(false);
+  const [placing,         setPlacing]         = useState(false);
+  const [error,           setError]           = useState("");
+  const [copied,          setCopied]          = useState(null); // caterer_id being copied
 
   const catererGroups = useMemo(() => {
     const map = new Map();
     for (const item of items) {
       if (!map.has(item.caterer_id)) {
-        map.set(item.caterer_id, {
-          caterer_id:   item.caterer_id,
-          caterer_name: item.caterer_name,
-          items: [],
-        });
+        map.set(item.caterer_id, { caterer_id: item.caterer_id, caterer_name: item.caterer_name, items: [] });
       }
       map.get(item.caterer_id).items.push(item);
     }
     return [...map.values()];
   }, [items]);
 
-  const unavailableItems = useMemo(
-    () => items.filter((i) => i.is_available === false),
-    [items]
-  );
+  const unavailableItems = useMemo(() => items.filter((i) => i.is_available === false), [items]);
 
-  const handlePayWithPhonePe = async () => {
-    if (!items.length) return;
+  // Fetch caterer profiles to get UPI IDs
+  useEffect(() => {
+    const ids = [...new Set(items.map((i) => i.caterer_id))];
+    if (!ids.length) return;
     setLoading(true);
+    Promise.all(ids.map((id) => api.request(`/caterers/${id}`).catch(() => null)))
+      .then((results) => {
+        const map = {};
+        results.forEach((r) => { if (r?.caterer) map[r.caterer.id] = r.caterer; });
+        setCatererProfiles(map);
+      })
+      .finally(() => setLoading(false));
+  }, [items]);
+
+  const handleCopyUpi = (catererId, upiId) => {
+    navigator.clipboard.writeText(upiId).catch(() => {});
+    setCopied(catererId);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!items.length || unavailableItems.length > 0) return;
+    setPlacing(true);
     setError("");
     try {
-      const result = await paymentService.initiate({
-        items:       items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
-        customerLat: customerCoords?.lat,
-        customerLng: customerCoords?.lng,
+      await api.request("/checkout/split-order", {
+        method: "POST",
+        body: JSON.stringify({
+          items:        items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
+          customer_lat: customerCoords?.lat ?? null,
+          customer_lng: customerCoords?.lng ?? null,
+        }),
       });
-      // Redirect to PhonePe — browser leaves this page
-      window.location.href = result.checkoutUrl;
+      clearCart();
+      navigate("/customer/master-orders");
     } catch (err) {
-      setError(err?.message || "Could not initiate payment. Please try again.");
-      setLoading(false);
+      setError(err?.message || "Could not place order. Please try again.");
+    } finally {
+      setPlacing(false);
     }
   };
 
@@ -63,12 +100,8 @@ export default function SplitCheckoutPage() {
     return (
       <AppLayout>
         <Container maxWidth="md" sx={{ py: 6, textAlign: "center" }}>
-          <Typography variant="h6" sx={{ color: "text.secondary", mb: 2 }}>
-            Your cart is empty.
-          </Typography>
-          <Button variant="contained" onClick={() => navigate("/services/food-marketplace")}>
-            Browse Food
-          </Button>
+          <Typography variant="h6" sx={{ color: "text.secondary", mb: 2 }}>Your cart is empty.</Typography>
+          <Button variant="contained" onClick={() => navigate("/services/food-marketplace")}>Browse Food</Button>
         </Container>
       </AppLayout>
     );
@@ -82,40 +115,36 @@ export default function SplitCheckoutPage() {
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Checkout</Typography>
         </Box>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
 
         {unavailableItems.length > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            {unavailableItems.map((i) => `"${i.food_name}"`).join(", ")}{" "}
-            {unavailableItems.length === 1 ? "is" : "are"} no longer available. Go back and remove{" "}
-            {unavailableItems.length === 1 ? "it" : "them"} before proceeding.
+            {unavailableItems.map((i) => `"${i.food_name}"`).join(", ")} {unavailableItems.length === 1 ? "is" : "are"} no longer available.
+            Go back and remove {unavailableItems.length === 1 ? "it" : "them"} before proceeding.
           </Alert>
         )}
 
         <Stack spacing={2.5}>
-          {/* Order breakdown by caterer */}
           {catererGroups.map((group) => {
-            const subtotal = group.items.reduce(
-              (s, i) => s + Number(i.price) * i.quantity, 0
-            );
+            const profile  = catererProfiles[group.caterer_id];
+            const upiId    = profile?.phonepe_id || profile?.upi_id || null;
+            const upiLabel = profile?.payment_name || group.caterer_name;
+            const subtotal = group.items.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
+            const upiLink  = upiId ? buildUpiLink(upiId, upiLabel, subtotal) : null;
+
             return (
-              <Paper
-                key={group.caterer_id}
-                elevation={0}
-                sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, overflow: "hidden" }}
-              >
-                <Box sx={{
-                  px: 2.5, py: 1.5,
-                  backgroundColor: brand.greenLight,
-                  borderBottom: `1px solid ${brand.border}`,
-                }}>
+              <Paper key={group.caterer_id} elevation={0}
+                sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, overflow: "hidden" }}>
+                {/* Caterer header */}
+                <Box sx={{ px: 2.5, py: 1.5, backgroundColor: brand.greenLight, borderBottom: `1px solid ${brand.border}` }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: brand.orange }}>
                     {group.caterer_name}
                   </Typography>
                 </Box>
 
                 <Box sx={{ px: 2.5, py: 1.5 }}>
-                  <Stack spacing={1}>
+                  {/* Items */}
+                  <Stack spacing={1} sx={{ mb: 1.5 }}>
                     {group.items.map((item) => (
                       <Box key={item.id} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                         <Box sx={{
@@ -126,9 +155,7 @@ export default function SplitCheckoutPage() {
                           <DinnerDiningRoundedIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
                         </Box>
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {item.food_name}
-                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.food_name}</Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
                             {item.quantity} × ₹{Number(item.price).toFixed(2)}
                           </Typography>
@@ -140,21 +167,70 @@ export default function SplitCheckoutPage() {
                     ))}
                   </Stack>
 
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.5 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
                       Subtotal: ₹{subtotal.toFixed(2)}
                     </Typography>
                   </Box>
+
+                  <Divider sx={{ mb: 1.5 }} />
+
+                  {/* Payment section */}
+                  {loading && !profile ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
+                      <CircularProgress size={14} />
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>Loading payment info…</Typography>
+                    </Box>
+                  ) : upiId ? (
+                    <Box>
+                      {/* UPI ID display */}
+                      <Box sx={{
+                        display: "flex", alignItems: "center", gap: 1, mb: 1.25,
+                        p: 1.25, borderRadius: 2,
+                        border: "1px solid #e8e0f7", backgroundColor: "#faf8ff",
+                      }}>
+                        <PhonePeBadge />
+                        <Typography variant="body2" sx={{ fontFamily: "monospace", flex: 1, fontWeight: 600 }}>
+                          {upiId}
+                        </Typography>
+                        <Tooltip title={copied === group.caterer_id ? "Copied!" : "Copy UPI ID"}>
+                          <IconButton size="small" onClick={() => handleCopyUpi(group.caterer_id, upiId)}>
+                            {copied === group.caterer_id
+                              ? <CheckRoundedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
+                              : <ContentCopyRoundedIcon sx={{ fontSize: 16 }} />}
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+
+                      {/* Pay button — UPI intent link */}
+                      <Button
+                        fullWidth variant="contained" size="medium"
+                        component="a" href={upiLink} target="_blank" rel="noopener noreferrer"
+                        startIcon={<PhonePeBadge />}
+                        sx={{
+                          background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                          fontWeight: 700, textTransform: "none",
+                          "&:hover": { background: "linear-gradient(135deg, #4A3ED8, #6B5CE0)" },
+                        }}
+                      >
+                        Pay ₹{subtotal.toFixed(2)} to {group.caterer_name} via PhonePe
+                      </Button>
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.75, textAlign: "center" }}>
+                        Opens PhonePe / any UPI app · Copy UPI ID above for desktop
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Alert severity="warning" sx={{ fontSize: "0.8rem", py: 0.5 }}>
+                      {group.caterer_name} hasn't added a UPI ID yet. Contact them directly to arrange payment.
+                    </Alert>
+                  )}
                 </Box>
               </Paper>
             );
           })}
 
-          {/* Total + PhonePe pay button */}
-          <Paper
-            elevation={0}
-            sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5 }}
-          >
+          {/* Total + Place Order */}
+          <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 800 }}>Total</Typography>
               <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange }}>
@@ -164,43 +240,22 @@ export default function SplitCheckoutPage() {
 
             <Divider sx={{ mb: 2 }} />
 
-            <Box
-              sx={{
-                display: "flex", alignItems: "center", gap: 1, mb: 1.5, p: 1.25,
-                borderRadius: 2, backgroundColor: "#F0F4FF",
-                border: "1px solid #C5D0F0",
-              }}
-            >
-              <LockRoundedIcon sx={{ fontSize: 16, color: "#5A4EE8" }} />
-              <Typography variant="caption" sx={{ color: "#5A4EE8", fontWeight: 600 }}>
-                Secured by PhonePe — 100% safe &amp; encrypted
-              </Typography>
-            </Box>
+            <Alert severity="info" sx={{ mb: 2, fontSize: "0.8rem" }}>
+              Pay each caterer via their PhonePe link above, then tap <strong>Place Order</strong> to confirm.
+            </Alert>
 
             <Button
-              fullWidth
-              variant="contained"
-              size="large"
-              onClick={handlePayWithPhonePe}
-              disabled={loading || !items.length || unavailableItems.length > 0}
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
-              sx={{
-                fontWeight: 700,
-                py: 1.4,
-                background: loading ? undefined : "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
-                "&:hover": { background: "linear-gradient(135deg, #4A3ED8, #6B5CE0)" },
-              }}
+              fullWidth variant="contained" size="large"
+              onClick={handlePlaceOrder}
+              disabled={placing || !items.length || unavailableItems.length > 0}
+              startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
+              sx={{ fontWeight: 700, py: 1.4 }}
             >
-              {loading
-                ? "Redirecting to PhonePe…"
-                : `Pay ₹${Number(total).toFixed(2)} with PhonePe`}
+              {placing ? "Placing Order…" : "Place Order"}
             </Button>
 
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", display: "block", mt: 1.5, textAlign: "center" }}
-            >
-              Your order is confirmed only after successful payment.
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5, textAlign: "center" }}>
+              Order is sent to caterers after you tap Place Order.
             </Typography>
           </Paper>
         </Stack>
