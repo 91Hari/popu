@@ -77,18 +77,20 @@ export default function PlatformSettingsPage() {
     platform_fee_enabled:  false,
     platform_fee_amount:   0,
   });
-  const [loading, setSaving]    = useState(false);
+  const [loading,  setSaving]  = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [snack, setSnack]       = useState({ open: false, message: "", severity: "success" });
+  const [snack,      setSnack]     = useState({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
     platformSettingsService.getSettings()
-      .then((s) => setSettings({
-        commission_enabled:    s.commission_enabled    ?? false,
-        commission_percentage: s.commission_percentage ?? 0,
-        platform_fee_enabled:  s.platform_fee_enabled  ?? false,
-        platform_fee_amount:   s.platform_fee_amount   ?? 0,
-      }))
+      .then((s) => {
+        setSettings({
+          commission_enabled:    s.commission_enabled    ?? false,
+          commission_percentage: s.commission_percentage ?? 0,
+          platform_fee_enabled:  s.platform_fee_enabled  ?? false,
+          platform_fee_amount:   s.platform_fee_amount   ?? 0,
+        });
+      })
       .catch(() => setSnack({ open: true, message: "Failed to load settings.", severity: "error" }))
       .finally(() => setFetching(false));
   }, []);

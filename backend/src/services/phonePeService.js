@@ -18,37 +18,65 @@
 const PROD_BASE = 'https://api.phonepe.com/apis/pg';
 const UAT_BASE  = 'https://api-preprod.phonepe.com/apis/pg';
 
-function base() {
-  return process.env.PHONEPE_ENV === 'production' ? PROD_BASE : UAT_BASE;
+// ─── DB-backed config with env-var fallback ───────────────────────────────────
+
+let _configCache = null;
+let _configExp   = 0;
+
+async function getPhonePeConfig() {
+  const now = Date.now();
+  if (_configCache && now < _configExp) return _configCache;
+
+  try {
+    const pool = require('../config/db');
+    const { rows } = await pool.query(
+      `SELECT phonepe_client_id, phonepe_client_secret, phonepe_env, phonepe_client_version
+       FROM platform_settings ORDER BY created_at ASC LIMIT 1`
+    );
+    const row = rows[0] || {};
+    _configCache = {
+      client_id:      row.phonepe_client_id      || process.env.PHONEPE_CLIENT_ID      || '',
+      client_secret:  row.phonepe_client_secret  || process.env.PHONEPE_CLIENT_SECRET  || '',
+      env:            row.phonepe_env            || process.env.PHONEPE_ENV            || 'uat',
+      client_version: row.phonepe_client_version || process.env.PHONEPE_CLIENT_VERSION || '1',
+    };
+  } catch {
+    // DB unavailable — fall back to env vars
+    _configCache = {
+      client_id:      process.env.PHONEPE_CLIENT_ID      || '',
+      client_secret:  process.env.PHONEPE_CLIENT_SECRET  || '',
+      env:            process.env.PHONEPE_ENV            || 'uat',
+      client_version: process.env.PHONEPE_CLIENT_VERSION || '1',
+    };
+  }
+
+  _configExp = now + 60_000; // re-read DB at most once per minute
+  return _configCache;
 }
 
 // Cached access token
 let _token     = null;
 let _tokenExp  = 0;
 
-function assertConfigured() {
-  if (!process.env.PHONEPE_CLIENT_ID || !process.env.PHONEPE_CLIENT_SECRET) {
-    throw Object.assign(
-      new Error(
-        'PhonePe not configured. Set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET env vars.'
-      ),
-      { status: 503 }
-    );
-  }
-}
-
 async function getAccessToken() {
   const now = Date.now();
   if (_token && now < _tokenExp) return _token;
 
-  assertConfigured();
+  const cfg = await getPhonePeConfig();
+  if (!cfg.client_id || !cfg.client_secret) {
+    throw Object.assign(
+      new Error('PhonePe not configured. Set credentials in Admin → Platform Settings.'),
+      { status: 503 }
+    );
+  }
 
-  const url  = `${base()}/v1/oauth/token`;
-  const body = new URLSearchParams({
+  const baseUrl = cfg.env === 'production' ? PROD_BASE : UAT_BASE;
+  const url     = `${baseUrl}/v1/oauth/token`;
+  const body    = new URLSearchParams({
     grant_type:     'client_credentials',
-    client_id:      process.env.PHONEPE_CLIENT_ID,
-    client_secret:  process.env.PHONEPE_CLIENT_SECRET,
-    client_version: process.env.PHONEPE_CLIENT_VERSION || '1',
+    client_id:      cfg.client_id,
+    client_secret:  cfg.client_secret,
+    client_version: cfg.client_version,
   });
 
   const res  = await fetch(url, {
@@ -78,12 +106,17 @@ async function authHeaders() {
   };
 }
 
+async function baseUrl() {
+  const cfg = await getPhonePeConfig();
+  return cfg.env === 'production' ? PROD_BASE : UAT_BASE;
+}
+
 /**
  * Create a Standard Checkout payment order.
  * Returns { orderId, state, checkoutUrl, expireAt }
  */
 async function createPaymentOrder({ merchantOrderId, amountInPaise, redirectUrl }) {
-  const url     = `${base()}/v2/pg/orders`;
+  const url     = `${await baseUrl()}/v2/pg/orders`;
   const headers = await authHeaders();
 
   const res  = await fetch(url, {
@@ -117,7 +150,7 @@ async function createPaymentOrder({ merchantOrderId, amountInPaise, redirectUrl 
  * state: CREATED | PENDING | COMPLETED | FAILED | CANCELLED
  */
 async function getOrderStatus(merchantOrderId) {
-  const url     = `${base()}/v2/pg/orders/${encodeURIComponent(merchantOrderId)}`;
+  const url     = `${await baseUrl()}/v2/pg/orders/${encodeURIComponent(merchantOrderId)}`;
   const headers = await authHeaders();
 
   const res  = await fetch(url, { headers });
@@ -137,7 +170,7 @@ async function getOrderStatus(merchantOrderId) {
  * Returns { refundId, state, amount, ... }
  */
 async function createRefund({ originalMerchantOrderId, merchantRefundId, amountInPaise }) {
-  const url     = `${base()}/v2/pg/refunds`;
+  const url     = `${await baseUrl()}/v2/pg/refunds`;
   const headers = await authHeaders();
 
   const res  = await fetch(url, {
@@ -164,7 +197,7 @@ async function createRefund({ originalMerchantOrderId, merchantRefundId, amountI
  * Fetch refund status.
  */
 async function getRefundStatus(merchantRefundId) {
-  const url     = `${base()}/v2/pg/refunds/${encodeURIComponent(merchantRefundId)}`;
+  const url     = `${await baseUrl()}/v2/pg/refunds/${encodeURIComponent(merchantRefundId)}`;
   const headers = await authHeaders();
 
   const res  = await fetch(url, { headers });
@@ -185,7 +218,7 @@ async function getRefundStatus(merchantRefundId) {
  * If PhonePe API is unreachable or not configured, throws so caller can degrade gracefully.
  */
 async function validateVpa(vpa) {
-  const url     = `${base()}/v2/pg/vpa/validate`;
+  const url     = `${await baseUrl()}/v2/pg/vpa/validate`;
   const headers = await authHeaders();
 
   const res  = await fetch(url, {
@@ -203,8 +236,14 @@ async function validateVpa(vpa) {
 }
 
 function clearTokenCache() {
-  _token   = null;
+  _token    = null;
   _tokenExp = 0;
+}
+
+function clearConfigCache() {
+  _configCache = null;
+  _configExp   = 0;
+  clearTokenCache(); // credentials changed — old token is invalid
 }
 
 module.exports = {
@@ -214,4 +253,5 @@ module.exports = {
   getRefundStatus,
   validateVpa,
   clearTokenCache,
+  clearConfigCache,
 };

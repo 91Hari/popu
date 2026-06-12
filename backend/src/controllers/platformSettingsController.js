@@ -1,13 +1,17 @@
 'use strict';
 
 const pool = require('../config/db');
-const { invalidateCache } = require('../services/paymentCalculationService');
+const { invalidateCache }   = require('../services/paymentCalculationService');
+const { clearConfigCache }  = require('../services/phonePeService');
 
 async function getSettings(req, res) {
   try {
     const { rows } = await pool.query(
       `SELECT id, commission_enabled, commission_percentage,
               platform_fee_enabled, platform_fee_amount,
+              phonepe_client_id, phonepe_env, phonepe_client_version,
+              CASE WHEN phonepe_client_secret IS NOT NULL AND phonepe_client_secret <> ''
+                   THEN TRUE ELSE FALSE END AS phonepe_secret_set,
               updated_by, updated_at
        FROM platform_settings ORDER BY created_at ASC LIMIT 1`
     );
@@ -16,6 +20,10 @@ async function getSettings(req, res) {
       commission_percentage: 0,
       platform_fee_enabled:  false,
       platform_fee_amount:   0,
+      phonepe_client_id:     null,
+      phonepe_secret_set:    false,
+      phonepe_env:           'uat',
+      phonepe_client_version:'1',
     });
   } catch (err) {
     console.error('[PlatformSettings] getSettings:', err.message);
@@ -29,6 +37,10 @@ async function updateSettings(req, res) {
     commission_percentage,
     platform_fee_enabled,
     platform_fee_amount,
+    phonepe_client_id,
+    phonepe_client_secret,
+    phonepe_env,
+    phonepe_client_version,
   } = req.body;
 
   if (commission_percentage != null) {
@@ -57,15 +69,24 @@ async function updateSettings(req, res) {
              commission_percentage = COALESCE($2, commission_percentage),
              platform_fee_enabled  = COALESCE($3, platform_fee_enabled),
              platform_fee_amount   = COALESCE($4, platform_fee_amount),
-             updated_by            = $5,
+             phonepe_client_id     = COALESCE($5, phonepe_client_id),
+             phonepe_client_secret = CASE WHEN $6::text IS NOT NULL AND $6 <> ''
+                                          THEN $6 ELSE phonepe_client_secret END,
+             phonepe_env           = COALESCE($7, phonepe_env),
+             phonepe_client_version= COALESCE($8, phonepe_client_version),
+             updated_by            = $9,
              updated_at            = NOW()
-         WHERE id = $6
+         WHERE id = $10
          RETURNING *`,
         [
           commission_enabled    ?? null,
           commission_percentage ?? null,
           platform_fee_enabled  ?? null,
           platform_fee_amount   ?? null,
+          phonepe_client_id     || null,
+          phonepe_client_secret || null,
+          phonepe_env           || null,
+          phonepe_client_version|| null,
           req.user.id,
           existing[0].id,
         ]
@@ -74,13 +95,18 @@ async function updateSettings(req, res) {
     } else {
       const { rows } = await pool.query(
         `INSERT INTO platform_settings
-           (commission_enabled, commission_percentage, platform_fee_enabled, platform_fee_amount, updated_by)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+           (commission_enabled, commission_percentage, platform_fee_enabled, platform_fee_amount,
+            phonepe_client_id, phonepe_client_secret, phonepe_env, phonepe_client_version, updated_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
           commission_enabled    ?? false,
           commission_percentage ?? 0,
           platform_fee_enabled  ?? false,
           platform_fee_amount   ?? 0,
+          phonepe_client_id     || null,
+          phonepe_client_secret || null,
+          phonepe_env           || 'uat',
+          phonepe_client_version|| '1',
           req.user.id,
         ]
       );
@@ -88,7 +114,8 @@ async function updateSettings(req, res) {
     }
 
     invalidateCache();
-    res.json(result);
+    clearConfigCache(); // force phonePeService to re-read new credentials from DB
+    res.json({ ...result, phonepe_client_secret: undefined, phonepe_secret_set: !!result.phonepe_client_secret });
   } catch (err) {
     console.error('[PlatformSettings] updateSettings:', err.message);
     res.status(500).json({ message: 'Failed to update platform settings.' });

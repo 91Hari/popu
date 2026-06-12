@@ -235,7 +235,7 @@ async function changePrice(id, caterer_id, price) {
 
 async function getAllFoods() {
   const { rows } = await pool.query(
-    `SELECT f.*, u.name AS caterer_name
+    `SELECT f.*, f.image_url AS "imageUrl", u.name AS caterer_name
      FROM food_items f
      JOIN users u ON u.id = f.caterer_id
      ORDER BY f.created_at DESC`
@@ -245,7 +245,7 @@ async function getAllFoods() {
 
 async function searchFoods(q) {
   const { rows } = await pool.query(
-    `SELECT f.*, u.name AS caterer_name
+    `SELECT f.*, f.image_url AS "imageUrl", u.name AS caterer_name
      FROM food_items f
      JOIN users u ON u.id = f.caterer_id
      WHERE to_tsvector('english', f.food_name) @@ plainto_tsquery('english', $1)
@@ -258,6 +258,7 @@ async function searchFoods(q) {
 async function getFoodById(id, { customerLat, customerLng } = {}) {
   const { rows } = await pool.query(
     `SELECT f.*,
+            f.image_url AS "imageUrl",
             u.name      AS caterer_name,
             u.latitude  AS caterer_lat,
             u.longitude AS caterer_lng

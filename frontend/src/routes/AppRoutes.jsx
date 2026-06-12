@@ -50,6 +50,7 @@ const CatererCateringBookingsPage  = React.lazy(() => import("../pages/caterer/C
 const CatererRidersPage            = React.lazy(() => import("../pages/caterer/CatererRidersPage"));
 const CatererProfilePage           = React.lazy(() => import("../pages/caterer/CatererProfilePage"));
 const CatererPaymentDetailsPage    = React.lazy(() => import("../pages/caterer/CatererPaymentDetailsPage"));
+const EditFoodPage                 = React.lazy(() => import("../pages/caterer/EditFoodPage"));
 
 // Customer extras
 const BookCateringPage             = React.lazy(() => import("../pages/customer/BookCateringPage"));
@@ -160,6 +161,7 @@ export default function AppRoutes() {
           {/* Caterer */}
           <Route path="/caterer"                    element={<C allowed={CATR} element={<CatererDashboard />} />} />
           <Route path="/caterer/add-food"           element={<C allowed={CATR} element={<AddFoodPage />} />} />
+          <Route path="/caterer/edit-food/:id"      element={<C allowed={CATR} element={<EditFoodPage />} />} />
           <Route path="/caterer/foods"              element={<C allowed={CATR} element={<FoodListPage />} />} />
           <Route path="/caterer/orders"             element={<C allowed={CATR} element={<CatererOrdersPage />} />} />
           <Route path="/caterer/availability"       element={<C allowed={CATR} element={<AvailabilityPage />} />} />

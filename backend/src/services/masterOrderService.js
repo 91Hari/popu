@@ -189,6 +189,10 @@ async function getMasterOrders(user) {
              'status',                    co.status,
              'subtotal',                  co.subtotal,
              'payment_status',            co.payment_status,
+             'eta_minutes',               co.eta_minutes,
+             'expected_arrival_at',       co.expected_arrival_at,
+             'accepted_at',               co.accepted_at,
+             'preparing_at',              co.preparing_at,
              'rider_id',                  co.rider_id,
              'delivery_confirmation_code',co.delivery_confirmation_code,
              'created_at',                co.created_at,
@@ -307,17 +311,64 @@ async function updateCatererOrderStatus(id, status, user) {
     e.status = 400; throw e;
   }
 
-  const timestampCols = {
-    ACCEPTED:  'accepted_at  = NOW()',
-    PREPARING: 'preparing_at = NOW()',
-    READY:     'ready_at     = NOW()',
-    DELIVERED: 'delivered_at = NOW()',
-    CANCELLED: 'cancelled_at = NOW()',
-  };
-  const extra = timestampCols[status] ? `, ${timestampCols[status]}` : '';
+  // Build SET clause — always stamp the relevant timestamp.
+  // For ACCEPTED: set a 30-min default ETA so the customer sees something immediately.
+  // For PREPARING: recalculate with GPS coords if available, fallback to 30 min.
+  let extraCols = '';
+  let etaMin    = null;
+
+  if (status === 'ACCEPTED') {
+    etaMin    = 30;
+    extraCols = `, accepted_at = NOW(),
+                  eta_minutes = ${etaMin},
+                  expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
+  } else if (status === 'PREPARING') {
+    etaMin = catererOrder.eta_minutes || 30; // keep existing if already set from ACCEPTED
+
+    // Try GPS-based calculation using customer coords stored on master_order
+    try {
+      const { rows: moRows } = await pool.query(
+        `SELECT mo.customer_lat, mo.customer_lng FROM master_orders mo WHERE mo.id = $1`,
+        [catererOrder.master_order_id]
+      );
+      const mo   = moRows[0];
+      const cLat = mo?.customer_lat != null ? parseFloat(mo.customer_lat) : null;
+      const cLng = mo?.customer_lng != null ? parseFloat(mo.customer_lng) : null;
+
+      if (cLat != null && cLng != null) {
+        const { rows: itemRows } = await pool.query(
+          `SELECT f.preparation_time_minutes, u.latitude AS caterer_lat, u.longitude AS caterer_lng
+           FROM caterer_order_items coi
+           JOIN food_items f  ON f.id = coi.food_item_id
+           JOIN users u        ON u.id = f.caterer_id
+           WHERE coi.caterer_order_id = $1`,
+          [id]
+        );
+        if (itemRows.length > 0) {
+          const { haversineKm, travelTimeMinutes } = require('./locationService');
+          const maxPrep = Math.max(...itemRows.map((r) => r.preparation_time_minutes || 20));
+          const distKm  = haversineKm(cLat, cLng, parseFloat(itemRows[0].caterer_lat), parseFloat(itemRows[0].caterer_lng));
+          const calc    = maxPrep + travelTimeMinutes(distKm);
+          if (calc > 0) etaMin = calc;
+        }
+      }
+    } catch (geoErr) {
+      console.error('[MasterOrderService] ETA geo calc failed, using default:', geoErr.message);
+    }
+
+    extraCols = `, preparing_at = NOW(),
+                  eta_minutes = ${etaMin},
+                  expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
+  } else if (status === 'READY') {
+    extraCols = ', ready_at = NOW()';
+  } else if (status === 'DELIVERED') {
+    extraCols = ', delivered_at = NOW()';
+  } else if (status === 'CANCELLED') {
+    extraCols = ', cancelled_at = NOW()';
+  }
 
   const { rows: updated } = await pool.query(
-    `UPDATE caterer_orders SET status = $1${extra} WHERE id = $2 RETURNING *`,
+    `UPDATE caterer_orders SET status = $1${extraCols} WHERE id = $2 RETURNING *`,
     [status, id]
   );
 

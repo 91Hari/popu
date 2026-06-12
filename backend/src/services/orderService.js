@@ -224,7 +224,11 @@ async function updateOrderStatus(id, status, user) {
   }
 
   if (status === 'ACCEPTED') {
-    extra = ', accepted_at = NOW()';
+    // Set a 30-min default ETA so the customer sees something right away.
+    // PREPARING will recalculate with GPS; this is just the initial estimate.
+    extra = `, accepted_at = NOW(),
+             eta_minutes = 30,
+             expected_arrival_at = NOW() + make_interval(mins => 30)`;
   }
 
   // Always set ETA when caterer starts preparing. Use GPS-based calculation if

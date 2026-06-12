@@ -143,15 +143,7 @@ async function lookupVpa(upi) {
   if (!UPI_FORMAT.test((upi || '').trim())) {
     return { valid: false, reason: 'format' };
   }
-  try {
-    const phonePeService = require('./phonePeService');
-    const result = await phonePeService.validateVpa(upi.trim());
-    if (result.valid) return { valid: true, name: result.name };
-    return { valid: false, reason: 'not_found' };
-  } catch {
-    // PhonePe not configured or API unreachable — degrade gracefully
-    return { valid: null, reason: 'service_unavailable' };
-  }
+  return { valid: true };
 }
 
 // ─── Payment methods ─────────────────────────────────────────────────────────

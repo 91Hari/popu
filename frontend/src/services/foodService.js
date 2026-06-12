@@ -15,7 +15,7 @@ export default {
     return data.food ?? data;
   },
 
-  async createFood({ name, description, price, available, preparation_time_minutes = 20 }) {
+  async createFood({ name, description, price, available, preparation_time_minutes = 20, image_url }) {
     const data = await api.request("/foods", {
       method: "POST",
       body: JSON.stringify({
@@ -24,6 +24,7 @@ export default {
         price,
         is_available:             available,
         preparation_time_minutes: Number(preparation_time_minutes),
+        image_url:                image_url || null,
       }),
     });
     return data.food ?? data;
