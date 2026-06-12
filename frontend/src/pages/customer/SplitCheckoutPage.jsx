@@ -84,8 +84,8 @@ export default function SplitCheckoutPage() {
           customer_lng: customerCoords?.lng ?? null,
         }),
       });
-      clearCart();
-      navigate("/customer/master-orders");
+      await clearCart();
+      navigate("/customer/master-orders", { state: { justPlaced: true } });
     } catch (err) {
       setError(err?.message || "Could not place order. Please try again.");
     } finally {

@@ -14,6 +14,8 @@ import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
+import DirectionsBikeRoundedIcon  from "@mui/icons-material/DirectionsBikeRounded";
+import AccessTimeRoundedIcon      from "@mui/icons-material/AccessTimeRounded";
 import LockRoundedIcon           from "@mui/icons-material/LockRounded";
 import RateReviewRoundedIcon     from "@mui/icons-material/RateReviewRounded";
 import masterOrderService from "../../services/masterOrderService";
@@ -45,6 +47,13 @@ function fmtDate(ts) {
   if (!ts) return "—";
   return new Date(ts).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
+
+function fmtArrival(ts) {
+  if (!ts) return null;
+  return new Date(ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+const ETA_STATUSES = new Set(["ACCEPTED", "PREPARING", "READY", "OUT_FOR_DELIVERY"]);
 
 export default function MasterOrdersPage() {
   const location   = useLocation();
@@ -249,6 +258,39 @@ export default function MasterOrdersPage() {
                                     ))}
                                   </Stack>
                                   <Divider sx={{ mt: 1 }} />
+                                </Box>
+                              )}
+
+                              {/* ETA block */}
+                              {ETA_STATUSES.has(co.status) && (
+                                <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
+                                  {(co.eta_minutes != null || co.expected_arrival_at != null) ? (
+                                    <Stack direction="row" alignItems="center" gap={1.25}>
+                                      <DirectionsBikeRoundedIcon sx={{ fontSize: 18, color: brand.orange, flexShrink: 0 }} />
+                                      <Box>
+                                        <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>
+                                          {co.status === "PREPARING" ? "Preparing Your Order" : co.status === "READY" ? "Order Ready for Pickup" : "Estimated Delivery"}
+                                        </Typography>
+                                        {co.eta_minutes != null && (
+                                          <Typography variant="body2" sx={{ color: brand.orange, fontWeight: 800, lineHeight: 1.4 }}>
+                                            ETA: {co.eta_minutes} mins
+                                          </Typography>
+                                        )}
+                                        {co.expected_arrival_at && (
+                                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                            Expected Arrival: {fmtArrival(co.expected_arrival_at)}
+                                          </Typography>
+                                        )}
+                                      </Box>
+                                    </Stack>
+                                  ) : (
+                                    <Stack direction="row" alignItems="center" gap={0.75}>
+                                      <AccessTimeRoundedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                        Delivery time will be confirmed shortly
+                                      </Typography>
+                                    </Stack>
+                                  )}
                                 </Box>
                               )}
 
