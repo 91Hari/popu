@@ -55,6 +55,12 @@ const adminService = {
     if (search) p.set("search", search);
     return api.request(`/admin/riders?${p}`);
   },
+  async getPlatformSettings() {
+    return api.request("/admin/platform-settings");
+  },
+  async updatePlatformSettings(data) {
+    return api.request("/admin/platform-settings", { method: "PUT", body: JSON.stringify(data) });
+  },
 };
 
 export default adminService;

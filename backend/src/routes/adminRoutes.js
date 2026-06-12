@@ -1,11 +1,14 @@
 const express = require('express');
 const router  = express.Router();
 const ctrl    = require('../controllers/adminController');
+const psCtrl  = require('../controllers/platformSettingsController');
 const { authenticate, requireRole } = require('../middlewares/authMiddleware');
 
 router.use(authenticate, requireRole('ADMIN'));
 
 router.get('/dashboard',                 ctrl.getDashboard);
+router.get('/platform-settings',         psCtrl.getSettings);
+router.put('/platform-settings',         psCtrl.updateSettings);
 router.get('/customers',                 ctrl.getCustomers);
 router.get('/caterers',                  ctrl.getCaterers);
 router.get('/foods',                     ctrl.getFoods);

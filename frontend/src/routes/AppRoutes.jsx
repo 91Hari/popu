@@ -64,6 +64,7 @@ const SettingsPage           = React.lazy(() => import("../pages/admin/SettingsP
 const AdminMasterOrdersPage      = React.lazy(() => import("../pages/admin/AdminMasterOrdersPage"));
 const AdminRidersPage            = React.lazy(() => import("../pages/admin/AdminRidersPage"));
 const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/AdminCateringBookingsPage"));
+const PlatformSettingsPage       = React.lazy(() => import("../pages/admin/PlatformSettingsPage"));
 
 function isAuthenticated() {
   try { return !!localStorage.getItem("token"); } catch { return false; }
@@ -170,7 +171,8 @@ export default function AppRoutes() {
           <Route path="/admin/settings"       element={<C allowed={ADMIN} element={<SettingsPage />} />} />
           <Route path="/admin/master-orders"      element={<C allowed={ADMIN} element={<AdminMasterOrdersPage />} />} />
           <Route path="/admin/riders"             element={<C allowed={ADMIN} element={<AdminRidersPage />} />} />
-          <Route path="/admin/catering-bookings"  element={<C allowed={ADMIN} element={<AdminCateringBookingsPage />} />} />
+          <Route path="/admin/catering-bookings"   element={<C allowed={ADMIN} element={<AdminCateringBookingsPage />} />} />
+          <Route path="/admin/platform-settings"  element={<C allowed={ADMIN} element={<PlatformSettingsPage />} />} />
 
           <Route path="/" element={<Navigate to="/customer" replace />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />

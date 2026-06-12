@@ -4,25 +4,42 @@ const pool = require('../config/db');
 const { notifyAllCustomers, notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 
 async function getDashboardStats() {
-  const [customers, caterers, foods, orders] = await Promise.all([
+  const [customers, caterers, foods, orderStats, financials] = await Promise.all([
     pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CUSTOMER' AND is_active = TRUE`),
     pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CATERER' AND is_active = TRUE`),
     pool.query(`SELECT COUNT(*) FROM food_items WHERE is_available = TRUE`),
-    pool.query(`SELECT
-      COUNT(*) AS total,
-      SUM(CASE WHEN status = 'PLACED'    THEN 1 ELSE 0 END) AS pending,
-      SUM(CASE WHEN status = 'DELIVERED' THEN total_amount ELSE 0 END) AS revenue
-    FROM orders`),
+    pool.query(`
+      SELECT
+        COUNT(DISTINCT mo.id)                                           AS total,
+        COUNT(CASE WHEN co.status = 'PLACED' THEN 1 END)               AS pending
+      FROM master_orders mo
+      LEFT JOIN caterer_orders co ON co.master_order_id = mo.id
+    `),
+    pool.query(`
+      SELECT
+        COALESCE(SUM(mo.total_amount),      0) AS total_order_value,
+        COALESCE(SUM(co.commission_amount), 0) AS total_commission,
+        COALESCE(SUM(co.platform_fee),      0) AS total_platform_fees,
+        COALESCE(SUM(co.caterer_payout),    0) AS total_caterer_payout
+      FROM caterer_orders co
+      JOIN master_orders mo ON mo.id = co.master_order_id
+      WHERE co.status = 'DELIVERED'
+    `),
   ]);
 
-  const o = orders.rows[0];
+  const o = orderStats.rows[0];
+  const f = financials.rows[0];
   return {
-    totalCustomers: Number(customers.rows[0].count),
-    totalCaterers:  Number(caterers.rows[0].count),
-    totalFoods:     Number(foods.rows[0].count),
-    totalOrders:    Number(o.total),
-    pendingOrders:  Number(o.pending),
-    revenue:        parseFloat(o.revenue || 0).toFixed(2),
+    totalCustomers:     Number(customers.rows[0].count),
+    totalCaterers:      Number(caterers.rows[0].count),
+    totalFoods:         Number(foods.rows[0].count),
+    totalOrders:        Number(o.total),
+    pendingOrders:      Number(o.pending),
+    revenue:            parseFloat(f.total_order_value || 0).toFixed(2),
+    totalOrderValue:    parseFloat(f.total_order_value    || 0).toFixed(2),
+    totalCommission:    parseFloat(f.total_commission     || 0).toFixed(2),
+    totalPlatformFees:  parseFloat(f.total_platform_fees  || 0).toFixed(2),
+    totalCatererPayout: parseFloat(f.total_caterer_payout || 0).toFixed(2),
   };
 }
 

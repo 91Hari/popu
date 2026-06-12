@@ -2,6 +2,7 @@
 
 const pool = require('../config/db');
 const { notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
+const payCalc = require('./paymentCalculationService');
 
 const CATERER_ORDER_WITH_ITEMS = `
   SELECT
@@ -102,10 +103,14 @@ async function createSplitOrder({ customer_id, items, customer_lat, customer_lng
     const createdCatererOrders = [];
     for (const [caterer_id, lines] of catererGroups) {
       const subtotal = lines.reduce((s, l) => s + l.total_price, 0);
+      const pc = await payCalc.calculate(subtotal);
       const { rows: coRows } = await client.query(
-        `INSERT INTO caterer_orders (master_order_id, caterer_id, subtotal)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [masterOrder.id, caterer_id, subtotal]
+        `INSERT INTO caterer_orders
+           (master_order_id, caterer_id, subtotal,
+            commission_percentage, commission_amount, platform_fee, caterer_payout)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [masterOrder.id, caterer_id, subtotal,
+         pc.commission_percentage, pc.commission_amount, pc.platform_fee, pc.caterer_payout]
       );
       const catererOrder = coRows[0];
 

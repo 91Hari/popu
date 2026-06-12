@@ -23,6 +23,7 @@ import CircleRoundedIcon            from "@mui/icons-material/CircleRounded";
 import PeopleRoundedIcon            from "@mui/icons-material/PeopleRounded";
 import AssessmentRoundedIcon        from "@mui/icons-material/AssessmentRounded";
 import SettingsRoundedIcon          from "@mui/icons-material/SettingsRounded";
+import TuneRoundedIcon              from "@mui/icons-material/TuneRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
@@ -70,8 +71,9 @@ const ADMIN_NAV = [
   { label: "Riders",            path: "/admin/riders",             icon: <TwoWheelerRoundedIcon /> },
   { label: "Catering Bookings", path: "/admin/catering-bookings",  icon: <EventRoundedIcon /> },
   { label: "Notifications",     path: "/admin/notifications",      icon: <NotificationsNoneRoundedIcon /> },
-  { label: "Reports",           path: "/admin/reports",            icon: <AssessmentRoundedIcon /> },
-  { label: "Settings",          path: "/admin/settings",           icon: <SettingsRoundedIcon /> },
+  { label: "Reports",            path: "/admin/reports",             icon: <AssessmentRoundedIcon /> },
+  { label: "Platform Settings", path: "/admin/platform-settings",  icon: <TuneRoundedIcon /> },
+  { label: "Settings",          path: "/admin/settings",            icon: <SettingsRoundedIcon /> },
 ];
 
 const RIDER_NAV = [
