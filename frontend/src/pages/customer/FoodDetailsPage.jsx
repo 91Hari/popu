@@ -154,10 +154,10 @@ export default function FoodDetailsPage() {
               justifyContent: "center",
             }}
           >
-            {food.imageUrl ? (
+            {(food.imageUrl || food.image_url) ? (
               <Box
                 component="img"
-                src={food.imageUrl}
+                src={food.imageUrl || food.image_url}
                 alt={food.food_name}
                 sx={{
                   position: "absolute", inset: 0,
