@@ -98,7 +98,7 @@ export default function ProfileSettingsPage() {
       <Container maxWidth="sm" sx={{ pt: 3, pb: 6 }}>
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate("/customer/profile")} sx={{ color: brand.orange }}>
+          <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: brand.orange }}>
             <ArrowBackRoundedIcon />
           </IconButton>
           <SettingsRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />
