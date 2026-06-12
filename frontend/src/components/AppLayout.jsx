@@ -275,7 +275,6 @@ export default function AppLayout({ children }) {
                   bgcolor: brand.white,
                   borderBottom: `1px solid ${brand.border}`,
                   color: brand.text,
-                  zIndex: theme.zIndex.drawer + 1,
                 }}
               >
                 <Toolbar sx={{ justifyContent: "space-between", minHeight: 56 }}>
