@@ -141,7 +141,7 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
 
   const settings = await getCatererTiffinSettings(caterer_id);
   if (!settings.tiffin_enabled) {
-    const e = new Error('This caterer does not offer tiffin service'); e.status = 400; throw e;
+    const e = new Error('This caterer does not offer Lunch Box service'); e.status = 400; throw e;
   }
 
   const priceByType = {
@@ -165,7 +165,7 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
   }
   const notAvail = foodRows.find((f) => !f.is_available || !f.available_for_tiffin);
   if (notAvail) {
-    const e = new Error(`"${notAvail.food_name}" is not available for tiffin`); e.status = 400; throw e;
+    const e = new Error(`"${notAvail.food_name}" is not available for Lunch Box`); e.status = 400; throw e;
   }
   const foodMap = new Map(foodRows.map((f) => [f.id, f]));
 
@@ -204,14 +204,14 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
         await Promise.all([
           notifyUser(caterer_id, {
             notification_type: 'TIFFIN_ORDER',
-            title:       'New Tiffin Box Order',
-            message:     `A new ${BOX_LABELS[box_type]} tiffin order has been placed.`,
+            title:       'New Lunch Box Order',
+            message:     `A new ${BOX_LABELS[box_type]} Lunch Box order has been placed.`,
             reference_id: order.id,
           }),
           notifyUser(customer_id, {
             notification_type: 'TIFFIN_ORDER',
-            title:       'Tiffin Box Order Placed!',
-            message:     `Your ${BOX_LABELS[box_type]} tiffin order was placed successfully.`,
+            title:       'Lunch Box Order Placed!',
+            message:     `Your ${BOX_LABELS[box_type]} Lunch Box order was placed successfully.`,
             reference_id: order.id,
           }),
         ]);

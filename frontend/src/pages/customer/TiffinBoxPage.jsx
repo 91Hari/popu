@@ -63,7 +63,7 @@ function StepCaterer({ onSelect }) {
   if (loading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress sx={{ color: brand.orange }} /></Box>;
   if (error)   return <Alert severity="error">{error}</Alert>;
   if (!caterers.length) return (
-    <Alert severity="info">No caterers are offering Tiffin Box service right now. Check back soon!</Alert>
+    <Alert severity="info">No caterers are offering Lunch Box service right now. Check back soon!</Alert>
   );
 
   return (
@@ -88,7 +88,7 @@ function StepCaterer({ onSelect }) {
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{c.name}</Typography>
               <Box sx={{ display: "flex", gap: 0.75, mt: 0.5, flexWrap: "wrap" }}>
-                <Chip label="Tiffin Available" size="small"
+                <Chip label="Lunch Box Available" size="small"
                   sx={{ backgroundColor: brand.greenLight, color: brand.green, fontWeight: 600, fontSize: "0.6rem" }} />
                 {c.availability_status === "READY" && (
                   <Chip label="Open Now" size="small" color="success" sx={{ fontSize: "0.6rem" }} />
@@ -125,7 +125,7 @@ function StepSchedule({ onNext }) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>How would you like your Tiffin Box?</Typography>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>How would you like your Lunch Box?</Typography>
 
       <Stack spacing={1.5} sx={{ mb: 2.5 }}>
         {[
@@ -215,7 +215,7 @@ function StepBoxType({ caterer, onNext }) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Choose Your Tiffin Box</Typography>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Choose Your Lunch Box</Typography>
 
       <Stack spacing={1.5} sx={{ mb: 2.5 }}>
         {BOX_CONFIGS.map((box) => (
@@ -298,7 +298,7 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
 
   if (loading) return <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress sx={{ color: brand.orange }} /></Box>;
   if (error)   return <Alert severity="error">{error}</Alert>;
-  if (!foods.length) return <Alert severity="info">No food items available for tiffin from this caterer.</Alert>;
+  if (!foods.length) return <Alert severity="info">No food items available for Lunch Box from this caterer.</Alert>;
 
   return (
     <Box>
@@ -420,7 +420,7 @@ function StepReview({ caterer, serviceType, days, boxType, boxPrice, selectedIte
             </Box>
             {serviceType === "TODAY" && (
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                One-time payment for today's tiffin box.
+                One-time payment for today's Lunch Box.
               </Typography>
             )}
             {serviceType === "DAILY" && (
@@ -463,12 +463,12 @@ function StepConfirmation({ navigate }) {
       <CheckCircleRoundedIcon sx={{ fontSize: 72, color: brand.orange, mb: 2 }} />
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>Order Placed!</Typography>
       <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
-        Your tiffin box order has been placed successfully. The caterer will start preparing your meal.
+        Your Lunch Box order has been placed successfully. The caterer will start preparing your meal.
       </Typography>
       <Stack spacing={1.5}>
         <Button variant="contained" fullWidth onClick={() => navigate("/customer/tiffin-orders")}
           sx={{ fontWeight: 700 }}>
-          View My Tiffin Orders
+          View My Lunch Box Orders
         </Button>
         <Button variant="outlined" fullWidth onClick={() => navigate("/services/tiffin-box")}
           sx={{ fontWeight: 700, borderColor: brand.orange, color: brand.orange }}>
@@ -523,7 +523,7 @@ export default function TiffinBoxPage() {
             <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 22 }} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1 }}>Tiffin Box</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1 }}>Lunch Box</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>Fresh meals delivered daily</Typography>
           </Box>
         </Box>

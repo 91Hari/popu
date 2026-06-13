@@ -79,11 +79,11 @@ export default function TiffinOrdersPage() {
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>My Tiffin Orders</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>My Lunch Box Orders</Typography>
           </Box>
           <Button variant="contained" size="small" onClick={() => navigate("/services/tiffin-box")}
             sx={{ fontWeight: 700, fontSize: "0.75rem" }}>
-            + Order Tiffin
+            + Order Lunch Box
           </Button>
         </Box>
 
@@ -92,9 +92,9 @@ export default function TiffinOrdersPage() {
         {orders.length === 0 ? (
           <Card elevation={0} sx={{ p: 5, textAlign: "center", border: `1px solid ${brand.border}` }}>
             <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>No tiffin orders yet</Typography>
+            <Typography variant="h6" sx={{ color: "text.secondary" }}>No lunch box orders yet</Typography>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-              Your tiffin box orders will appear here.
+              Your Lunch Box orders will appear here.
             </Typography>
             <Button variant="contained" onClick={() => navigate("/services/tiffin-box")}>
               Order Now
@@ -116,7 +116,7 @@ export default function TiffinOrdersPage() {
                     >
                       <Box>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.25 }}>
-                          <Chip label="Tiffin Box" size="small"
+                          <Chip label="Lunch Box" size="small"
                             sx={{ backgroundColor: brand.orangeLight, color: brand.orange, fontWeight: 700, fontSize: "0.6rem" }} />
                           <Chip label={cfg.label} size="small" color={cfg.color}
                             sx={{ fontWeight: 600, fontSize: "0.6rem" }} />

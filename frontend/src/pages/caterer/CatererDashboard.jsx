@@ -202,7 +202,7 @@ export default function CatererDashboard() {
           <Button variant="outlined" size="large" startIcon={<SetMealRoundedIcon />}
             onClick={() => navigate("/caterer/tiffin")}
             sx={{ borderColor: brand.orange, color: brand.orange, fontWeight: 700, px: 3 }}>
-            Tiffin Box
+            Lunch Box
           </Button>
         </Stack>
 

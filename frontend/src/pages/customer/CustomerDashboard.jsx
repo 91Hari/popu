@@ -68,7 +68,7 @@ export default function CustomerDashboard() {
 
         {/* Search */}
         <Box sx={{ mb: 3, maxWidth: 600 }}>
-          <SearchSuggestions placeholder="Search for catering, tiffins, cooks…" fullWidth />
+          <SearchSuggestions placeholder="Search for catering, lunch boxes, cooks…" fullWidth />
         </Box>
 
         {/* Hero banner */}

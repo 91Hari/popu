@@ -27,8 +27,8 @@ const SERVICES = [
   },
   {
     icon: <SetMealRoundedIcon sx={{ fontSize: 28, color: brand.orange }} />,
-    title: "Tiffin Box",
-    subtitle: "Daily tiffin subscriptions from local caterers",
+    title: "Lunch Box",
+    subtitle: "Fresh daily meal boxes from your favorite caterers",
     to: "/services/tiffin-box",
     comingSoon: false,
   },

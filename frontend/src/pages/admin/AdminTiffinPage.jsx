@@ -14,11 +14,11 @@ import tiffinService            from "../../services/tiffinService";
 import { brand }                from "../../theme";
 
 const METRIC_DEFS = [
-  { key: "totalOrders",    label: "Total Tiffin Orders",    icon: <ReceiptLongRoundedIcon />,   color: brand.orange,  bg: brand.orangeLight },
-  { key: "revenue",        label: "Total Revenue",          icon: <CurrencyRupeeRoundedIcon />, color: brand.green,   bg: brand.greenLight,  prefix: "₹" },
-  { key: "dailySubs",      label: "Daily Subscriptions",    icon: <DateRangeRoundedIcon />,     color: "#1565C0",     bg: "#E3F2FD" },
-  { key: "todayOrders",    label: "Today's Orders",         icon: <TodayRoundedIcon />,         color: "#6A1B9A",     bg: "#F3E5F5" },
-  { key: "activeCaterers", label: "Active Tiffin Caterers", icon: <StorefrontRoundedIcon />,    color: brand.gold,    bg: brand.goldLight },
+  { key: "totalOrders",    label: "Total Lunch Box Orders",    icon: <ReceiptLongRoundedIcon />,   color: brand.orange,  bg: brand.orangeLight },
+  { key: "revenue",        label: "Lunch Box Revenue",         icon: <CurrencyRupeeRoundedIcon />, color: brand.green,   bg: brand.greenLight,  prefix: "₹" },
+  { key: "dailySubs",      label: "Daily Subscriptions",       icon: <DateRangeRoundedIcon />,     color: "#1565C0",     bg: "#E3F2FD" },
+  { key: "todayOrders",    label: "Today's Lunch Box Orders",  icon: <TodayRoundedIcon />,         color: "#6A1B9A",     bg: "#F3E5F5" },
+  { key: "activeCaterers", label: "Active Lunch Box Caterers", icon: <StorefrontRoundedIcon />,    color: brand.gold,    bg: brand.goldLight },
 ];
 
 function MetricCard({ def, value, loading }) {
@@ -72,7 +72,7 @@ export default function AdminTiffinPage() {
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>Tiffin Box Overview</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>Lunch Box Overview</Typography>
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

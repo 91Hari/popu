@@ -103,7 +103,7 @@ export default function CatererTiffinPage() {
       <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>Tiffin Box Management</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>Lunch Box Management</Typography>
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -123,9 +123,9 @@ export default function CatererTiffinPage() {
               }
               label={
                 <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Enable Tiffin Box Service</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Enable Lunch Box Service</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    Customers will see you in the Tiffin Box caterer list
+                    Customers will see you in the Lunch Box caterer list
                   </Typography>
                 </Box>
               }
@@ -170,7 +170,7 @@ export default function CatererTiffinPage() {
         <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
           <CardContent sx={{ p: 2.5 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Food Availability for Tiffin</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Food Availability for Lunch Box</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {Object.values(foodMap).filter(Boolean).length} of {foods.length} available
               </Typography>
@@ -178,7 +178,7 @@ export default function CatererTiffinPage() {
 
             {foods.length === 0 ? (
               <Alert severity="info" sx={{ fontSize: "0.8rem" }}>
-                Add food items to your menu first, then enable them for tiffin here.
+                Add food items to your menu first, then enable them for Lunch Box here.
               </Alert>
             ) : (
               <Stack spacing={1} sx={{ mb: 2 }}>
