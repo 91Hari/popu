@@ -81,6 +81,12 @@ const AdminPaymentsPage          = React.lazy(() => import("../pages/admin/Admin
 const AdminRefundsPage           = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
 const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
+// Tiffin Box module
+const TiffinBoxPage     = React.lazy(() => import("../pages/customer/TiffinBoxPage"));
+const TiffinOrdersPage  = React.lazy(() => import("../pages/customer/TiffinOrdersPage"));
+const CatererTiffinPage = React.lazy(() => import("../pages/caterer/CatererTiffinPage"));
+const AdminTiffinPage   = React.lazy(() => import("../pages/admin/AdminTiffinPage"));
+
 function isAuthenticated() {
   try { return !!localStorage.getItem("token"); } catch { return false; }
 }
@@ -175,10 +181,16 @@ export default function AppRoutes() {
           <Route path="/caterer/profile/payment"          element={<C allowed={CATR} element={<CatererPaymentDetailsPage />} />} />
           <Route path="/caterer/profile/addresses"        element={<C allowed={CATR} element={<AddressManagementPage />} />} />
           <Route path="/caterer/profile/settings"         element={<C allowed={CATR} element={<ProfileSettingsPage />} />} />
+          {/* Tiffin Box — caterer */}
+          <Route path="/caterer/tiffin"             element={<C allowed={CATR} element={<CatererTiffinPage />} />} />
 
           {/* Customer catering */}
           <Route path="/customer/catering-booking/:catererId" element={<ErrorBoundary><C allowed={CUST} element={<BookCateringPage />} /></ErrorBoundary>} />
           <Route path="/customer/catering-bookings"           element={<ErrorBoundary><C allowed={CUST} element={<CustomerCateringBookingsPage />} /></ErrorBoundary>} />
+
+          {/* Tiffin Box — customer */}
+          <Route path="/services/tiffin-box"       element={<ErrorBoundary><C allowed={CUST} element={<TiffinBoxPage />} /></ErrorBoundary>} />
+          <Route path="/customer/tiffin-orders"    element={<ErrorBoundary><C allowed={CUST} element={<TiffinOrdersPage />} /></ErrorBoundary>} />
 
           {/* Rider portal */}
           <Route path="/rider"                element={<C allowed={RIDER} element={<RiderDashboard />} />} />
@@ -200,6 +212,8 @@ export default function AppRoutes() {
           <Route path="/admin/platform-settings"  element={<C allowed={ADMIN} element={<PlatformSettingsPage />} />} />
           <Route path="/admin/payments"            element={<C allowed={ADMIN} element={<AdminPaymentsPage />} />} />
           <Route path="/admin/refunds"             element={<C allowed={ADMIN} element={<AdminRefundsPage />} />} />
+          {/* Tiffin Box — admin */}
+          <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
 
           <Route path="/" element={<Navigate to="/customer" replace />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />

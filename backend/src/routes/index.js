@@ -18,5 +18,6 @@ router.use('/reviews',                require('./reviewRoutes'));
 router.use('/payments',               require('./paymentRoutes'));
 router.use('/webhooks',               require('./webhookRoutes'));
 router.use('/profile',                require('./profileRoutes'));
+router.use('/tiffin',                 require('./tiffinRoutes'));
 
 module.exports = router;
