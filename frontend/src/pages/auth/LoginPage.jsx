@@ -68,8 +68,8 @@ export default function LoginPage() {
     >
       <Card sx={{ width: "100%", maxWidth: 420, boxShadow: 3, borderRadius: 2 }}>
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-            <Logo size={60} showTagline />
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <Logo size={80} showTagline />
           </Box>
 
           <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
