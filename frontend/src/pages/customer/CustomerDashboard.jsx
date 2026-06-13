@@ -8,6 +8,7 @@ import LunchDiningRoundedIcon   from "@mui/icons-material/LunchDiningRounded";
 import PeopleAltRoundedIcon     from "@mui/icons-material/PeopleAltRounded";
 import HomeRoundedIcon          from "@mui/icons-material/HomeRounded";
 import SchoolRoundedIcon        from "@mui/icons-material/SchoolRounded";
+import SetMealRoundedIcon       from "@mui/icons-material/SetMealRounded";
 import DinnerDiningRoundedIcon  from "@mui/icons-material/DinnerDiningRounded";
 import RocketLaunchRoundedIcon  from "@mui/icons-material/RocketLaunchRounded";
 import { brand } from "../../theme";
@@ -20,6 +21,7 @@ import { useCustomerGeo } from "../../utils/geoUtils";
 const CATEGORIES = [
   { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,  label: "Catering",  to: "/services/catering" },
   { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",      to: "/services/food-marketplace" },
+  { icon: <SetMealRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,    label: "Lunch Box", to: "/services/tiffin-box" },
   { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,    label: "Book Cook", to: "/services/book-cook" },
   { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,         label: "Home Food", to: "/services/home-food" },
   { icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,       label: "Training",  to: "/services/training" },
