@@ -14,6 +14,7 @@ import ArrowForwardRoundedIcon         from "@mui/icons-material/ArrowForwardRou
 import NotificationsNoneRoundedIcon    from "@mui/icons-material/NotificationsNoneRounded";
 import FiberNewRoundedIcon             from "@mui/icons-material/FiberNewRounded";
 import CheckCircleOutlineRoundedIcon   from "@mui/icons-material/CheckCircleOutlineRounded";
+import SetMealRoundedIcon              from "@mui/icons-material/SetMealRounded";
 
 import foodService                  from "../../services/foodService";
 import masterOrderService           from "../../services/masterOrderService";
@@ -197,6 +198,11 @@ export default function CatererDashboard() {
             onClick={() => navigate("/caterer/sub-orders")}
             sx={{ borderColor: brand.orange, color: brand.orange, fontWeight: 700, px: 3 }}>
             View Orders
+          </Button>
+          <Button variant="outlined" size="large" startIcon={<SetMealRoundedIcon />}
+            onClick={() => navigate("/caterer/tiffin")}
+            sx={{ borderColor: brand.orange, color: brand.orange, fontWeight: 700, px: 3 }}>
+            Tiffin Box
           </Button>
         </Stack>
 
