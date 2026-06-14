@@ -101,9 +101,14 @@ async function getFoods({ search, page = 1, limit = 20 } = {}) {
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
     `SELECT f.id, f.food_name, f.price, f.category, f.is_available, f.created_at,
-            u.name AS caterer_name
-     FROM food_items f JOIN users u ON u.id = f.caterer_id
+            u.name AS caterer_name,
+            ROUND(AVG(r.rating)::numeric, 1) AS avg_rating,
+            COUNT(r.id)::int AS review_count
+     FROM food_items f
+     JOIN users u ON u.id = f.caterer_id
+     LEFT JOIN reviews r ON r.subject_type = 'food' AND r.subject_id = f.id
      ${where}
+     GROUP BY f.id, u.name
      ORDER BY f.created_at DESC
      LIMIT $${idx++} OFFSET $${idx}`,
     params

@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Container, Box, Typography, TextField, InputAdornment,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Paper, Chip, Button, CircularProgress, Alert,
+  Paper, Chip, Button, CircularProgress, Alert, Stack,
 } from "@mui/material";
 import SearchRoundedIcon         from "@mui/icons-material/SearchRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
+import StarRoundedIcon           from "@mui/icons-material/StarRounded";
 import AppLayout    from "../../components/AppLayout";
 import adminService from "../../services/adminService";
 import { brand }    from "../../theme";
@@ -65,13 +66,14 @@ export default function AdminFoodsPage() {
           <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Food Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Caterer</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Price</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
+                <TableRow sx={{ backgroundColor: brand.orange }}>
+                  <TableCell sx={{ fontWeight: 700, color: "#fff" }}>Food Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: "#fff" }}>Caterer</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: "#fff" }}>Category</TableCell>
+                  <TableCell align="right"  sx={{ fontWeight: 700, color: "#fff" }}>Price</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: "#fff" }}>Rating</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: "#fff" }}>Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: "#fff" }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -81,6 +83,21 @@ export default function AdminFoodsPage() {
                     <TableCell sx={{ color: "text.secondary" }}>{f.caterer_name}</TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{f.category || "—"}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: brand.orange }}>₹{f.price}</TableCell>
+                    <TableCell align="center">
+                      {f.avg_rating != null ? (
+                        <Stack direction="row" alignItems="center" justifyContent="center" spacing={0.4}>
+                          <StarRoundedIcon sx={{ fontSize: 15, color: brand.star ?? "#F4B400" }} />
+                          <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                            {Number(f.avg_rating).toFixed(1)}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                            ({f.review_count})
+                          </Typography>
+                        </Stack>
+                      ) : (
+                        <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
+                      )}
+                    </TableCell>
                     <TableCell align="center">
                       <Chip label={f.is_available ? "Available" : "Disabled"}
                         color={f.is_available ? "success" : "default"} size="small" sx={{ fontWeight: 700 }} />

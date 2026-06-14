@@ -235,9 +235,13 @@ async function changePrice(id, caterer_id, price) {
 
 async function getAllFoods() {
   const { rows } = await pool.query(
-    `SELECT f.*, f.image_url AS "imageUrl", u.name AS caterer_name
+    `SELECT f.*, f.image_url AS "imageUrl", u.name AS caterer_name,
+            ROUND(AVG(r.rating)::numeric, 1) AS avg_rating,
+            COUNT(r.id)::int                 AS review_count
      FROM food_items f
      JOIN users u ON u.id = f.caterer_id
+     LEFT JOIN reviews r ON r.subject_type = 'food' AND r.subject_id = f.id
+     GROUP BY f.id, u.name
      ORDER BY f.created_at DESC`
   );
   return rows;
