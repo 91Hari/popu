@@ -271,64 +271,7 @@ export default function SplitCheckoutPage() {
                     </Alert>
                   ) : (
                     <Box>
-                      {/* ── UPI deep-link buttons ── */}
-                      {upiLink && (
-                        <Stack spacing={1} sx={{ mb: 1.5 }}>
-                          {/* Pay with PhonePe */}
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            onClick={() => handleUpiPay(upiLink, group.caterer_id)}
-                            startIcon={<PhonePeBadge size={20} />}
-                            endIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
-                            sx={{
-                              background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
-                              color: "#fff",
-                              fontWeight: 700,
-                              fontSize: "0.9rem",
-                              py: 1.1,
-                              borderRadius: 2,
-                              textTransform: "none",
-                              "&:hover": { background: "linear-gradient(135deg, #4A3ED8, #6B5CE0)" },
-                            }}
-                          >
-                            Pay with PhonePe
-                          </Button>
-
-                          {/* PhonePe declined tip */}
-                          {upiTipId === group.caterer_id && (
-                            <Alert
-                              severity="warning"
-                              onClose={() => setUpiTipId(null)}
-                              sx={{ fontSize: "0.78rem", py: 0.5 }}
-                            >
-                              If PhonePe declined the payment, open PhonePe manually →
-                              tap <strong>Send Money</strong> → paste the UPI ID below.
-                            </Alert>
-                          )}
-
-                          {/* Pay with Any UPI App */}
-                          <Button
-                            fullWidth
-                            variant="outlined"
-                            onClick={() => handleUpiPay(upiLink, group.caterer_id)}
-                            startIcon={<AccountBalanceWalletRoundedIcon />}
-                            endIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: "0.9rem",
-                              py: 1,
-                              borderRadius: 2,
-                              textTransform: "none",
-                              borderColor: brand.orange,
-                              color: brand.orange,
-                              "&:hover": { backgroundColor: brand.orangeLight, borderColor: brand.orange },
-                            }}
-                          >
-                            Pay with Any UPI App
-                          </Button>
-                        </Stack>
-                      )}
+                      {/* UPI deep-link buttons hidden — re-enable when merchant UPI IDs are set up */}
 
                       {/* ── QR + Copy row ── */}
                       <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
