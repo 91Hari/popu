@@ -1,6 +1,7 @@
 'use strict';
 
 const pool = require('../config/db');
+const { notifyUser } = require('./notificationService');
 
 async function submitProof({ customer_id, caterer_order_id, payment_screenshot_url, upi_reference }) {
   const { rows } = await pool.query(
@@ -66,6 +67,35 @@ async function reviewProof(id, { status, rejection_reason }, caterer_id) {
     `UPDATE caterer_orders SET payment_status = $1 WHERE id = $2`,
     [coStatus, proof.caterer_order_id]
   );
+
+  setImmediate(async () => {
+    try {
+      if (status === 'APPROVED') {
+        await notifyUser(proof.customer_id, {
+          notification_type: 'PAYMENT',
+          title:   'Payment Verified!',
+          message: 'Your payment has been verified. Your order is being prepared.',
+          reference_id: proof.master_order_id,
+        });
+      } else if (status === 'REJECTED') {
+        await notifyUser(proof.customer_id, {
+          notification_type: 'PAYMENT',
+          title:   'Payment Proof Rejected',
+          message: `Your payment proof was rejected${rejection_reason ? ': ' + rejection_reason : ''}. Please re-upload.`,
+          reference_id: proof.master_order_id,
+        });
+      } else if (status === 'REUPLOAD_REQUESTED') {
+        await notifyUser(proof.customer_id, {
+          notification_type: 'PAYMENT',
+          title:   'Re-upload Required',
+          message: 'Please re-upload your payment proof.',
+          reference_id: proof.master_order_id,
+        });
+      }
+    } catch (err) {
+      console.error('[PaymentProofService] Notification failed:', err.message);
+    }
+  });
 
   return updated[0];
 }

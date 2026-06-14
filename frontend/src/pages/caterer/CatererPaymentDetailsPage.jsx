@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container, Box, Typography, IconButton, Card, CardContent,
   Stack, TextField, Button, CircularProgress, Alert,
   Snackbar, Divider, InputAdornment,
 } from "@mui/material";
-import ArrowBackRoundedIcon   from "@mui/icons-material/ArrowBackRounded";
-import PhonelinkRoundedIcon   from "@mui/icons-material/PhonelinkRounded";
-import QrCodeRoundedIcon      from "@mui/icons-material/QrCodeRounded";
-import SaveRoundedIcon        from "@mui/icons-material/SaveRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import ArrowBackRoundedIcon     from "@mui/icons-material/ArrowBackRounded";
+import PhonelinkRoundedIcon     from "@mui/icons-material/PhonelinkRounded";
+import QrCodeRoundedIcon        from "@mui/icons-material/QrCodeRounded";
+import SaveRoundedIcon          from "@mui/icons-material/SaveRounded";
+import CheckCircleRoundedIcon   from "@mui/icons-material/CheckCircleRounded";
+import UploadFileRoundedIcon    from "@mui/icons-material/UploadFileRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import api from "../../services/api";
@@ -28,8 +30,11 @@ function PhonePeIcon() {
   );
 }
 
+const QR_MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+
 export default function CatererPaymentDetailsPage() {
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
+  const qrInputRef = useRef(null);
   const [fetching, setFetching] = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [snack,    setSnack]    = useState({ open: false, message: "", severity: "success" });
@@ -63,6 +68,23 @@ export default function CatererPaymentDetailsPage() {
     if (v && !UPI_REGEX.test(v)) {
       setErrors((err) => ({ ...err, [field]: true }));
     }
+  };
+
+  const handleQrFileChange = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSnack({ open: true, message: "Only image files are accepted.", severity: "error" });
+      return;
+    }
+    if (file.size > QR_MAX_BYTES) {
+      setSnack({ open: true, message: "Image must be under 3 MB.", severity: "error" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm((f) => ({ ...f, qr_code_image_url: ev.target.result }));
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {
@@ -192,14 +214,69 @@ export default function CatererPaymentDetailsPage() {
                   onChange={set("payment_name")}
                 />
 
-                <TextField
-                  fullWidth size="small"
-                  label="QR Code Image URL"
-                  placeholder="https://..."
-                  value={form.qr_code_image_url}
-                  onChange={set("qr_code_image_url")}
-                  helperText="Upload your QR to an image host and paste the URL here."
-                />
+                {/* QR Code upload */}
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
+                    <QrCodeRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>Payment QR Code</Typography>
+                  </Box>
+                  <input
+                    ref={qrInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleQrFileChange}
+                  />
+                  {form.qr_code_image_url ? (
+                    <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+                      <Box
+                        component="img"
+                        src={form.qr_code_image_url}
+                        alt="Payment QR"
+                        sx={{ width: 120, height: 120, objectFit: "contain", borderRadius: 2, border: `1px solid ${brand.border}`, p: 0.5 }}
+                      />
+                      <Stack spacing={1} sx={{ flex: 1 }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          Customers will scan this QR to pay you.
+                        </Typography>
+                        <Button
+                          size="small" variant="outlined"
+                          startIcon={<UploadFileRoundedIcon />}
+                          onClick={() => qrInputRef.current?.click()}
+                          sx={{ alignSelf: "flex-start", fontWeight: 600 }}
+                        >
+                          Replace Image
+                        </Button>
+                        <Button
+                          size="small" variant="outlined" color="error"
+                          startIcon={<DeleteOutlineRoundedIcon />}
+                          onClick={() => setForm((f) => ({ ...f, qr_code_image_url: "" }))}
+                          sx={{ alignSelf: "flex-start", fontWeight: 600 }}
+                        >
+                          Remove
+                        </Button>
+                      </Stack>
+                    </Box>
+                  ) : (
+                    <Box
+                      onClick={() => qrInputRef.current?.click()}
+                      sx={{
+                        border: `2px dashed ${brand.border}`, borderRadius: 2,
+                        p: 3, textAlign: "center", cursor: "pointer",
+                        "&:hover": { borderColor: brand.orange, backgroundColor: brand.orangeLight },
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <QrCodeRoundedIcon sx={{ fontSize: 36, color: brand.border, mb: 0.5 }} />
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>
+                        Upload QR Code
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                        PNG / JPG / WEBP · Max 3 MB
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
 
                 <TextField
                   fullWidth size="small"

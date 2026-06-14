@@ -272,14 +272,17 @@ async function getCatererSubOrders(caterer_id) {
            'unit_price',   coi.unit_price,
            'total_price',  coi.total_price
          ) ORDER BY coi.id
-       ) AS items
+       ) AS items,
+       pp.id                     AS proof_id,
+       pp.payment_screenshot_url AS proof_screenshot_url
      FROM caterer_orders co
      JOIN master_orders mo ON mo.id = co.master_order_id
      JOIN users u ON u.id = mo.customer_id
      JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
      JOIN food_items f ON f.id = coi.food_item_id
+     LEFT JOIN payment_proofs pp ON pp.caterer_order_id = co.id
      WHERE co.caterer_id = $1
-     GROUP BY co.id, mo.id, mo.customer_id, u.name, u.email
+     GROUP BY co.id, mo.id, mo.customer_id, u.name, u.email, pp.id, pp.payment_screenshot_url
      ORDER BY co.created_at DESC`,
     [caterer_id]
   );
