@@ -168,7 +168,7 @@ export default function CustomerDashboard() {
         <Box
           sx={{
             display: "flex", gap: { xs: 1, md: 2 }, mb: 3.5,
-            overflowX: "auto", pb: 0.5,
+            overflowX: "auto", pt: 1, pb: 0.5,
             "&::-webkit-scrollbar": { display: "none" },
             scrollbarWidth: "none",
           }}
