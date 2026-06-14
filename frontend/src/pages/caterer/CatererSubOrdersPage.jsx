@@ -27,6 +27,7 @@ const STATUS_CFG = {
   OUT_FOR_DELIVERY:  { label: "Out for Delivery",color: "warning", actions: [] },
   DELIVERED:         { label: "Delivered",      color: "success", actions: [] },
   CANCELLED:         { label: "Cancelled",      color: "default", actions: [] },
+  AUTO_CANCELLED:    { label: "Auto-Cancelled", color: "error",   actions: [] },
 };
 
 const ACTION_LABELS = {

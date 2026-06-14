@@ -292,10 +292,11 @@ async function getCatererSubOrders(caterer_id) {
 }
 
 const CATERER_VALID_TRANSITIONS = {
-  PLACED:    ['ACCEPTED', 'CANCELLED'],
-  ACCEPTED:  ['PREPARING', 'CANCELLED'],
-  PREPARING: ['READY', 'CANCELLED'],
-  READY:     ['DELIVERED', 'CANCELLED'],
+  PLACED:         ['ACCEPTED', 'CANCELLED'],
+  ACCEPTED:       ['PREPARING', 'CANCELLED'],
+  PREPARING:      ['READY', 'CANCELLED'],
+  READY:          ['DELIVERED', 'CANCELLED'],
+  AUTO_CANCELLED: [],
 };
 
 async function updateCatererOrderStatus(id, status, user) {
