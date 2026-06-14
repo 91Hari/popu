@@ -24,7 +24,7 @@ export function CartProvider({ children }) {
     }
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      if (user.role && user.role !== "CUSTOMER") {
+      if (user.role && user.role.toLowerCase() !== "customer") {
         dispatch({ type: "SET", items: [], total: 0 });
         return;
       }
