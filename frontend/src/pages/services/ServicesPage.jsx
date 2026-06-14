@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Container, Typography } from "@mui/material";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
+import BentoIcon     from "@mui/icons-material/Bento";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
@@ -22,6 +23,13 @@ const SERVICES = [
     title: "Food Marketplace",
     subtitle: "Daily fresh meals delivered to your door",
     to: "/services/food-marketplace",
+    comingSoon: false,
+  },
+  {
+    icon: <BentoIcon sx={{ fontSize: 28, color: brand.orange }} />,
+    title: "Lunch Box",
+    subtitle: "Fresh daily meal boxes from your favorite caterers",
+    to: "/services/tiffin-box",
     comingSoon: false,
   },
   {

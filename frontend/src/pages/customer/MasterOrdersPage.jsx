@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+
 import {
   Box, Container, Typography, Card, CardContent, Stack,
   Chip, Button, CircularProgress, Alert, Divider, Collapse,
@@ -56,8 +57,11 @@ function fmtArrival(ts) {
 const ETA_STATUSES = new Set(["ACCEPTED", "PREPARING", "READY", "OUT_FOR_DELIVERY"]);
 
 export default function MasterOrdersPage() {
-  const location   = useLocation();
-  const navigate   = useNavigate();
+  const location             = useLocation();
+  const navigate             = useNavigate();
+  const [searchParams]       = useSearchParams();
+  const highlightId          = searchParams.get("order") || "";
+  const orderCardRefs        = useRef({});
   const [orders, setOrders]         = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
@@ -86,6 +90,22 @@ export default function MasterOrdersPage() {
       setSnack({ open: true, message: "Order placed successfully!", severity: "success" });
     }
   }, [location.state]);
+
+  // Auto-expand and scroll to a highlighted order (from notification click)
+  useEffect(() => {
+    if (!highlightId || loading) return;
+    setExpanded((prev) => {
+      if (prev.has(highlightId)) return prev;
+      const next = new Set(prev);
+      next.add(highlightId);
+      return next;
+    });
+    const timer = setTimeout(() => {
+      const el = orderCardRefs.current[highlightId];
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [highlightId, loading]);
 
   const handleCancelConfirm = async () => {
     setSubmitting(true);
@@ -156,7 +176,18 @@ export default function MasterOrdersPage() {
               const isExpanded    = expandedOrders.has(masterOrder.id);
 
               return (
-                <Card key={masterOrder.id} elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
+                <Card
+                  key={masterOrder.id}
+                  ref={(el) => { if (el) orderCardRefs.current[masterOrder.id] = el; }}
+                  elevation={0}
+                  sx={{
+                    border: masterOrder.id === highlightId
+                      ? `2px solid ${brand.orange}`
+                      : `1px solid ${brand.border}`,
+                    backgroundColor: masterOrder.id === highlightId ? brand.orangeLight : undefined,
+                    transition: "border-color 0.3s, background-color 0.3s",
+                  }}
+                >
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     {/* Master order header */}
                     <Box

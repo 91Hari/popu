@@ -23,6 +23,13 @@ export function CartProvider({ children }) {
       return;
     }
     try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (user.role && user.role.toLowerCase() !== "customer") {
+        dispatch({ type: "SET", items: [], total: 0 });
+        return;
+      }
+    } catch { /* ignore parse errors */ }
+    try {
       const data = await cartApi.getCart();
       dispatch({ type: "SET", items: data.items || [], total: data.total || 0 });
     } catch {

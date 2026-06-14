@@ -9,8 +9,12 @@ import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
 import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
-import masterOrderService from "../../services/masterOrderService";
-import riderService from "../../services/riderService";
+import VerifiedRoundedIcon       from "@mui/icons-material/VerifiedRounded";
+import BlockRoundedIcon          from "@mui/icons-material/BlockRounded";
+import ImageSearchRoundedIcon    from "@mui/icons-material/ImageSearchRounded";
+import masterOrderService  from "../../services/masterOrderService";
+import riderService        from "../../services/riderService";
+import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
@@ -28,7 +32,7 @@ const STATUS_CFG = {
 const ACTION_LABELS = {
   ACCEPTED:  "Accept Order",
   PREPARING: "Start Preparing",
-  READY:     "Mark Ready",
+  READY:     "Ready For Delivery",
   DELIVERED: "Mark Delivered",
   CANCELLED: "Cancel",
 };
@@ -57,6 +61,9 @@ export default function CatererSubOrdersPage() {
   const [riders, setRiders]               = useState([]);
   const [selectedRider, setSelectedRider] = useState("");
   const [assigning, setAssigning]         = useState(false);
+  const [rejectDialog, setRejectDialog]   = useState({ open: false, proofId: null, orderId: null, reason: "" });
+  const [proofReviewing, setProofReviewing] = useState({});
+  const [proofPreview, setProofPreview]   = useState({ open: false, url: "" });
 
   const load = useCallback(async () => {
     try {
@@ -116,6 +123,38 @@ export default function CatererSubOrdersPage() {
       setSnack({ open: true, message: err?.message || "Failed to update order.", severity: "error" });
     } finally {
       setUpdating((u) => { const n = { ...u }; delete n[orderId]; return n; });
+    }
+  };
+
+  const handleApproveProof = async (orderId, proofId) => {
+    setProofReviewing((p) => ({ ...p, [orderId]: "APPROVING" }));
+    try {
+      await paymentProofService.reviewProof(proofId, { status: "APPROVED" });
+      setOrders((prev) => prev.map((o) =>
+        o.id === orderId ? { ...o, payment_status: "APPROVED" } : o
+      ));
+      setSnack({ open: true, message: "Payment approved. Customer has been notified.", severity: "success" });
+    } catch (err) {
+      setSnack({ open: true, message: err?.message || "Failed to approve payment.", severity: "error" });
+    } finally {
+      setProofReviewing((p) => { const n = { ...p }; delete n[orderId]; return n; });
+    }
+  };
+
+  const handleRejectConfirm = async () => {
+    const { proofId, orderId, reason } = rejectDialog;
+    setProofReviewing((p) => ({ ...p, [orderId]: "REJECTING" }));
+    try {
+      await paymentProofService.reviewProof(proofId, { status: "REJECTED", rejection_reason: reason });
+      setOrders((prev) => prev.map((o) =>
+        o.id === orderId ? { ...o, payment_status: "REJECTED" } : o
+      ));
+      setRejectDialog({ open: false, proofId: null, orderId: null, reason: "" });
+      setSnack({ open: true, message: "Payment rejected. Customer will be asked to re-upload.", severity: "info" });
+    } catch (err) {
+      setSnack({ open: true, message: err?.message || "Failed to reject payment.", severity: "error" });
+    } finally {
+      setProofReviewing((p) => { const n = { ...p }; delete n[orderId]; return n; });
     }
   };
 
@@ -227,7 +266,79 @@ export default function CatererSubOrdersPage() {
 
                     <Divider sx={{ mb: 1.25 }} />
 
-                    {statusKey === "PLACED" && (
+                    {/* Payment proof review block */}
+                    {order.payment_status === "PROOF_SUBMITTED" && order.proof_id && (
+                      <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: "#E3F2FD", border: "1px solid #90CAF9" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
+                          <ImageSearchRoundedIcon sx={{ fontSize: 16, color: "#1565C0" }} />
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#1565C0" }}>
+                            Payment Proof Received — Please Review
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 1.25, alignItems: "center" }}>
+                          {/* Proof thumbnail */}
+                          {order.proof_screenshot_url && (
+                            <Box
+                              onClick={() => setProofPreview({ open: true, url: order.proof_screenshot_url })}
+                              sx={{
+                                width: 64, height: 64,
+                                borderRadius: 1.5, border: "1px solid #90CAF9",
+                                cursor: "pointer", flexShrink: 0,
+                                backgroundColor: "#BBDEFB",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                overflow: "hidden",
+                              }}
+                            >
+                              {order.proof_screenshot_url.startsWith("data:image") ? (
+                                <Box
+                                  component="img"
+                                  src={order.proof_screenshot_url}
+                                  alt="Payment proof"
+                                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                              ) : (
+                                <ImageSearchRoundedIcon sx={{ color: "#1565C0" }} />
+                              )}
+                            </Box>
+                          )}
+                          <Stack spacing={0.75} sx={{ flex: 1 }}>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              Customer uploaded payment proof. Verify and approve or reject.
+                            </Typography>
+                            <Stack direction="row" spacing={0.75}>
+                              <Button
+                                size="small" variant="contained"
+                                startIcon={proofReviewing[order.id] === "APPROVING" ? <CircularProgress size={12} color="inherit" /> : <VerifiedRoundedIcon fontSize="small" />}
+                                disabled={!!proofReviewing[order.id]}
+                                onClick={() => handleApproveProof(order.id, order.proof_id)}
+                                sx={{ fontWeight: 700, fontSize: "0.72rem", backgroundColor: "#2E7D32", "&:hover": { backgroundColor: "#1B5E20" } }}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="small" variant="outlined" color="error"
+                                startIcon={proofReviewing[order.id] === "REJECTING" ? <CircularProgress size={12} color="inherit" /> : <BlockRoundedIcon fontSize="small" />}
+                                disabled={!!proofReviewing[order.id]}
+                                onClick={() => setRejectDialog({ open: true, proofId: order.proof_id, orderId: order.id, reason: "" })}
+                                sx={{ fontWeight: 700, fontSize: "0.72rem" }}
+                              >
+                                Reject
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {order.payment_status === "REJECTED" && (
+                      <Box sx={{ mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#FFEBEE", border: "1px solid #EF9A9A" }}>
+                        <Typography variant="caption" sx={{ color: "#C62828", fontWeight: 700 }}>
+                          Payment proof rejected — awaiting customer re-upload
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {statusKey === "PLACED" && order.payment_status !== "PROOF_SUBMITTED" && (
                       <Box sx={{ p: 1, mb: 1.25, borderRadius: 1.5, backgroundColor: brand.goldLight, border: `1px solid ${brand.gold}` }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                           <HourglassEmptyRoundedIcon sx={{ fontSize: 14, color: "#B8860B" }} />
@@ -334,6 +445,45 @@ export default function CatererSubOrdersPage() {
           <Button onClick={() => setCancelDialog((s) => ({ ...s, open: false }))}>Keep</Button>
           <Button variant="contained" color="error" onClick={handleCancelConfirm}>Yes, Cancel</Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Reject proof dialog */}
+      <Dialog open={rejectDialog.open} onClose={() => setRejectDialog((s) => ({ ...s, open: false }))} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Reject Payment Proof?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            The customer will be notified and can re-upload. Provide a reason (optional).
+          </Typography>
+          <TextField
+            fullWidth size="small" label="Rejection reason (optional)"
+            value={rejectDialog.reason}
+            onChange={(e) => setRejectDialog((s) => ({ ...s, reason: e.target.value }))}
+            multiline rows={2}
+            placeholder="e.g. Amount unclear, wrong screenshot…"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setRejectDialog((s) => ({ ...s, open: false }))}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleRejectConfirm}>Reject Proof</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Proof image preview dialog */}
+      <Dialog open={proofPreview.open} onClose={() => setProofPreview({ open: false, url: "" })} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Payment Proof
+          <Button size="small" onClick={() => setProofPreview({ open: false, url: "" })}>Close</Button>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: "center", pb: 2 }}>
+          {proofPreview.url.startsWith("data:image") ? (
+            <Box component="img" src={proofPreview.url} alt="Payment proof"
+              sx={{ maxWidth: "100%", maxHeight: 500, borderRadius: 2, objectFit: "contain" }} />
+          ) : (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              PDF proof — cannot preview inline.
+            </Typography>
+          )}
+        </DialogContent>
       </Dialog>
 
       <Snackbar

@@ -9,7 +9,7 @@ import { haversineKm, etaMinutes, formatDistance, formatEta } from "../utils/geo
 export const CATERER_CARD_HEIGHT = 230;
 
 export default function CatererCard({ caterer = {}, onClick, customerCoords }) {
-  const { catererName, businessName, location, address, latitude, longitude, rating, foodCount, email } = caterer;
+  const { catererName, businessName, location, address, latitude, longitude, rating, reviewCount, foodCount, email } = caterer;
 
   const hasDistance = customerCoords && latitude != null && longitude != null;
   const distKm      = hasDistance ? haversineKm(customerCoords.lat, customerCoords.lng, Number(latitude), Number(longitude)) : null;
@@ -98,6 +98,11 @@ export default function CatererCard({ caterer = {}, onClick, customerCoords }) {
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
                     {Number(rating).toFixed(1)}
                   </Typography>
+                  {reviewCount != null && reviewCount > 0 && (
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      ({reviewCount})
+                    </Typography>
+                  )}
                 </>
               ) : (
                 <Typography variant="caption" sx={{ color: "text.disabled" }}>No rating yet</Typography>

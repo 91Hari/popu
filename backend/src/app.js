@@ -23,6 +23,7 @@ const reviewRoutes               = require('./routes/reviewRoutes');
 const paymentRoutes              = require('./routes/paymentRoutes');
 const webhookRoutes              = require('./routes/webhookRoutes');
 const profileRoutes              = require('./routes/profileRoutes');
+const tiffinRoutes               = require('./routes/tiffinRoutes');
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/reviews',                reviewRoutes);
 app.use('/api/payments',               paymentRoutes);
 app.use('/api/webhooks',               webhookRoutes);
 app.use('/api/profile',                profileRoutes);
+app.use('/api/tiffin',                 tiffinRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not Found' }));
 

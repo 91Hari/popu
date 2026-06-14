@@ -11,9 +11,10 @@ import EditRoundedIcon             from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon           from "@mui/icons-material/DeleteRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
 import DinnerDiningRoundedIcon     from "@mui/icons-material/DinnerDiningRounded";
-import foodService from "../../services/foodService";
-import AppLayout   from "../../components/AppLayout";
-import { brand }   from "../../theme";
+import foodService            from "../../services/foodService";
+import { StarDisplay }        from "../../components/StarRating";
+import AppLayout              from "../../components/AppLayout";
+import { brand }              from "../../theme";
 
 export default function FoodListPage() {
   const [rows,       setRows]       = useState([]);
@@ -32,11 +33,13 @@ export default function FoodListPage() {
         const data = await foodService.getFoods();
         const mine = user.id ? (data || []).filter((f) => f.caterer_id === user.id) : (data || []);
         setRows(mine.map((f) => ({
-          id:        f.id,
-          name:      f.food_name || "",
-          price:     Number(f.price ?? 0),
-          available: !!f.is_available,
-          imageUrl:  f.imageUrl || f.image_url || null,
+          id:           f.id,
+          name:         f.food_name || "",
+          price:        Number(f.price ?? 0),
+          available:    !!f.is_available,
+          imageUrl:     f.imageUrl || f.image_url || null,
+          avg_rating:   f.avg_rating != null ? Number(f.avg_rating) : null,
+          review_count: f.review_count != null ? Number(f.review_count) : 0,
         })));
       } catch {
         setRows([]);
@@ -149,9 +152,10 @@ export default function FoodListPage() {
                     <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.5, lineHeight: 1.3 }}>
                       {r.name}
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange }}>
+                    <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange, mb: 0.5 }}>
                       ₹{r.price}
                     </Typography>
+                    <StarDisplay rating={r.avg_rating} count={r.review_count || null} size={14} />
                   </CardContent>
 
                   <CardActions sx={{ px: 2, pb: 1.5, pt: 0, justifyContent: "space-between", alignItems: "center" }}>
