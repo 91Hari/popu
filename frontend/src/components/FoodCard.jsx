@@ -4,6 +4,7 @@ import AddShoppingCartRoundedIcon from "@mui/icons-material/AddShoppingCartRound
 import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import CommonCard from "./CommonCard";
+import { StarDisplay } from "./StarRating";
 import { useCart } from "../contexts/CartContext";
 import { brand } from "../theme";
 
@@ -24,6 +25,8 @@ export default function FoodCard({ food = {}, onClick }) {
   const category    = food.category;
   const eta         = food.estimatedDeliveryTime;
   const etaRange    = food.etaRange;
+  const avgRating   = food.avgRating != null ? Number(food.avgRating) : null;
+  const reviewCount = food.reviewCount != null ? Number(food.reviewCount) : null;
 
   const handleAddToCart = async (e) => {
     e.stopPropagation();
@@ -82,6 +85,11 @@ export default function FoodCard({ food = {}, onClick }) {
             </Typography>
           </Box>
         </Tooltip>
+      )}
+      {avgRating != null && (
+        <Box sx={{ mt: 0.5 }}>
+          <StarDisplay rating={avgRating} count={reviewCount && reviewCount > 0 ? reviewCount : null} size={12} />
+        </Box>
       )}
     </Box>
   );

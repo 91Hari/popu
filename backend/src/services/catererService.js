@@ -33,9 +33,12 @@ async function getCaterers({ search, location, page = 1, limit = 20 } = {}) {
        u.longitude,
        u.email,
        u.availability_status AS "availabilityStatus",
-       COUNT(f.id)::int      AS "foodCount"
+       COUNT(DISTINCT f.id)::int                AS "foodCount",
+       ROUND(AVG(r.rating)::numeric, 1)         AS "rating",
+       COUNT(DISTINCT r.id)::int                AS "reviewCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
+     LEFT JOIN reviews r ON r.subject_type = 'caterer' AND r.subject_id = u.id
      WHERE ${where}
      GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude, u.email, u.availability_status
      ORDER BY u.name ASC
@@ -64,9 +67,12 @@ async function getCatererById(id) {
        u.payment_name,
        u.qr_code_image_url,
        u.bank_account_name,
-       COUNT(f.id)::int       AS "foodCount"
+       COUNT(DISTINCT f.id)::int                AS "foodCount",
+       ROUND(AVG(r.rating)::numeric, 1)         AS "rating",
+       COUNT(DISTINCT r.id)::int                AS "reviewCount"
      FROM users u
      LEFT JOIN food_items f ON f.caterer_id = u.id AND f.is_available = TRUE
+     LEFT JOIN reviews r ON r.subject_type = 'caterer' AND r.subject_id = u.id
      WHERE u.id = $1 AND u.role = 'CATERER' AND u.is_active = TRUE
      GROUP BY u.id, u.name, u.business_name, u.location, u.address, u.latitude, u.longitude,
               u.email, u.availability_status, u.catering_available,

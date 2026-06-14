@@ -304,15 +304,19 @@ const CUSTOMER_FOOD_SELECT = `
     u.id                          AS "catererId",
     u.name                        AS "catererName",
     u.latitude                    AS "catererLat",
-    u.longitude                   AS "catererLng"
+    u.longitude                   AS "catererLng",
+    ROUND(AVG(r.rating)::numeric, 1) AS "avgRating",
+    COUNT(r.id)::int              AS "reviewCount"
   FROM food_items f
   JOIN users u ON u.id = f.caterer_id
+  LEFT JOIN reviews r ON r.subject_type = 'food' AND r.subject_id = f.id
 `;
 
 async function getCustomerFoods({ customerLat, customerLng } = {}) {
   const { rows } = await pool.query(
     CUSTOMER_FOOD_SELECT +
     `WHERE u.is_active = TRUE
+     GROUP BY f.id, u.id, u.name, u.latitude, u.longitude
      ORDER BY f.created_at DESC`
   );
   return rows.map((r) => _enrichWithETA(r, customerLat, customerLng));
@@ -337,7 +341,10 @@ async function searchCustomerFoods({
   }
 
   const { rows } = await pool.query(
-    CUSTOMER_FOOD_SELECT + `WHERE ${conditions.join(' AND ')} ORDER BY f.created_at DESC`,
+    CUSTOMER_FOOD_SELECT +
+    `WHERE ${conditions.join(' AND ')}
+     GROUP BY f.id, u.id, u.name, u.latitude, u.longitude
+     ORDER BY f.created_at DESC`,
     params
   );
   return rows.map((r) => _enrichWithETA(r, customerLat, customerLng));
