@@ -11,7 +11,9 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-async function register({ name, email, password, role, phone, business_name, location, address, latitude, longitude }) {
+const UPI_REGEX = /^[\w.\-]+@[\w]+$/;
+
+async function register({ name, email, password, role, phone, business_name, location, address, latitude, longitude, upi_id, upi_name, qr_code_image_url }) {
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
   if (existing.rows.length > 0) {
     const err = new Error('Email already registered');
@@ -23,9 +25,17 @@ async function register({ name, email, password, role, phone, business_name, loc
   const upperRole  = role.toUpperCase();
   const isCaterer  = upperRole === 'CATERER';
 
+  // Validate UPI ID format if provided
+  const cleanUpiId = upi_id ? upi_id.trim() : null;
+  if (cleanUpiId && !UPI_REGEX.test(cleanUpiId)) {
+    const err = new Error('Invalid UPI ID format (expected format: name@bank)');
+    err.status = 400;
+    throw err;
+  }
+
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, password_hash, role, phone, business_name, location, address, latitude, longitude)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO users (name, email, password_hash, role, phone, business_name, location, address, latitude, longitude, upi_id, payment_name, qr_code_image_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING id, name, email, role, is_active, created_at`,
     [
       name, email, password_hash, upperRole,
@@ -35,6 +45,9 @@ async function register({ name, email, password, role, phone, business_name, loc
       isCaterer ? (address || null) : null,
       latitude  != null ? latitude  : null,
       longitude != null ? longitude : null,
+      isCaterer ? (cleanUpiId || null)                         : null,
+      isCaterer ? (upi_name?.trim() || null)                   : null,
+      isCaterer ? (qr_code_image_url || null)                  : null,
     ]
   );
 
