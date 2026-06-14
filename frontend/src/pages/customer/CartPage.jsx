@@ -9,7 +9,7 @@ import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
-import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon from "@mui/icons-material/Dining";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import { useCart } from "../../contexts/CartContext";
@@ -114,7 +114,7 @@ export default function CartPage() {
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}
                     >
-                      {!item.image_url && <DinnerDiningRoundedIcon sx={{ fontSize: 28, color: brand.orange, opacity: 0.7 }} />}
+                      {!item.image_url && <DiningIcon sx={{ fontSize: 28, color: brand.orange, opacity: 0.7 }} />}
                     </Box>
 
                     {/* Content column */}

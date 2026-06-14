@@ -20,7 +20,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import PersonPinRoundedIcon from "@mui/icons-material/PersonPinRounded";
-import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon from "@mui/icons-material/Dining";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import foodService from "../../services/foodService";
@@ -166,7 +166,7 @@ export default function FoodDetailsPage() {
                 }}
               />
             ) : (
-              <DinnerDiningRoundedIcon
+              <DiningIcon
                 sx={{ fontSize: isMobile ? 72 : 100, color: brand.orange, opacity: 0.6 }}
               />
             )}

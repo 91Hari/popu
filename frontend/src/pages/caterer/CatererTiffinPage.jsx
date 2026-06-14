@@ -4,7 +4,7 @@ import {
   Switch, FormControlLabel, TextField, Button, Divider,
   Alert, CircularProgress, Snackbar, Chip,
 } from "@mui/material";
-import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon from "@mui/icons-material/Dining";
 import SaveRoundedIcon          from "@mui/icons-material/SaveRounded";
 import AppLayout                from "../../components/AppLayout";
 import tiffinService            from "../../services/tiffinService";
@@ -102,7 +102,7 @@ export default function CatererTiffinPage() {
     <AppLayout>
       <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
+          <DiningIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Lunch Box Management</Typography>
         </Box>
 

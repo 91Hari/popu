@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import CheckCircleRoundedIcon  from "@mui/icons-material/CheckCircleRounded";
 import TwoWheelerRoundedIcon   from "@mui/icons-material/TwoWheelerRounded";
-import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon from "@mui/icons-material/Dining";
 import PersonRoundedIcon       from "@mui/icons-material/PersonRounded";
 import AppLayout from "../../components/AppLayout";
 import BackButton from "../../components/BackButton";
@@ -138,7 +138,7 @@ export default function RiderDeliveryPage() {
                   <Stack spacing={0.5}>
                     {order.items.map((it, i) => (
                       <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                        <DinnerDiningRoundedIcon sx={{ fontSize: 13, color: brand.orange }} />
+                        <DiningIcon sx={{ fontSize: 13, color: brand.orange }} />
                         <Typography variant="caption">
                           {it.food_name} × {it.quantity}
                         </Typography>

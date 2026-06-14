@@ -9,7 +9,7 @@ import {
 import ReceiptLongRoundedIcon        from "@mui/icons-material/ReceiptLongRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import CancelOutlinedIcon            from "@mui/icons-material/CancelOutlined";
-import LocalDiningRoundedIcon        from "@mui/icons-material/LocalDiningRounded";
+import DiningIcon        from "@mui/icons-material/Dining";
 import TaskAltRoundedIcon            from "@mui/icons-material/TaskAltRounded";
 import TwoWheelerRoundedIcon         from "@mui/icons-material/TwoWheelerRounded";
 import orderService from "../../services/orderService";
@@ -60,7 +60,7 @@ function getActions(status, orderId, busy, onAction) {
       ];
     case "ACCEPTED":
       return [
-        btn("Start Preparing", "PREPARING", <LocalDiningRoundedIcon />, null, brand.orange),
+        btn("Start Preparing", "PREPARING", <DiningIcon />, null, brand.orange),
         btn("Cancel",          "CANCELLED", <CancelOutlinedIcon />,     "error", null),
       ];
     case "PREPARING":

@@ -3,7 +3,7 @@ import {
   Box, Container, Typography, Card, CardContent,
   Grid, CircularProgress, Alert, Skeleton,
 } from "@mui/material";
-import DinnerDiningRoundedIcon  from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon  from "@mui/icons-material/Dining";
 import ReceiptLongRoundedIcon   from "@mui/icons-material/ReceiptLongRounded";
 import DateRangeRoundedIcon     from "@mui/icons-material/DateRangeRounded";
 import TodayRoundedIcon         from "@mui/icons-material/TodayRounded";
@@ -71,7 +71,7 @@ export default function AdminTiffinPage() {
     <AppLayout>
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
+          <DiningIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Lunch Box Overview</Typography>
         </Box>
 

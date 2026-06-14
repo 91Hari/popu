@@ -4,7 +4,7 @@ import {
   Box, Container, Typography, Card, CardContent, Stack,
   Chip, Button, CircularProgress, Alert, Divider, Collapse,
 } from "@mui/material";
-import DinnerDiningRoundedIcon  from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon  from "@mui/icons-material/Dining";
 import ExpandMoreRoundedIcon    from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon    from "@mui/icons-material/ExpandLessRounded";
 import TodayRoundedIcon         from "@mui/icons-material/TodayRounded";
@@ -78,7 +78,7 @@ export default function TiffinOrdersPage() {
       <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
+            <DiningIcon sx={{ color: brand.orange, fontSize: 26 }} />
             <Typography variant="h5" sx={{ fontWeight: 800 }}>My Lunch Box Orders</Typography>
           </Box>
           <Button variant="contained" size="small" onClick={() => navigate("/services/tiffin-box")}
@@ -91,7 +91,7 @@ export default function TiffinOrdersPage() {
 
         {orders.length === 0 ? (
           <Card elevation={0} sx={{ p: 5, textAlign: "center", border: `1px solid ${brand.border}` }}>
-            <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
+            <DiningIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
             <Typography variant="h6" sx={{ color: "text.secondary" }}>No lunch box orders yet</Typography>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               Your Lunch Box orders will appear here.

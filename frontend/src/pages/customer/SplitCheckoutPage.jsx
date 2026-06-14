@@ -5,7 +5,7 @@ import {
   Alert, Stack, Paper, Divider, IconButton, Tooltip, Chip,
 } from "@mui/material";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
-import DinnerDiningRoundedIcon         from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon         from "@mui/icons-material/Dining";
 import ContentCopyRoundedIcon          from "@mui/icons-material/ContentCopyRounded";
 import CheckRoundedIcon                from "@mui/icons-material/CheckRounded";
 import QrCodeRoundedIcon               from "@mui/icons-material/QrCodeRounded";
@@ -205,7 +205,7 @@ export default function SplitCheckoutPage() {
                           background: `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                           display: "flex", alignItems: "center", justifyContent: "center",
                         }}>
-                          <DinnerDiningRoundedIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
+                          <DiningIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
                         </Box>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.food_name}</Typography>

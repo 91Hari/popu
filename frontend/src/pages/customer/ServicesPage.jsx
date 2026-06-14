@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Container, Toolbar, Typography, Card } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
-import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
+import DiningIcon from "@mui/icons-material/Dining";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
@@ -17,7 +17,7 @@ const SERVICES = [
     to: "/customer/search",
   },
   {
-    icon: <LunchDiningRoundedIcon sx={{ fontSize: 28, color: brand.orange }} />,
+    icon: <DiningIcon sx={{ fontSize: 28, color: brand.orange }} />,
     title: "Tiffin Services",
     subtitle: "Daily healthy meals at your door",
     to: "/customer/search",

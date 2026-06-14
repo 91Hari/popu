@@ -13,7 +13,7 @@ import ExpandLessRoundedIcon     from "@mui/icons-material/ExpandLessRounded";
 import UploadFileRoundedIcon     from "@mui/icons-material/UploadFileRounded";
 import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
-import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon   from "@mui/icons-material/Dining";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
 import DirectionsBikeRoundedIcon  from "@mui/icons-material/DirectionsBikeRounded";
 import AccessTimeRoundedIcon      from "@mui/icons-material/AccessTimeRounded";
@@ -274,7 +274,7 @@ export default function MasterOrdersPage() {
                                           backgroundColor: brand.orangeLight,
                                           display: "flex", alignItems: "center", justifyContent: "center",
                                         }}>
-                                          <DinnerDiningRoundedIcon sx={{ fontSize: 15, color: brand.orange }} />
+                                          <DiningIcon sx={{ fontSize: 15, color: brand.orange }} />
                                         </Box>
                                         <Typography variant="caption" sx={{ flex: 1, fontWeight: 600 }}>
                                           {it.food_name}
@@ -415,7 +415,7 @@ export default function MasterOrdersPage() {
                                     {Array.isArray(co.items) && co.items.map((it, idx) => (
                                       <Button
                                         key={idx} size="small" variant="outlined"
-                                        startIcon={<DinnerDiningRoundedIcon fontSize="small" />}
+                                        startIcon={<DiningIcon fontSize="small" />}
                                         onClick={() => setReviewDialog({ open: true, subjectType: "food", subjectId: it.food_item_id, subjectName: it.food_name, orderRefId: co.id })}
                                         sx={{ fontWeight: 600, fontSize: "0.7rem" }}
                                       >

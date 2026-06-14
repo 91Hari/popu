@@ -6,7 +6,7 @@ import {
   TextField, Select, MenuItem, FormControl, InputLabel, Snackbar,
 } from "@mui/material";
 import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
-import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon   from "@mui/icons-material/Dining";
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
 import VerifiedRoundedIcon       from "@mui/icons-material/VerifiedRounded";
@@ -249,7 +249,7 @@ export default function CatererSubOrdersPage() {
                             background: `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
-                            <DinnerDiningRoundedIcon sx={{ fontSize: 16, color: brand.orange, opacity: 0.7 }} />
+                            <DiningIcon sx={{ fontSize: 16, color: brand.orange, opacity: 0.7 }} />
                           </Box>
                           <Box sx={{ flex: 1 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{it.food_name}</Typography>

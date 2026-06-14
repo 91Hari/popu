@@ -10,7 +10,7 @@ import {
 import EditRoundedIcon             from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon           from "@mui/icons-material/DeleteRounded";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
-import DinnerDiningRoundedIcon     from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon     from "@mui/icons-material/Dining";
 import foodService            from "../../services/foodService";
 import { StarDisplay }        from "../../components/StarRating";
 import AppLayout              from "../../components/AppLayout";
@@ -114,7 +114,7 @@ export default function FoodListPage() {
             textAlign: "center", py: 8,
             border: `1px dashed ${brand.border}`, borderRadius: 3,
           }}>
-            <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.3, mb: 1.5 }} />
+            <DiningIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.3, mb: 1.5 }} />
             <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 600 }}>No food items yet</Typography>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2.5 }}>Add your first item to start receiving orders</Typography>
             <Button variant="contained" onClick={() => navigate("/caterer/add-food")}
@@ -144,7 +144,7 @@ export default function FoodListPage() {
                       height: 160, display: "flex", alignItems: "center", justifyContent: "center",
                       background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
                     }}>
-                      <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.5 }} />
+                      <DiningIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.5 }} />
                     </Box>
                   )}
 

@@ -18,7 +18,7 @@ import ShoppingCartRoundedIcon      from "@mui/icons-material/ShoppingCartRounde
 import LogoutRoundedIcon            from "@mui/icons-material/LogoutRounded";
 import RoomServiceRoundedIcon       from "@mui/icons-material/RoomServiceRounded";
 import StorefrontRoundedIcon        from "@mui/icons-material/StorefrontRounded";
-import LunchDiningRoundedIcon       from "@mui/icons-material/LunchDiningRounded";
+import DiningIcon       from "@mui/icons-material/Dining";
 import CircleRoundedIcon            from "@mui/icons-material/CircleRounded";
 import PeopleRoundedIcon            from "@mui/icons-material/PeopleRounded";
 import AssessmentRoundedIcon        from "@mui/icons-material/AssessmentRounded";
@@ -43,7 +43,7 @@ export const DRAWER_WIDTH = 240;
 const CUSTOMER_NAV = [
   { label: "Dashboard",     path: "/customer",                    icon: <HomeRoundedIcon />,                   exact: true  },
   { label: "Services",      path: "/services",                    icon: <RoomServiceRoundedIcon />,            exact: true  },
-  { label: "Food Marketplace", path: "/services/food-marketplace",icon: <LunchDiningRoundedIcon />,            exact: false },
+  { label: "Food Marketplace", path: "/services/food-marketplace",icon: <DiningIcon />,            exact: false },
   { label: "My Cart",       path: "/cart",                        icon: <ShoppingCartRoundedIcon />,           cartBadge: true  },
   { label: "My Orders",     path: "/customer/master-orders",       icon: <ReceiptLongRoundedIcon /> },
   { label: "My Bookings",   path: "/customer/catering-bookings",   icon: <EventRoundedIcon /> },

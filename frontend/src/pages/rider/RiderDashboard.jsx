@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
 import SearchRoundedIcon         from "@mui/icons-material/SearchRounded";
-import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
+import DiningIcon   from "@mui/icons-material/Dining";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import riderService from "../../services/riderService";
@@ -103,7 +103,7 @@ export default function RiderDashboard() {
                     <Stack spacing={0.5} sx={{ mb: 1.5 }}>
                       {items.map((it, i) => (
                         <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <DinnerDiningRoundedIcon sx={{ fontSize: 14, color: brand.orange, flexShrink: 0 }} />
+                          <DiningIcon sx={{ fontSize: 14, color: brand.orange, flexShrink: 0 }} />
                           <Typography variant="caption">
                             {it.food_name} × {it.quantity}
                           </Typography>
