@@ -194,16 +194,18 @@ async function getMasterOrders(user) {
              'accepted_at',               co.accepted_at,
              'preparing_at',              co.preparing_at,
              'rider_id',                  co.rider_id,
+             'rider_name',                (SELECT u2.name FROM users u2 WHERE u2.id = co.rider_id),
              'delivery_confirmation_code',co.delivery_confirmation_code,
              'created_at',                co.created_at,
              'items', (
                SELECT json_agg(
                  json_build_object(
-                   'id',          coi.id,
-                   'food_name',   f.food_name,
-                   'quantity',    coi.quantity,
-                   'unit_price',  coi.unit_price,
-                   'total_price', coi.total_price
+                   'id',           coi.id,
+                   'food_item_id', coi.food_item_id,
+                   'food_name',    f.food_name,
+                   'quantity',     coi.quantity,
+                   'unit_price',   coi.unit_price,
+                   'total_price',  coi.total_price
                  ) ORDER BY coi.id
                )
                FROM caterer_order_items coi
