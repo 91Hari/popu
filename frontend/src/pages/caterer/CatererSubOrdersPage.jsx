@@ -279,19 +279,24 @@ export default function CatererSubOrdersPage() {
                           {/* Proof thumbnail */}
                           {order.proof_screenshot_url && (
                             <Box
-                              component={order.proof_screenshot_url.startsWith("data:image") ? "img" : "div"}
-                              src={order.proof_screenshot_url.startsWith("data:image") ? order.proof_screenshot_url : undefined}
-                              alt="Payment proof"
                               onClick={() => setProofPreview({ open: true, url: order.proof_screenshot_url })}
                               sx={{
-                                width: 64, height: 64, objectFit: "cover",
+                                width: 64, height: 64,
                                 borderRadius: 1.5, border: "1px solid #90CAF9",
                                 cursor: "pointer", flexShrink: 0,
                                 backgroundColor: "#BBDEFB",
                                 display: "flex", alignItems: "center", justifyContent: "center",
+                                overflow: "hidden",
                               }}
                             >
-                              {!order.proof_screenshot_url.startsWith("data:image") && (
+                              {order.proof_screenshot_url.startsWith("data:image") ? (
+                                <Box
+                                  component="img"
+                                  src={order.proof_screenshot_url}
+                                  alt="Payment proof"
+                                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                              ) : (
                                 <ImageSearchRoundedIcon sx={{ color: "#1565C0" }} />
                               )}
                             </Box>

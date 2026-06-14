@@ -183,10 +183,6 @@ export default function SplitCheckoutPage() {
             const proof    = proofFiles[group.caterer_id];
             const needsProof = !loading && qrUrl && !proof;
 
-            // Hidden file input ref per caterer
-            if (!fileInputRefs.current[group.caterer_id]) {
-              fileInputRefs.current[group.caterer_id] = { current: null };
-            }
 
             return (
               <Paper key={group.caterer_id} elevation={0}
