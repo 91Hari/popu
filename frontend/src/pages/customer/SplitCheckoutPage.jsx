@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Button, CircularProgress,
-  Alert, Stack, Paper, Divider, IconButton, Tooltip, Chip,
+  Alert, Stack, Paper, Divider, IconButton, Tooltip, Chip, Collapse,
 } from "@mui/material";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import DinnerDiningRoundedIcon         from "@mui/icons-material/DinnerDiningRounded";
@@ -14,6 +14,9 @@ import CheckCircleRoundedIcon          from "@mui/icons-material/CheckCircleRoun
 import DeleteOutlineRoundedIcon        from "@mui/icons-material/DeleteOutlineRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import OpenInNewRoundedIcon            from "@mui/icons-material/OpenInNewRounded";
+import HelpOutlineRoundedIcon          from "@mui/icons-material/HelpOutlineRounded";
+import ExpandMoreRoundedIcon           from "@mui/icons-material/ExpandMoreRounded";
+import ExpandLessRoundedIcon           from "@mui/icons-material/ExpandLessRounded";
 import { useCart }        from "../../contexts/CartContext";
 import AppLayout          from "../../components/AppLayout";
 import QRCodeModal        from "../../components/QRCodeModal";
@@ -134,7 +137,8 @@ export default function SplitCheckoutPage() {
     setProofFiles((prev) => { const next = { ...prev }; delete next[catererId]; return next; });
   };
 
-  const [upiTipId, setUpiTipId] = useState(null); // caterer_id that last triggered a UPI tip
+  const [upiTipId,   setUpiTipId]   = useState(null);
+  const [guideOpen,  setGuideOpen]  = useState({}); // { [caterer_id]: bool }
 
   const handleUpiPay = (upiLink, catererId) => {
     // Show fallback tip after 2.5s — if PhonePe declines (browser security),
@@ -345,6 +349,104 @@ export default function SplitCheckoutPage() {
                           )}
                         </Box>
                       </Box>
+
+                      {/* ── PhonePe payment guide ── */}
+                      {upiId && (
+                        <Box sx={{ mb: 1.5 }}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            startIcon={<HelpOutlineRoundedIcon sx={{ fontSize: 16 }} />}
+                            endIcon={guideOpen[group.caterer_id]
+                              ? <ExpandLessRoundedIcon sx={{ fontSize: 16 }} />
+                              : <ExpandMoreRoundedIcon sx={{ fontSize: 16 }} />}
+                            onClick={() => setGuideOpen((g) => ({ ...g, [group.caterer_id]: !g[group.caterer_id] }))}
+                            sx={{
+                              fontWeight: 700, textTransform: "none", fontSize: "0.8rem",
+                              color: "#5A4EE8", px: 0,
+                              "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
+                            }}
+                          >
+                            How to pay using PhonePe?
+                          </Button>
+
+                          <Collapse in={!!guideOpen[group.caterer_id]}>
+                            <Box sx={{
+                              mt: 1, p: 1.5, borderRadius: 2,
+                              backgroundColor: "#F5F3FF",
+                              border: "1px solid #D8D0F7",
+                            }}>
+                              <Typography variant="caption" sx={{ fontWeight: 800, color: "#5A4EE8", display: "block", mb: 1.25 }}>
+                                Follow these steps in PhonePe app
+                              </Typography>
+
+                              {[
+                                {
+                                  label: "Open PhonePe → Money Transfers",
+                                  detail: 'Tap "To Bank & Self A/c" on the home screen',
+                                },
+                                {
+                                  label: "Tap "To UPI ID or Number"",
+                                  detail: "Choose "Transfer to any UPI app" option",
+                                },
+                                {
+                                  label: 'Tap "+ UPI ID / Number" button',
+                                  detail: "Add a new UPI recipient",
+                                },
+                                {
+                                  label: "Paste the UPI ID below → Proceed",
+                                  detail: `PhonePe will verify and show the account holder name`,
+                                },
+                              ].map((step, i) => (
+                                <Box key={i} sx={{ display: "flex", gap: 1.25, mb: i < 3 ? 1 : 0 }}>
+                                  <Box sx={{
+                                    width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                                    background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                  }}>
+                                    <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "0.65rem", lineHeight: 1 }}>
+                                      {i + 1}
+                                    </Typography>
+                                  </Box>
+                                  <Box>
+                                    <Typography variant="caption" sx={{ fontWeight: 700, color: "#3D2EA0", display: "block", lineHeight: 1.4 }}>
+                                      {step.label}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.4 }}>
+                                      {step.detail}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              ))}
+
+                              {/* Inline copy inside guide */}
+                              <Box
+                                onClick={() => handleCopyUpi(group.caterer_id, upiId)}
+                                sx={{
+                                  mt: 1.25, display: "flex", alignItems: "center", gap: 1,
+                                  p: 1, borderRadius: 1.5, cursor: "pointer",
+                                  border: `1.5px solid ${copied === group.caterer_id ? "#2e7d32" : "#C5B9F7"}`,
+                                  backgroundColor: copied === group.caterer_id ? "#f1f8f1" : "#EDE9FE",
+                                  transition: "all 0.18s",
+                                }}
+                              >
+                                <PhonePeBadge size={18} />
+                                <Typography sx={{ fontFamily: "monospace", fontWeight: 800, fontSize: "0.88rem", flex: 1, color: "#3D2EA0" }}>
+                                  {upiId}
+                                </Typography>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                  {copied === group.caterer_id
+                                    ? <CheckRoundedIcon sx={{ fontSize: 15, color: "#2e7d32" }} />
+                                    : <ContentCopyRoundedIcon sx={{ fontSize: 15, color: "#5A4EE8" }} />}
+                                  <Typography variant="caption" sx={{ fontWeight: 700, color: copied === group.caterer_id ? "#2e7d32" : "#5A4EE8" }}>
+                                    {copied === group.caterer_id ? "Copied!" : "Copy UPI ID"}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Collapse>
+                        </Box>
+                      )}
 
                       {/* ── Screenshot upload ── */}
                       <input
