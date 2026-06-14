@@ -81,12 +81,13 @@ export default function LatestFoodsCarousel() {
     el.scrollLeft += e.deltaY + e.deltaX;
   }, []);
 
+  // Re-runs when `loading` changes so the listener attaches after the carousel renders.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
-  }, [handleWheel]);
+  }, [handleWheel, loading]);
 
   // Mouse drag scroll
   const onMouseDown = (e) => {

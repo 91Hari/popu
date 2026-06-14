@@ -71,13 +71,14 @@ export default function CustomerDashboard() {
     el.scrollLeft += e.deltaY + e.deltaX;
   }, []);
 
-  // Attach as non-passive so we can preventDefault (required by Chrome)
+  // Attach as non-passive so we can preventDefault (required by Chrome).
+  // Depends on `loading` so it re-runs after the carousel renders (scrollRef is null while loading).
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
-  }, [handleWheel]);
+  }, [handleWheel, loading]);
 
   // Drag scroll — mouse
   const handleMouseDown = (e) => {
