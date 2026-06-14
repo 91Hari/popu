@@ -31,6 +31,7 @@ import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded"
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
 import EventNoteRoundedIcon         from "@mui/icons-material/EventNoteRounded";
 import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
+import ToggleOnRoundedIcon          from "@mui/icons-material/ToggleOnRounded";
 import Logo from "./Logo";
 import { brand } from "../theme";
 import { useCart }          from "../contexts/CartContext";
@@ -74,6 +75,7 @@ const ADMIN_NAV = [
   { label: "Catering Bookings", path: "/admin/catering-bookings",  icon: <EventRoundedIcon /> },
   { label: "Notifications",     path: "/admin/notifications",      icon: <NotificationsNoneRoundedIcon /> },
   { label: "Reports",            path: "/admin/reports",             icon: <AssessmentRoundedIcon /> },
+  { label: "Service Management", path: "/admin/services",           icon: <ToggleOnRoundedIcon /> },
   { label: "Platform Settings", path: "/admin/platform-settings",  icon: <TuneRoundedIcon /> },
   { label: "Payments",          path: "/admin/payments",            icon: <PaymentsRoundedIcon /> },
   { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },

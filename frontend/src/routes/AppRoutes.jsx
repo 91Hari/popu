@@ -79,6 +79,7 @@ const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/Admin
 const PlatformSettingsPage       = React.lazy(() => import("../pages/admin/PlatformSettingsPage"));
 const AdminPaymentsPage          = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
 const AdminRefundsPage           = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
+const ServiceManagementPage      = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
 const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
 // Tiffin Box module
@@ -212,6 +213,7 @@ export default function AppRoutes() {
           <Route path="/admin/platform-settings"  element={<C allowed={ADMIN} element={<PlatformSettingsPage />} />} />
           <Route path="/admin/payments"            element={<C allowed={ADMIN} element={<AdminPaymentsPage />} />} />
           <Route path="/admin/refunds"             element={<C allowed={ADMIN} element={<AdminRefundsPage />} />} />
+          <Route path="/admin/services"            element={<C allowed={ADMIN} element={<ServiceManagementPage />} />} />
           {/* Tiffin Box — admin */}
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
 

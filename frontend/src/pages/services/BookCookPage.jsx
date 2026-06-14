@@ -16,7 +16,7 @@ export default function BookCookPage() {
           <IconButton size="small" onClick={() => navigate("/services")} sx={{ color: brand.muted }}>
             <ArrowBackRoundedIcon />
           </IconButton>
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>Book Cook</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>Book A Cook</Typography>
         </Stack>
 
         <Box sx={{ textAlign: "center", py: 6 }}>

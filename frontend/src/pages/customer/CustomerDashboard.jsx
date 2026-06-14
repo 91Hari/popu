@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Typography, CircularProgress,
+  Box, Container, Typography, CircularProgress, Chip,
 } from "@mui/material";
 import RestaurantRoundedIcon   from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon  from "@mui/icons-material/LunchDiningRounded";
@@ -15,34 +15,56 @@ import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
 import LatestFoodsCarousel from "../../components/LatestFoodsCarousel";
 import SearchSuggestions from "../../components/SearchSuggestions";
+import ComingSoonModal from "../../components/ComingSoonModal";
 import foodService from "../../services/foodService";
+import serviceConfigService from "../../services/serviceConfigService";
 import { useCustomerGeo } from "../../utils/geoUtils";
 
-const CARD_W = 200; // fixed card width in px
+const CARD_W = 200;
 
 const CATEGORIES = [
-  { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,  label: "Catering",  to: "/services/catering" },
-  { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",      to: "/services/food-marketplace" },
-  { icon: <BentoIcon sx={{ fontSize: 26, color: brand.orange }} />,              label: "Lunch Box", to: "/services/tiffin-box" },
-  { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,    label: "Book Cook", to: "/services/book-cook" },
-  { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,         label: "Home Food", to: "/services/home-food" },
-  { icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,       label: "Training",  to: "/services/training" },
+  { serviceCode: "CATERING",    icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,  label: "Catering",    to: "/services/catering" },
+  { serviceCode: "FOOD",        icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",        to: "/services/food-marketplace" },
+  { serviceCode: "LUNCH_BOX",   icon: <BentoIcon sx={{ fontSize: 26, color: brand.orange }} />,              label: "Lunch Box",   to: "/services/tiffin-box" },
+  { serviceCode: "BOOK_A_COOK", icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,    label: "Book A Cook", to: "/services/book-cook" },
+  { serviceCode: "HOME_FOOD",   icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,         label: "Home Food",   to: "/services/home-food" },
+  { serviceCode: "TRAINING",    icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,       label: "Training",    to: "/services/training" },
 ];
 
 export default function CustomerDashboard() {
-  const [foods, setFoods]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate              = useNavigate();
-  const customerCoords        = useCustomerGeo();
+  const [foods, setFoods]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [enabledMap, setEnabledMap] = useState({});
+  const [modalOpen, setModalOpen]   = useState(false);
 
-  // Carousel drag state
-  const scrollRef  = useRef(null);
-  const dragRef    = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
+  const navigate       = useNavigate();
+  const customerCoords = useCustomerGeo();
+  const scrollRef      = useRef(null);
+  const dragRef        = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
 
   const user = (() => {
     try { return JSON.parse(localStorage.getItem("user")) || {}; } catch { return {}; }
   })();
   const firstName = (user.name || "there").split(" ")[0];
+
+  // Load service config
+  useEffect(() => {
+    serviceConfigService.getServices()
+      .then((configs) => {
+        const map = {};
+        configs.forEach((c) => { map[c.serviceCode] = c.isEnabled; });
+        setEnabledMap(map);
+      })
+      .catch(() => {
+        setEnabledMap({ CATERING: true, FOOD: true, LUNCH_BOX: true });
+      });
+  }, []);
+
+  const handleCategoryClick = (cat) => {
+    const enabled = enabledMap[cat.serviceCode] ?? false;
+    if (enabled) navigate(cat.to);
+    else setModalOpen(true);
+  };
 
   const fetchFoods = useCallback(async (coords) => {
     try {
@@ -63,7 +85,6 @@ export default function CustomerDashboard() {
 
   useEffect(() => { fetchFoods(); }, [fetchFoods]);
 
-  // Mouse wheel → horizontal scroll (declared before the effect that references it)
   const handleWheel = useCallback((e) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -71,8 +92,6 @@ export default function CustomerDashboard() {
     el.scrollLeft += e.deltaY + e.deltaX;
   }, []);
 
-  // Attach as non-passive so we can preventDefault (required by Chrome).
-  // Depends on `loading` so it re-runs after the carousel renders (scrollRef is null while loading).
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -80,25 +99,23 @@ export default function CustomerDashboard() {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [handleWheel, loading]);
 
-  // Drag scroll — mouse
   const handleMouseDown = (e) => {
     const el = scrollRef.current;
     if (!el) return;
     dragRef.current = { dragging: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
-    el.style.cursor = "grabbing";
+    el.style.cursor     = "grabbing";
     el.style.userSelect = "none";
   };
   const handleMouseMove = (e) => {
     if (!dragRef.current.dragging) return;
     const el = scrollRef.current;
     if (!el) return;
-    const x = e.pageX - el.offsetLeft;
-    el.scrollLeft = dragRef.current.scrollLeft - (x - dragRef.current.startX);
+    el.scrollLeft = dragRef.current.scrollLeft - (e.pageX - el.offsetLeft - dragRef.current.startX);
   };
   const handleMouseUp = () => {
     dragRef.current.dragging = false;
     if (scrollRef.current) {
-      scrollRef.current.style.cursor = "grab";
+      scrollRef.current.style.cursor     = "grab";
       scrollRef.current.style.userSelect = "";
     }
   };
@@ -122,7 +139,7 @@ export default function CustomerDashboard() {
           <SearchSuggestions placeholder="Search for catering, lunch boxes, cooks…" fullWidth />
         </Box>
 
-        {/* Hero banner — Explore Now button removed */}
+        {/* Hero banner */}
         <Box
           sx={{
             backgroundColor: brand.orange,
@@ -156,38 +173,62 @@ export default function CustomerDashboard() {
             scrollbarWidth: "none",
           }}
         >
-          {CATEGORIES.map((cat) => (
-            <Box
-              key={cat.label}
-              onClick={() => navigate(cat.to)}
-              sx={{
-                display: "flex", flexDirection: "column", alignItems: "center",
-                gap: 0.75, cursor: "pointer", flexShrink: 0,
-                minWidth: { xs: 72, md: 90 },
-              }}
-            >
+          {CATEGORIES.map((cat) => {
+            const enabled = enabledMap[cat.serviceCode] ?? false;
+            return (
               <Box
+                key={cat.label}
+                onClick={() => handleCategoryClick(cat)}
                 sx={{
-                  width: { xs: 56, md: 68 }, height: { xs: 56, md: 68 },
-                  borderRadius: 3, backgroundColor: brand.orangeLight,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "background-color 0.15s, transform 0.15s",
-                  "&:hover": { backgroundColor: brand.greenLight, transform: "translateY(-3px)" },
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: 0.75, cursor: "pointer", flexShrink: 0,
+                  minWidth: { xs: 72, md: 90 },
+                  opacity: enabled ? 1 : 0.65,
                 }}
               >
-                {cat.icon}
+                <Box sx={{ position: "relative" }}>
+                  <Box
+                    sx={{
+                      width: { xs: 56, md: 68 }, height: { xs: 56, md: 68 },
+                      borderRadius: 3,
+                      backgroundColor: enabled ? brand.orangeLight : brand.border,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "background-color 0.15s, transform 0.15s",
+                      "&:hover": enabled
+                        ? { backgroundColor: brand.greenLight, transform: "translateY(-3px)" }
+                        : { transform: "translateY(-2px)" },
+                    }}
+                  >
+                    {cat.icon}
+                  </Box>
+                  {!enabled && (
+                    <Chip
+                      label="Soon"
+                      size="small"
+                      sx={{
+                        position: "absolute", top: -6, right: -6,
+                        height: 16, fontSize: "0.58rem", fontWeight: 700,
+                        backgroundColor: brand.muted, color: "white",
+                        "& .MuiChip-label": { px: 0.75 },
+                      }}
+                    />
+                  )}
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 600, textAlign: "center", lineHeight: 1.2, fontSize: { md: "0.78rem" } }}
+                >
+                  {cat.label}
+                </Typography>
               </Box>
-              <Typography variant="caption" sx={{ fontWeight: 600, textAlign: "center", lineHeight: 1.2, fontSize: { md: "0.78rem" } }}>
-                {cat.label}
-              </Typography>
-            </Box>
-          ))}
+            );
+          })}
         </Box>
 
-        {/* Latest foods — infinite scroll carousel */}
+        {/* Latest Foods carousel */}
         <LatestFoodsCarousel />
 
-        {/* Recommended for you — horizontal carousel */}
+        {/* Recommended for you */}
         <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>Recommended For You</Typography>
 
         {loading ? (
@@ -207,25 +248,15 @@ export default function CustomerDashboard() {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             sx={{
-              display: "flex",
-              gap: 2,
-              overflowX: "auto",
-              pb: 1,
-              cursor: "grab",
-              /* hide scrollbar */
+              display: "flex", gap: 2, overflowX: "auto", pb: 1, cursor: "grab",
               "&::-webkit-scrollbar": { display: "none" },
               scrollbarWidth: "none",
-              /* smooth momentum on iOS */
               WebkitOverflowScrolling: "touch",
-              /* prevent vertical page scroll while dragging horizontally */
               overscrollBehaviorX: "contain",
             }}
           >
             {foods.map((food) => (
-              <Box
-                key={food.foodId || food.id}
-                sx={{ width: CARD_W, minWidth: CARD_W, flexShrink: 0 }}
-              >
+              <Box key={food.foodId || food.id} sx={{ width: CARD_W, minWidth: CARD_W, flexShrink: 0 }}>
                 <FoodCard
                   food={food}
                   onClick={() => navigate(`/customer/food/${food.foodId || food.id}`)}
@@ -236,6 +267,8 @@ export default function CustomerDashboard() {
         )}
 
       </Container>
+
+      <ComingSoonModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </AppLayout>
   );
 }

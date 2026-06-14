@@ -4,6 +4,7 @@ const ctrl       = require('../controllers/adminController');
 const psCtrl     = require('../controllers/platformSettingsController');
 const payCtrl    = require('../controllers/paymentController');
 const refundCtrl = require('../controllers/refundController');
+const svcCtrl    = require('../controllers/serviceConfigController');
 const { authenticate, requireRole } = require('../middlewares/authMiddleware');
 
 router.use(authenticate, requireRole('ADMIN'));
@@ -26,5 +27,8 @@ router.get('/catering-bookings',         ctrl.getCateringBookings);
 router.get('/riders',                    ctrl.getAllRiders);
 router.get('/payments',                  payCtrl.adminListPayments);
 router.get('/refunds',                   refundCtrl.adminListRefunds);
+
+router.get('/services',                  svcCtrl.getAllServices);
+router.put('/services/:serviceCode',     svcCtrl.updateService);
 
 module.exports = router;
