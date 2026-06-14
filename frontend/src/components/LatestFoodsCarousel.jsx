@@ -50,7 +50,8 @@ export default function LatestFoodsCarousel() {
 
   useEffect(() => { loadPage(1); }, [loadPage]);
 
-  // IntersectionObserver with horizontal scroll container as root
+  // IntersectionObserver with horizontal scroll container as root.
+  // Depends on `loading` so it re-runs after the carousel mounts (refs are null during skeleton phase).
   useEffect(() => {
     const sentinel = sentinelRef.current;
     const root     = scrollRef.current;
@@ -71,7 +72,7 @@ export default function LatestFoodsCarousel() {
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loadPage]);
+  }, [loadPage, loading]);
 
   // Non-passive wheel → horizontal scroll
   const handleWheel = useCallback((e) => {
