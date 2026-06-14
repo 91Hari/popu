@@ -351,6 +351,38 @@ async function searchCustomerFoods({
   return rows.map((r) => _enrichWithETA(r, customerLat, customerLng));
 }
 
+async function getLatestFoods({ page = 1, limit = 5 } = {}) {
+  const pageNum  = Math.max(1, Number(page));
+  const limitNum = Math.min(20, Math.max(1, Number(limit)));
+  const offset   = (pageNum - 1) * limitNum;
+
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(DISTINCT f.id)
+     FROM food_items f
+     JOIN users u ON u.id = f.caterer_id
+     WHERE f.is_available = TRUE AND u.is_active = TRUE`
+  );
+  const total      = Number(countRows[0].count);
+  const totalPages = Math.ceil(total / limitNum) || 1;
+
+  const { rows } = await pool.query(
+    CUSTOMER_FOOD_SELECT +
+    `WHERE f.is_available = TRUE AND u.is_active = TRUE
+     GROUP BY f.id, u.id, u.name, u.latitude, u.longitude
+     ORDER BY f.created_at DESC
+     LIMIT $1 OFFSET $2`,
+    [limitNum, offset]
+  );
+
+  return {
+    foods:       rows,
+    total,
+    totalPages,
+    currentPage: pageNum,
+    hasMore:     pageNum < totalPages,
+  };
+}
+
 module.exports = {
   createFood,
   updateFood,
@@ -362,4 +394,5 @@ module.exports = {
   getFoodById,
   getCustomerFoods,
   searchCustomerFoods,
+  getLatestFoods,
 };

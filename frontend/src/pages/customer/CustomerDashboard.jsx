@@ -13,6 +13,7 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
+import LatestFoodsCarousel from "../../components/LatestFoodsCarousel";
 import SearchSuggestions from "../../components/SearchSuggestions";
 import foodService from "../../services/foodService";
 import { useCustomerGeo } from "../../utils/geoUtils";
@@ -182,7 +183,10 @@ export default function CustomerDashboard() {
           ))}
         </Box>
 
-        {/* Recently Added — horizontal carousel */}
+        {/* Latest foods — infinite scroll carousel */}
+        <LatestFoodsCarousel />
+
+        {/* Recommended for you — horizontal carousel */}
         <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>Recommended For You</Typography>
 
         {loading ? (

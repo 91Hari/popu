@@ -3,8 +3,9 @@ const router   = express.Router();
 const ctrl     = require('../controllers/customerFoodController');
 const { authenticate } = require('../middlewares/authMiddleware');
 
-router.get('/foods',        ctrl.getCustomerFoods);
+router.get('/foods/latest', ctrl.getLatestFoods);
 router.get('/foods/search', ctrl.searchCustomerFoods);
+router.get('/foods',        ctrl.getCustomerFoods);
 
 router.use(authenticate);
 
