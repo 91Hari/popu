@@ -15,7 +15,8 @@ function _parseCoords(req) {
 async function getCustomerFoods(req, res, next) {
   try {
     const { customerLat, customerLng } = _parseCoords(req);
-    const foods = await foodService.getCustomerFoods({ customerLat, customerLng });
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+    const foods = await foodService.getCustomerFoods({ customerLat, customerLng, limit });
     res.json(foods);
   } catch (err) {
     next(err);
@@ -64,9 +65,21 @@ async function markAllNotificationsRead(req, res, next) {
   }
 }
 
+async function getLatestFoods(req, res, next) {
+  try {
+    const page  = req.query.page  ? Number(req.query.page)  : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 5;
+    const result = await foodService.getLatestFoods({ page, limit });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getCustomerFoods,
   searchCustomerFoods,
+  getLatestFoods,
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,

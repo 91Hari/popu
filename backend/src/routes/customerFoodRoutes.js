@@ -1,10 +1,15 @@
 const express  = require('express');
 const router   = express.Router();
 const ctrl     = require('../controllers/customerFoodController');
+const svcCtrl  = require('../controllers/serviceConfigController');
 const { authenticate } = require('../middlewares/authMiddleware');
 
-router.get('/foods',        ctrl.getCustomerFoods);
+// Public — customer UI reads service config to show enabled/disabled state
+router.get('/services', svcCtrl.getAllServices);
+
+router.get('/foods/latest', ctrl.getLatestFoods);
 router.get('/foods/search', ctrl.searchCustomerFoods);
+router.get('/foods',        ctrl.getCustomerFoods);
 
 router.use(authenticate);
 

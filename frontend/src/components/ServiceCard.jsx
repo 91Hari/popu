@@ -15,8 +15,7 @@ export default function ServiceCard({ icon, title, subtitle, comingSoon = false,
       }}
     >
       <CardActionArea
-        onClick={comingSoon ? undefined : onClick}
-        disabled={comingSoon}
+        onClick={onClick}
         sx={{ p: 0 }}
       >
         <CardContent
