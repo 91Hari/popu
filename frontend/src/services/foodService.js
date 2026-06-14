@@ -68,10 +68,11 @@ export default {
     return Array.isArray(data) ? data : (data.foods ?? []);
   },
 
-  async getCustomerFoods({ customerLat, customerLng } = {}) {
+  async getCustomerFoods({ customerLat, customerLng, limit } = {}) {
     const params = new URLSearchParams();
     if (customerLat != null) params.set("customer_lat", String(customerLat));
     if (customerLng != null) params.set("customer_lng", String(customerLng));
+    if (limit != null) params.set("limit", String(limit));
     const qs   = params.toString();
     const data = await api.request(`/customer/foods${qs ? `?${qs}` : ""}`);
     return Array.isArray(data) ? data : (data.foods ?? []);

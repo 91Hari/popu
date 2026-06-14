@@ -3,7 +3,7 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import { brand } from "../theme";
 
 export const CARD_IMG_HEIGHT  = 120;
-export const CARD_BODY_HEIGHT = 110;
+export const CARD_BODY_HEIGHT = 130;
 export const CARD_BTN_HEIGHT  = 44;
 export const CARD_TOTAL_HEIGHT = CARD_IMG_HEIGHT + CARD_BODY_HEIGHT + CARD_BTN_HEIGHT;
 

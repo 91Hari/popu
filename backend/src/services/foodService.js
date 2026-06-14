@@ -312,12 +312,13 @@ const CUSTOMER_FOOD_SELECT = `
   LEFT JOIN reviews r ON r.subject_type = 'food' AND r.subject_id = f.id
 `;
 
-async function getCustomerFoods({ customerLat, customerLng } = {}) {
+async function getCustomerFoods({ customerLat, customerLng, limit } = {}) {
+  const limitClause = limit ? ` LIMIT ${Math.min(100, Math.max(1, parseInt(limit, 10)))}` : '';
   const { rows } = await pool.query(
     CUSTOMER_FOOD_SELECT +
     `WHERE u.is_active = TRUE
      GROUP BY f.id, u.id, u.name, u.latitude, u.longitude
-     ORDER BY f.created_at DESC`
+     ORDER BY f.created_at DESC` + limitClause
   );
   return rows.map((r) => _enrichWithETA(r, customerLat, customerLng));
 }

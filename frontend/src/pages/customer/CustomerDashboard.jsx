@@ -1,16 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Typography, Button, CircularProgress, Grid,
+  Box, Container, Typography, CircularProgress,
 } from "@mui/material";
-import RestaurantRoundedIcon    from "@mui/icons-material/RestaurantRounded";
-import LunchDiningRoundedIcon   from "@mui/icons-material/LunchDiningRounded";
-import PeopleAltRoundedIcon     from "@mui/icons-material/PeopleAltRounded";
-import HomeRoundedIcon          from "@mui/icons-material/HomeRounded";
-import SchoolRoundedIcon        from "@mui/icons-material/SchoolRounded";
-import BentoIcon       from "@mui/icons-material/Bento";
-import DinnerDiningRoundedIcon  from "@mui/icons-material/DinnerDiningRounded";
-import RocketLaunchRoundedIcon  from "@mui/icons-material/RocketLaunchRounded";
+import RestaurantRoundedIcon   from "@mui/icons-material/RestaurantRounded";
+import LunchDiningRoundedIcon  from "@mui/icons-material/LunchDiningRounded";
+import PeopleAltRoundedIcon    from "@mui/icons-material/PeopleAltRounded";
+import HomeRoundedIcon         from "@mui/icons-material/HomeRounded";
+import SchoolRoundedIcon       from "@mui/icons-material/SchoolRounded";
+import BentoIcon               from "@mui/icons-material/Bento";
+import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
@@ -18,10 +17,12 @@ import SearchSuggestions from "../../components/SearchSuggestions";
 import foodService from "../../services/foodService";
 import { useCustomerGeo } from "../../utils/geoUtils";
 
+const CARD_W = 200; // fixed card width in px
+
 const CATEGORIES = [
   { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,  label: "Catering",  to: "/services/catering" },
   { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",      to: "/services/food-marketplace" },
-  { icon: <BentoIcon sx={{ fontSize: 26, color: brand.orange }} />,    label: "Lunch Box", to: "/services/tiffin-box" },
+  { icon: <BentoIcon sx={{ fontSize: 26, color: brand.orange }} />,              label: "Lunch Box", to: "/services/tiffin-box" },
   { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,    label: "Book Cook", to: "/services/book-cook" },
   { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,         label: "Home Food", to: "/services/home-food" },
   { icon: <SchoolRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,       label: "Training",  to: "/services/training" },
@@ -33,7 +34,9 @@ export default function CustomerDashboard() {
   const navigate              = useNavigate();
   const customerCoords        = useCustomerGeo();
 
-  useEffect(() => { console.log("[Diag] CustomerDashboard mounted"); }, []);
+  // Carousel drag state
+  const scrollRef  = useRef(null);
+  const dragRef    = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
 
   const user = (() => {
     try { return JSON.parse(localStorage.getItem("user")) || {}; } catch { return {}; }
@@ -44,8 +47,12 @@ export default function CustomerDashboard() {
     try {
       setLoading(true);
       const geo  = coords || customerCoords;
-      const data = await foodService.getCustomerFoods({ customerLat: geo?.lat, customerLng: geo?.lng });
-      setFoods((data || []).slice(0, 12));
+      const data = await foodService.getCustomerFoods({
+        customerLat: geo?.lat,
+        customerLng: geo?.lng,
+        limit: 5,
+      });
+      setFoods(data || []);
     } catch {
       setFoods([]);
     } finally {
@@ -55,9 +62,49 @@ export default function CustomerDashboard() {
 
   useEffect(() => { fetchFoods(); }, [fetchFoods]);
 
+  // Mouse wheel → horizontal scroll (declared before the effect that references it)
+  const handleWheel = useCallback((e) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    e.preventDefault();
+    el.scrollLeft += e.deltaY + e.deltaX;
+  }, []);
+
+  // Attach as non-passive so we can preventDefault (required by Chrome)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
+
+  // Drag scroll — mouse
+  const handleMouseDown = (e) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    dragRef.current = { dragging: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
+    el.style.cursor = "grabbing";
+    el.style.userSelect = "none";
+  };
+  const handleMouseMove = (e) => {
+    if (!dragRef.current.dragging) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    el.scrollLeft = dragRef.current.scrollLeft - (x - dragRef.current.startX);
+  };
+  const handleMouseUp = () => {
+    dragRef.current.dragging = false;
+    if (scrollRef.current) {
+      scrollRef.current.style.cursor = "grab";
+      scrollRef.current.style.userSelect = "";
+    }
+  };
+
   return (
     <AppLayout>
       <Container maxWidth="lg" sx={{ pt: 2.5, pb: 4 }}>
+
         {/* Greeting */}
         <Box sx={{ mb: 2.5 }}>
           <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
@@ -73,7 +120,7 @@ export default function CustomerDashboard() {
           <SearchSuggestions placeholder="Search for catering, lunch boxes, cooks…" fullWidth />
         </Box>
 
-        {/* Hero banner */}
+        {/* Hero banner — Explore Now button removed */}
         <Box
           sx={{
             backgroundColor: brand.orange,
@@ -90,17 +137,7 @@ export default function CustomerDashboard() {
             <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2, mb: 0.5 }}>
               Healthy Food<br />For Every Occasion
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.85, mb: 2 }}>pure · fresh · trusted</Typography>
-            <Button
-              onClick={() => navigate("/services")}
-              startIcon={<RocketLaunchRoundedIcon />}
-              sx={{
-                backgroundColor: "white", color: brand.orange, fontWeight: 700, px: 3,
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.9)" },
-              }}
-            >
-              Explore Now
-            </Button>
+            <Typography variant="body2" sx={{ opacity: 0.85 }}>pure · fresh · trusted</Typography>
           </Box>
           <DinnerDiningRoundedIcon
             sx={{ fontSize: { xs: 60, md: 100 }, opacity: 0.18, display: { xs: "none", sm: "block" }, flexShrink: 0 }}
@@ -114,6 +151,7 @@ export default function CustomerDashboard() {
             display: "flex", gap: { xs: 1, md: 2 }, mb: 3.5,
             overflowX: "auto", pb: 0.5,
             "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
           }}
         >
           {CATEGORIES.map((cat) => (
@@ -144,8 +182,9 @@ export default function CustomerDashboard() {
           ))}
         </Box>
 
-        {/* Recommended */}
+        {/* Recently Added — horizontal carousel */}
         <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>Recommended For You</Typography>
+
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
             <CircularProgress sx={{ color: brand.orange }} />
@@ -156,17 +195,41 @@ export default function CustomerDashboard() {
             <Typography variant="body2" sx={{ color: "text.secondary" }}>No food items available right now.</Typography>
           </Box>
         ) : (
-          <Grid container spacing={2} alignItems="flex-start">
+          <Box
+            ref={scrollRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            sx={{
+              display: "flex",
+              gap: 2,
+              overflowX: "auto",
+              pb: 1,
+              cursor: "grab",
+              /* hide scrollbar */
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollbarWidth: "none",
+              /* smooth momentum on iOS */
+              WebkitOverflowScrolling: "touch",
+              /* prevent vertical page scroll while dragging horizontally */
+              overscrollBehaviorX: "contain",
+            }}
+          >
             {foods.map((food) => (
-              <Grid item key={food.foodId || food.id} xs={6} sm={4} md={3} lg={3}>
+              <Box
+                key={food.foodId || food.id}
+                sx={{ width: CARD_W, minWidth: CARD_W, flexShrink: 0 }}
+              >
                 <FoodCard
                   food={food}
                   onClick={() => navigate(`/customer/food/${food.foodId || food.id}`)}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         )}
+
       </Container>
     </AppLayout>
   );
