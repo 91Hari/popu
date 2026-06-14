@@ -14,7 +14,7 @@ import ArrowForwardRoundedIcon         from "@mui/icons-material/ArrowForwardRou
 import NotificationsNoneRoundedIcon    from "@mui/icons-material/NotificationsNoneRounded";
 import FiberNewRoundedIcon             from "@mui/icons-material/FiberNewRounded";
 import CheckCircleOutlineRoundedIcon   from "@mui/icons-material/CheckCircleOutlineRounded";
-import SetMealRoundedIcon              from "@mui/icons-material/SetMealRounded";
+import BentoIcon              from "@mui/icons-material/Bento";
 
 import foodService                  from "../../services/foodService";
 import masterOrderService           from "../../services/masterOrderService";
@@ -199,7 +199,7 @@ export default function CatererDashboard() {
             sx={{ borderColor: brand.orange, color: brand.orange, fontWeight: 700, px: 3 }}>
             View Orders
           </Button>
-          <Button variant="outlined" size="large" startIcon={<SetMealRoundedIcon />}
+          <Button variant="outlined" size="large" startIcon={<BentoIcon />}
             onClick={() => navigate("/caterer/tiffin")}
             sx={{ borderColor: brand.orange, color: brand.orange, fontWeight: 700, px: 3 }}>
             Lunch Box

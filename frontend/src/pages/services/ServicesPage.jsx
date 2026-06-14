@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Container, Typography } from "@mui/material";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
-import SetMealRoundedIcon     from "@mui/icons-material/SetMealRounded";
+import BentoIcon     from "@mui/icons-material/Bento";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
@@ -26,7 +26,7 @@ const SERVICES = [
     comingSoon: false,
   },
   {
-    icon: <SetMealRoundedIcon sx={{ fontSize: 28, color: brand.orange }} />,
+    icon: <BentoIcon sx={{ fontSize: 28, color: brand.orange }} />,
     title: "Lunch Box",
     subtitle: "Fresh daily meal boxes from your favorite caterers",
     to: "/services/tiffin-box",
