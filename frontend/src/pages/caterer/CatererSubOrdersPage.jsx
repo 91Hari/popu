@@ -267,6 +267,52 @@ export default function CatererSubOrdersPage() {
 
                     <Divider sx={{ mb: 1.25 }} />
 
+                    {/* UPI payment reference — shown for PLACED orders before acceptance */}
+                    {statusKey === "PLACED" && (order.caterer_upi_id || order.caterer_phonepe_id) && (
+                      <Box sx={{ mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#f3f0ff", border: "1px solid #d8d0f7" }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: "#5A4EE8", display: "block", mb: 0.25 }}>
+                          Customer should pay to your UPI
+                        </Typography>
+                        <Typography sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.85rem", color: "#3D2EA0" }}>
+                          {order.caterer_phonepe_id || order.caterer_upi_id}
+                        </Typography>
+                        {order.caterer_payment_name && (
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                            {order.caterer_payment_name}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Payment screenshot — shown whenever available (any status) */}
+                    {order.proof_screenshot_url && order.payment_status !== "PROOF_SUBMITTED" && (
+                      <Box sx={{ mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#F1F8F1", border: "1px solid #A5D6A7", display: "flex", gap: 1.25, alignItems: "center" }}>
+                        <Box
+                          onClick={() => setProofPreview({ open: true, url: order.proof_screenshot_url })}
+                          sx={{
+                            width: 56, height: 56, borderRadius: 1.5, border: "1px solid #A5D6A7",
+                            cursor: "pointer", flexShrink: 0, backgroundColor: "#C8E6C9",
+                            display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+                          }}
+                        >
+                          {order.proof_screenshot_url.startsWith("data:image") ? (
+                            <Box component="img" src={order.proof_screenshot_url} alt="Payment proof"
+                              sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            <ImageSearchRoundedIcon sx={{ color: "#2E7D32" }} />
+                          )}
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#2E7D32", display: "block" }}>
+                            Payment Screenshot
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                            Tap to view full size
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+
                     {/* Payment proof review block */}
                     {order.payment_status === "PROOF_SUBMITTED" && order.proof_id && (
                       <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: "#E3F2FD", border: "1px solid #90CAF9" }}>

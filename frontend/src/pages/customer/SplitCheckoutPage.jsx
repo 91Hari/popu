@@ -12,23 +12,39 @@ import QrCodeRoundedIcon               from "@mui/icons-material/QrCodeRounded";
 import UploadFileRoundedIcon           from "@mui/icons-material/UploadFileRounded";
 import CheckCircleRoundedIcon          from "@mui/icons-material/CheckCircleRounded";
 import DeleteOutlineRoundedIcon        from "@mui/icons-material/DeleteOutlineRounded";
+import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
+import OpenInNewRoundedIcon            from "@mui/icons-material/OpenInNewRounded";
 import { useCart }        from "../../contexts/CartContext";
 import AppLayout          from "../../components/AppLayout";
+import QRCodeModal        from "../../components/QRCodeModal";
 import { brand }          from "../../theme";
 import { useCustomerGeo } from "../../utils/geoUtils";
 import api                from "../../services/api";
 
-const PROOF_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const PROOF_MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_PROOF_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"];
 
-function PhonePeBadge() {
+// Build UPI deep-link URI
+function buildUpiLink(upiId, upiName, amount) {
+  const pa = encodeURIComponent(upiId);
+  const pn = encodeURIComponent(upiName || "");
+  const am = Number(amount).toFixed(2);
+  return `upi://pay?pa=${pa}&pn=${pn}&am=${am}&cu=INR`;
+}
+
+// Detect mobile device
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function PhonePeBadge({ size = 22 }) {
   return (
     <Box sx={{
-      width: 22, height: 22, borderRadius: "50%",
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
       background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
-      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "center",
     }}>
-      <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "0.55rem", lineHeight: 1 }}>Pe</Typography>
+      <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: `${size * 0.45}px`, lineHeight: 1 }}>Pe</Typography>
     </Box>
   );
 }
@@ -43,8 +59,8 @@ export default function SplitCheckoutPage() {
   const [placing,         setPlacing]         = useState(false);
   const [error,           setError]           = useState("");
   const [copied,          setCopied]          = useState(null);
-  // { [caterer_id]: { url: base64DataUrl, fileName: string } }
   const [proofFiles,      setProofFiles]      = useState({});
+  const [qrModal,         setQrModal]         = useState({ open: false });
   const fileInputRefs = useRef({});
 
   const catererGroups = useMemo(() => {
@@ -73,20 +89,23 @@ export default function SplitCheckoutPage() {
       .finally(() => setLoading(false));
   }, [items]);
 
-  // QR-enabled caterers = those with a qr_code_image_url after profiles load
-  const qrCatererIds = useMemo(() => {
+  // Caterers with any payment method (UPI or QR) — require screenshot from all of them
+  const paymentEnabledIds = useMemo(() => {
     if (loading) return new Set();
     return new Set(
       catererGroups
-        .filter((g) => catererProfiles[g.caterer_id]?.qr_code_image_url)
+        .filter((g) => {
+          const p = catererProfiles[g.caterer_id];
+          return p?.phonepe_id || p?.upi_id || p?.qr_code_image_url;
+        })
         .map((g) => g.caterer_id)
     );
   }, [catererGroups, catererProfiles, loading]);
 
   const allProofsReady = useMemo(() => {
-    if (qrCatererIds.size === 0) return true;
-    return [...qrCatererIds].every((id) => !!proofFiles[id]);
-  }, [qrCatererIds, proofFiles]);
+    if (paymentEnabledIds.size === 0) return true;
+    return [...paymentEnabledIds].every((id) => !!proofFiles[id]);
+  }, [paymentEnabledIds, proofFiles]);
 
   const handleCopyUpi = (catererId, upiId) => {
     navigator.clipboard.writeText(upiId).catch(() => {});
@@ -113,6 +132,10 @@ export default function SplitCheckoutPage() {
 
   const handleRemoveProof = (catererId) => {
     setProofFiles((prev) => { const next = { ...prev }; delete next[catererId]; return next; });
+  };
+
+  const handleUpiPay = (upiLink) => {
+    window.location.href = upiLink;
   };
 
   const handlePlaceOrder = async () => {
@@ -169,7 +192,8 @@ export default function SplitCheckoutPage() {
 
         {unavailableItems.length > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            {unavailableItems.map((i) => `"${i.food_name}"`).join(", ")} {unavailableItems.length === 1 ? "is" : "are"} no longer available.
+            {unavailableItems.map((i) => `"${i.food_name}"`).join(", ")}{" "}
+            {unavailableItems.length === 1 ? "is" : "are"} no longer available.
             Go back and remove {unavailableItems.length === 1 ? "it" : "them"} before proceeding.
           </Alert>
         )}
@@ -178,11 +202,13 @@ export default function SplitCheckoutPage() {
           {catererGroups.map((group) => {
             const profile  = catererProfiles[group.caterer_id];
             const upiId    = profile?.phonepe_id || profile?.upi_id || null;
+            const upiName  = profile?.payment_name || group.caterer_name || "";
             const qrUrl    = profile?.qr_code_image_url || null;
+            const hasPayment = upiId || qrUrl;
             const subtotal = group.items.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
             const proof    = proofFiles[group.caterer_id];
-            const needsProof = !loading && qrUrl && !proof;
-
+            const needsProof = !loading && hasPayment && !proof;
+            const upiLink  = upiId ? buildUpiLink(upiId, upiName, subtotal) : null;
 
             return (
               <Paper key={group.caterer_id} elevation={0}
@@ -196,7 +222,7 @@ export default function SplitCheckoutPage() {
                 </Box>
 
                 <Box sx={{ px: 2.5, py: 1.5 }}>
-                  {/* Items */}
+                  {/* Items list */}
                   <Stack spacing={1} sx={{ mb: 1.5 }}>
                     {group.items.map((item) => (
                       <Box key={item.id} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -228,87 +254,139 @@ export default function SplitCheckoutPage() {
 
                   <Divider sx={{ mb: 1.5 }} />
 
-                  {/* Payment section */}
+                  {/* ── Payment section ── */}
                   {loading && !profile ? (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
                       <CircularProgress size={14} />
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>Loading payment info…</Typography>
                     </Box>
-                  ) : qrUrl ? (
-                    /* ── QR code payment flow ── */
+                  ) : !hasPayment ? (
+                    <Alert severity="warning" sx={{ fontSize: "0.8rem", py: 0.5 }}>
+                      {group.caterer_name} hasn't added payment details yet. Contact them directly to arrange payment.
+                    </Alert>
+                  ) : (
                     <Box>
-                      {/* Step instructions */}
-                      <Box sx={{ mb: 1.5, p: 1.5, borderRadius: 2, backgroundColor: brand.orangeLight, border: `1px solid ${brand.border}` }}>
-                        <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange, display: "block", mb: 0.75 }}>
-                          Pay via QR Code — 3 steps
-                        </Typography>
-                        {[
-                          "Scan the QR code below with any UPI app (PhonePe / GPay / Paytm)",
-                          `Pay ₹${subtotal.toFixed(2)} to ${group.caterer_name}`,
-                          "Take a screenshot and upload it as proof below",
-                        ].map((step, i) => (
-                          <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "flex-start", mb: 0.4 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 800, color: brand.orange, minWidth: 16, lineHeight: 1.6 }}>
-                              {i + 1}.
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>{step}</Typography>
-                          </Box>
-                        ))}
-                      </Box>
-
-                      {/* QR image */}
-                      <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
-                        <Box sx={{ textAlign: "center" }}>
-                          <Box
-                            component="img"
-                            src={qrUrl}
-                            alt={`QR code for ${group.caterer_name}`}
+                      {/* ── UPI deep-link buttons ── */}
+                      {upiLink && (
+                        <Stack spacing={1} sx={{ mb: 1.5 }}>
+                          {/* Pay with PhonePe */}
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={() => handleUpiPay(upiLink)}
+                            startIcon={<PhonePeBadge size={20} />}
+                            endIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
                             sx={{
-                              width: 180, height: 180, objectFit: "contain",
-                              border: `2px solid ${brand.border}`, borderRadius: 2, p: 1,
-                              backgroundColor: "#fff",
+                              background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              py: 1.1,
+                              borderRadius: 2,
+                              textTransform: "none",
+                              "&:hover": { background: "linear-gradient(135deg, #4A3ED8, #6B5CE0)" },
                             }}
-                          />
-                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
-                            Scan with any UPI app · ₹{subtotal.toFixed(2)}
-                          </Typography>
-                        </Box>
-                      </Box>
+                          >
+                            Pay with PhonePe
+                          </Button>
 
-                      {/* Also show UPI ID as fallback copy */}
-                      {upiId && (
-                        <Box sx={{
-                          display: "flex", alignItems: "center", gap: 1, mb: 1.5,
-                          p: 1.25, borderRadius: 2,
-                          border: `1px solid ${copied === group.caterer_id ? "#2e7d32" : "#e8e0f7"}`,
-                          backgroundColor: copied === group.caterer_id ? "#f1f8f1" : "#faf8ff",
-                          transition: "all 0.2s", cursor: "pointer",
-                        }}
-                          onClick={() => handleCopyUpi(group.caterer_id, upiId)}
-                        >
-                          <PhonePeBadge />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1 }}>
-                              Or copy UPI ID
-                            </Typography>
-                            <Typography sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.88rem" }}>
-                              {upiId}
-                            </Typography>
-                          </Box>
-                          <Tooltip title={copied === group.caterer_id ? "Copied!" : "Tap to copy"}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                              {copied === group.caterer_id
-                                ? <CheckRoundedIcon sx={{ fontSize: 16, color: "#2e7d32" }} />
-                                : <ContentCopyRoundedIcon sx={{ fontSize: 16, color: "#5A4EE8" }} />}
-                              <Typography variant="caption" sx={{ color: copied === group.caterer_id ? "#2e7d32" : "#5A4EE8", fontWeight: 700 }}>
-                                {copied === group.caterer_id ? "Copied!" : "Copy"}
-                              </Typography>
-                            </Box>
-                          </Tooltip>
-                        </Box>
+                          {/* Pay with Any UPI App */}
+                          <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => handleUpiPay(upiLink)}
+                            startIcon={<AccountBalanceWalletRoundedIcon />}
+                            endIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              py: 1,
+                              borderRadius: 2,
+                              textTransform: "none",
+                              borderColor: brand.orange,
+                              color: brand.orange,
+                              "&:hover": { backgroundColor: brand.orangeLight, borderColor: brand.orange },
+                            }}
+                          >
+                            Pay with Any UPI App
+                          </Button>
+                        </Stack>
                       )}
 
-                      {/* Proof upload */}
+                      {/* ── QR + Copy row ── */}
+                      <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                        {qrUrl && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<QrCodeRoundedIcon />}
+                            onClick={() => setQrModal({
+                              open: true, qrUrl, upiId, upiName,
+                              catererName: group.caterer_name, amount: subtotal,
+                            })}
+                            sx={{
+                              fontWeight: 600, textTransform: "none",
+                              borderColor: brand.border, color: "text.secondary",
+                              "&:hover": { borderColor: brand.orange, color: brand.orange },
+                            }}
+                          >
+                            Show QR Code
+                          </Button>
+                        )}
+
+                        {upiId && (
+                          <Box
+                            onClick={() => handleCopyUpi(group.caterer_id, upiId)}
+                            sx={{
+                              display: "flex", alignItems: "center", gap: 1,
+                              px: 1.5, py: 0.5, borderRadius: 1.5, cursor: "pointer", flexShrink: 0,
+                              border: `1px solid ${copied === group.caterer_id ? "#2e7d32" : brand.border}`,
+                              backgroundColor: copied === group.caterer_id ? "#f1f8f1" : "#faf8ff",
+                              transition: "all 0.18s",
+                            }}
+                          >
+                            <PhonePeBadge size={16} />
+                            <Typography sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.8rem", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {upiId}
+                            </Typography>
+                            <Tooltip title={copied === group.caterer_id ? "Copied!" : "Copy UPI ID"}>
+                              {copied === group.caterer_id
+                                ? <CheckRoundedIcon sx={{ fontSize: 14, color: "#2e7d32" }} />
+                                : <ContentCopyRoundedIcon sx={{ fontSize: 14, color: "#5A4EE8" }} />}
+                            </Tooltip>
+                          </Box>
+                        )}
+                      </Stack>
+
+                      {/* Mobile tip */}
+                      {!isMobileDevice() && upiLink && (
+                        <Alert severity="info" icon={false} sx={{ mb: 1.5, fontSize: "0.75rem", py: 0.5 }}>
+                          On a laptop? Use <strong>Show QR Code</strong> to scan from your phone, or copy the UPI ID.
+                        </Alert>
+                      )}
+
+                      {/* Pay to info */}
+                      <Box sx={{
+                        display: "flex", alignItems: "center", gap: 1,
+                        px: 1.5, py: 1, mb: 1.5, borderRadius: 1.5,
+                        backgroundColor: brand.orangeLight, border: `1px solid ${brand.border}`,
+                      }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.2 }}>
+                            Pay ₹{subtotal.toFixed(2)} to
+                          </Typography>
+                          <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", color: brand.orange }}>
+                            {upiName}
+                          </Typography>
+                          {upiId && (
+                            <Typography variant="caption" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
+                              {upiId}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* ── Screenshot upload ── */}
                       <input
                         type="file"
                         accept="image/*,application/pdf"
@@ -324,12 +402,12 @@ export default function SplitCheckoutPage() {
                         <Box sx={{
                           display: "flex", alignItems: "center", gap: 1.5,
                           p: 1.25, borderRadius: 2,
-                          border: `2px solid #2e7d32`, backgroundColor: "#f1f8f1",
+                          border: "2px solid #2e7d32", backgroundColor: "#f1f8f1",
                         }}>
                           <CheckCircleRoundedIcon sx={{ color: "#2e7d32", fontSize: 22, flexShrink: 0 }} />
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography variant="caption" sx={{ fontWeight: 700, color: "#2e7d32", display: "block" }}>
-                              Proof uploaded
+                              Payment proof uploaded
                             </Typography>
                             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {proof.fileName}
@@ -366,76 +444,13 @@ export default function SplitCheckoutPage() {
                         </Box>
                       )}
                     </Box>
-                  ) : upiId ? (
-                    /* ── UPI copy-only flow (no QR) ── */
-                    <Box>
-                      <Box sx={{
-                        mb: 1.5, p: 1.5, borderRadius: 2,
-                        backgroundColor: "#f3f0ff", border: "1px solid #d8d0f7",
-                      }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                          <PhonePeBadge />
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#5A4EE8" }}>
-                            Pay via PhonePe
-                          </Typography>
-                        </Box>
-                        <Stack spacing={0.4}>
-                          {[
-                            "Open PhonePe → Send Money",
-                            `Enter the UPI ID below`,
-                            `Pay ₹${subtotal.toFixed(2)} to ${group.caterer_name}`,
-                          ].map((step, i) => (
-                            <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                              <Typography variant="caption" sx={{ fontWeight: 800, color: "#5A4EE8", minWidth: 16, lineHeight: 1.6 }}>
-                                {i + 1}.
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>{step}</Typography>
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Box>
-
-                      <Box sx={{
-                        display: "flex", alignItems: "center", gap: 1,
-                        p: 1.5, borderRadius: 2,
-                        border: `2px solid ${copied === group.caterer_id ? "#2e7d32" : "#e8e0f7"}`,
-                        backgroundColor: copied === group.caterer_id ? "#f1f8f1" : "#faf8ff",
-                        transition: "all 0.2s", cursor: "pointer",
-                      }}
-                        onClick={() => handleCopyUpi(group.caterer_id, upiId)}
-                      >
-                        <PhonePeBadge />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1 }}>
-                            UPI ID
-                          </Typography>
-                          <Typography sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.95rem", letterSpacing: 0.3 }}>
-                            {upiId}
-                          </Typography>
-                        </Box>
-                        <Tooltip title={copied === group.caterer_id ? "Copied!" : "Tap to copy"}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            {copied === group.caterer_id
-                              ? <CheckRoundedIcon sx={{ fontSize: 18, color: "#2e7d32" }} />
-                              : <ContentCopyRoundedIcon sx={{ fontSize: 18, color: "#5A4EE8" }} />}
-                            <Typography variant="caption" sx={{ color: copied === group.caterer_id ? "#2e7d32" : "#5A4EE8", fontWeight: 700 }}>
-                              {copied === group.caterer_id ? "Copied!" : "Copy"}
-                            </Typography>
-                          </Box>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  ) : (
-                    <Alert severity="warning" sx={{ fontSize: "0.8rem", py: 0.5 }}>
-                      {group.caterer_name} hasn't added a UPI ID or QR code yet. Contact them directly to arrange payment.
-                    </Alert>
                   )}
                 </Box>
               </Paper>
             );
           })}
 
-          {/* Total + Place Order */}
+          {/* ── Total + Place Order ── */}
           <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 800 }}>Total</Typography>
@@ -446,11 +461,11 @@ export default function SplitCheckoutPage() {
 
             <Divider sx={{ mb: 2 }} />
 
-            {!loading && qrCatererIds.size > 0 ? (
+            {!loading && paymentEnabledIds.size > 0 ? (
               <Alert severity={allProofsReady ? "success" : "warning"} sx={{ mb: 2, fontSize: "0.8rem" }}>
                 {allProofsReady
-                  ? "Payment proof uploaded. Tap Place Order to confirm."
-                  : "Scan the QR code, pay each caterer, and upload your payment screenshot before placing the order."}
+                  ? "Payment proof uploaded for all caterers. Tap Place Order to confirm."
+                  : "Complete payment for each caterer using PhonePe or UPI, then upload your payment screenshot."}
               </Alert>
             ) : (
               <Alert severity="info" sx={{ mb: 2, fontSize: "0.8rem" }}>
@@ -461,20 +476,20 @@ export default function SplitCheckoutPage() {
             <Button
               fullWidth variant="contained" size="large"
               onClick={handlePlaceOrder}
-              disabled={placing || !items.length || unavailableItems.length > 0 || (!loading && !allProofsReady && qrCatererIds.size > 0)}
+              disabled={placing || !items.length || unavailableItems.length > 0 || (!loading && !allProofsReady && paymentEnabledIds.size > 0)}
               startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
               sx={{ fontWeight: 700, py: 1.4 }}
             >
               {placing ? "Placing Order…" : "Place Order"}
             </Button>
 
-            {!loading && !allProofsReady && qrCatererIds.size > 0 && (
+            {!loading && !allProofsReady && paymentEnabledIds.size > 0 && (
               <Typography variant="caption" sx={{ color: brand.orange, display: "block", mt: 1, textAlign: "center", fontWeight: 600 }}>
                 Upload payment proof for all caterers to continue
               </Typography>
             )}
 
-            {(loading || allProofsReady || qrCatererIds.size === 0) && (
+            {(loading || allProofsReady || paymentEnabledIds.size === 0) && (
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5, textAlign: "center" }}>
                 Order is sent to caterers after you tap Place Order.
               </Typography>
@@ -482,6 +497,17 @@ export default function SplitCheckoutPage() {
           </Paper>
         </Stack>
       </Container>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={qrModal.open}
+        onClose={() => setQrModal({ open: false })}
+        qrUrl={qrModal.qrUrl}
+        upiId={qrModal.upiId}
+        upiName={qrModal.upiName}
+        catererName={qrModal.catererName}
+        amount={qrModal.amount}
+      />
     </AppLayout>
   );
 }

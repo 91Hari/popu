@@ -1,17 +1,22 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Container, Card, CardContent, TextField, Button, Box, Typography,
   Alert, CircularProgress, Stack, FormControl, InputLabel, Select,
   MenuItem, useMediaQuery, useTheme, Collapse, Divider, Chip,
+  InputAdornment,
 } from "@mui/material";
-import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import MyLocationRoundedIcon   from "@mui/icons-material/MyLocationRounded";
+import CheckCircleRoundedIcon  from "@mui/icons-material/CheckCircleRounded";
+import QrCodeRoundedIcon       from "@mui/icons-material/QrCodeRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import authService from "../../services/authService";
 import Logo from "../../components/Logo";
 
 import { brand } from "../../theme";
 const BRAND_GREEN = brand.orange;
+const UPI_REGEX   = /^[\w.\-]+@[\w]+$/;
+const QR_MAX_BYTES = 3 * 1024 * 1024;
 
 export default function RegisterPage() {
   const [name, setName]               = useState("");
@@ -27,6 +32,10 @@ export default function RegisterPage() {
   const [latitude, setLatitude]         = useState(null);
   const [longitude, setLongitude]       = useState(null);
   const [geoStatus, setGeoStatus]       = useState("idle"); // idle | detecting | detected | denied
+  const [upiId, setUpiId]               = useState("");
+  const [upiName, setUpiName]           = useState("");
+  const [qrDataUrl, setQrDataUrl]       = useState("");
+  const qrInputRef = useRef(null);
 
   const [errors, setErrors]     = useState({});
   const [apiError, setApiError] = useState("");
@@ -77,6 +86,7 @@ export default function RegisterPage() {
     if (isCaterer) {
       if (!businessName.trim())    e.businessName = "Business name is required";
       if (!address.trim())         e.address = "Address is required";
+      if (upiId.trim() && !UPI_REGEX.test(upiId.trim())) e.upiId = "Invalid UPI ID format (e.g. name@ybl)";
     }
 
     return e;
@@ -103,6 +113,9 @@ export default function RegisterPage() {
         ...(isCaterer && {
           business_name: businessName,
           address,
+          upi_id:            upiId.trim()   || undefined,
+          upi_name:          upiName.trim()  || undefined,
+          qr_code_image_url: qrDataUrl       || undefined,
         }),
       });
       navigate("/login", { state: { registered: true } });
@@ -111,6 +124,17 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQrFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setApiError("QR code must be an image file."); return; }
+    if (file.size > QR_MAX_BYTES) { setApiError("QR image must be under 3 MB."); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => setQrDataUrl(ev.target.result);
+    reader.readAsDataURL(file);
   };
 
   const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: 1 } };
@@ -246,6 +270,90 @@ export default function RegisterPage() {
                       placeholder="e.g. 12 MG Road, Banjara Hills, Hyderabad 500034"
                       disabled={loading} sx={fieldSx}
                     />
+
+                    <Divider>
+                      <Chip label="Payment Details (Optional)" size="small" sx={{ backgroundColor: brand.goldLight, color: BRAND_GREEN, fontWeight: 600, fontSize: "0.72rem" }} />
+                    </Divider>
+
+                    <TextField
+                      fullWidth label="UPI ID" size="small"
+                      placeholder="e.g. satvikfoods@ybl"
+                      value={upiId}
+                      onChange={(e) => { setUpiId(e.target.value); if (errors.upiId) setErrors({ ...errors, upiId: "" }); }}
+                      error={!!errors.upiId}
+                      helperText={errors.upiId || "Customers will use this to pay you (PhonePe, GPay, Paytm…)"}
+                      disabled={loading}
+                      sx={fieldSx}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <QrCodeRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                          </InputAdornment>
+                        ),
+                        endAdornment: upiId.trim() && UPI_REGEX.test(upiId.trim()) ? (
+                          <InputAdornment position="end">
+                            <CheckCircleRoundedIcon sx={{ color: "#2e7d32", fontSize: 18 }} />
+                          </InputAdornment>
+                        ) : null,
+                      }}
+                    />
+
+                    <TextField
+                      fullWidth label="UPI Display Name" size="small"
+                      placeholder="e.g. Satvik Foods"
+                      value={upiName}
+                      onChange={(e) => setUpiName(e.target.value)}
+                      helperText="Name shown to customer on their UPI payment screen"
+                      disabled={loading}
+                      sx={fieldSx}
+                    />
+
+                    {/* QR Code upload */}
+                    <Box>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.75 }}>
+                        Payment QR Code (optional)
+                      </Typography>
+                      <input ref={qrInputRef} type="file" accept="image/*" hidden onChange={handleQrFile} />
+                      {qrDataUrl ? (
+                        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                          <Box
+                            component="img" src={qrDataUrl} alt="QR preview"
+                            sx={{ width: 72, height: 72, objectFit: "contain", borderRadius: 1.5, border: `1px solid ${brand.border}`, p: 0.5 }}
+                          />
+                          <Stack spacing={0.75}>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>QR code uploaded</Typography>
+                            <Button size="small" variant="outlined" startIcon={<QrCodeRoundedIcon />}
+                              onClick={() => qrInputRef.current?.click()} disabled={loading}
+                              sx={{ fontSize: "0.72rem", textTransform: "none" }}>
+                              Replace
+                            </Button>
+                            <Button size="small" variant="outlined" color="error" startIcon={<DeleteOutlineRoundedIcon />}
+                              onClick={() => setQrDataUrl("")} disabled={loading}
+                              sx={{ fontSize: "0.72rem", textTransform: "none" }}>
+                              Remove
+                            </Button>
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Box
+                          onClick={() => !loading && qrInputRef.current?.click()}
+                          sx={{
+                            border: `2px dashed ${brand.border}`, borderRadius: 1.5,
+                            p: 2, textAlign: "center", cursor: loading ? "default" : "pointer",
+                            "&:hover": loading ? {} : { borderColor: BRAND_GREEN, backgroundColor: brand.greenLight },
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <QrCodeRoundedIcon sx={{ fontSize: 30, color: brand.border, mb: 0.25 }} />
+                          <Typography variant="caption" sx={{ display: "block", fontWeight: 600, color: "text.secondary" }}>
+                            Upload QR Code
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                            PNG / JPG · Max 3 MB
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
                   </Stack>
                 </Collapse>
 

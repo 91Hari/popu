@@ -10,6 +10,7 @@ const CATERER_ORDER_WITH_ITEMS = `
     u.name                AS caterer_name,
     u.business_name       AS caterer_business_name,
     u.upi_id,
+    u.phonepe_id,
     u.payment_name,
     u.qr_code_image_url,
     u.bank_account_name,
@@ -28,7 +29,7 @@ const CATERER_ORDER_WITH_ITEMS = `
   JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
   JOIN food_items f ON f.id = coi.food_item_id
   WHERE co.master_order_id = $1
-  GROUP BY co.id, u.name, u.business_name, u.upi_id, u.payment_name, u.qr_code_image_url, u.bank_account_name
+  GROUP BY co.id, u.name, u.business_name, u.upi_id, u.phonepe_id, u.payment_name, u.qr_code_image_url, u.bank_account_name
   ORDER BY co.created_at ASC
 `;
 
@@ -276,15 +277,20 @@ async function getCatererSubOrders(caterer_id) {
          ) ORDER BY coi.id
        ) AS items,
        pp.id                     AS proof_id,
-       pp.payment_screenshot_url AS proof_screenshot_url
+       pp.payment_screenshot_url AS proof_screenshot_url,
+       cu.upi_id                 AS caterer_upi_id,
+       cu.phonepe_id             AS caterer_phonepe_id,
+       cu.payment_name           AS caterer_payment_name
      FROM caterer_orders co
      JOIN master_orders mo ON mo.id = co.master_order_id
-     JOIN users u ON u.id = mo.customer_id
+     JOIN users u  ON u.id  = mo.customer_id
+     JOIN users cu ON cu.id = co.caterer_id
      JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
      JOIN food_items f ON f.id = coi.food_item_id
      LEFT JOIN payment_proofs pp ON pp.caterer_order_id = co.id
      WHERE co.caterer_id = $1
-     GROUP BY co.id, mo.id, mo.customer_id, u.name, u.email, pp.id, pp.payment_screenshot_url
+     GROUP BY co.id, mo.id, mo.customer_id, u.name, u.email, pp.id, pp.payment_screenshot_url,
+              cu.upi_id, cu.phonepe_id, cu.payment_name
      ORDER BY co.created_at DESC`,
     [caterer_id]
   );
