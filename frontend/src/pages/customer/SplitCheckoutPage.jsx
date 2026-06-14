@@ -134,8 +134,13 @@ export default function SplitCheckoutPage() {
     setProofFiles((prev) => { const next = { ...prev }; delete next[catererId]; return next; });
   };
 
-  const handleUpiPay = (upiLink) => {
+  const [upiTipId, setUpiTipId] = useState(null); // caterer_id that last triggered a UPI tip
+
+  const handleUpiPay = (upiLink, catererId) => {
+    // Show fallback tip after 2.5s — if PhonePe declines (browser security),
+    // the page will still be here and the tip guides the user to copy the UPI ID.
     window.location.href = upiLink;
+    setTimeout(() => setUpiTipId(catererId), 2500);
   };
 
   const handlePlaceOrder = async () => {
@@ -273,7 +278,7 @@ export default function SplitCheckoutPage() {
                           <Button
                             fullWidth
                             variant="contained"
-                            onClick={() => handleUpiPay(upiLink)}
+                            onClick={() => handleUpiPay(upiLink, group.caterer_id)}
                             startIcon={<PhonePeBadge size={20} />}
                             endIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
                             sx={{
@@ -290,11 +295,23 @@ export default function SplitCheckoutPage() {
                             Pay with PhonePe
                           </Button>
 
+                          {/* PhonePe declined tip */}
+                          {upiTipId === group.caterer_id && (
+                            <Alert
+                              severity="warning"
+                              onClose={() => setUpiTipId(null)}
+                              sx={{ fontSize: "0.78rem", py: 0.5 }}
+                            >
+                              If PhonePe declined the payment, open PhonePe manually →
+                              tap <strong>Send Money</strong> → paste the UPI ID below.
+                            </Alert>
+                          )}
+
                           {/* Pay with Any UPI App */}
                           <Button
                             fullWidth
                             variant="outlined"
-                            onClick={() => handleUpiPay(upiLink)}
+                            onClick={() => handleUpiPay(upiLink, group.caterer_id)}
                             startIcon={<AccountBalanceWalletRoundedIcon />}
                             endIcon={<OpenInNewRoundedIcon sx={{ fontSize: 16 }} />}
                             sx={{
