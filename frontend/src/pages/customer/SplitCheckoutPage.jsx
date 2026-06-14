@@ -17,6 +17,10 @@ import OpenInNewRoundedIcon            from "@mui/icons-material/OpenInNewRounde
 import HelpOutlineRoundedIcon          from "@mui/icons-material/HelpOutlineRounded";
 import ExpandMoreRoundedIcon           from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon           from "@mui/icons-material/ExpandLessRounded";
+import AccountBalanceRoundedIcon       from "@mui/icons-material/AccountBalanceRounded";
+import AlternateEmailRoundedIcon       from "@mui/icons-material/AlternateEmailRounded";
+import AddCircleRoundedIcon            from "@mui/icons-material/AddCircleRounded";
+import VerifiedUserRoundedIcon         from "@mui/icons-material/VerifiedUserRounded";
 import { useCart }        from "../../contexts/CartContext";
 import AppLayout          from "../../components/AppLayout";
 import QRCodeModal        from "../../components/QRCodeModal";
@@ -382,37 +386,98 @@ export default function SplitCheckoutPage() {
 
                               {[
                                 {
+                                  icon: <AccountBalanceRoundedIcon sx={{ fontSize: 22, color: "#fff" }} />,
+                                  bg: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                                  screen: "Money Transfers",
+                                  tap: "To Bank & Self A/c",
                                   label: "Open PhonePe → Money Transfers",
-                                  detail: 'Tap "To Bank & Self A/c" on the home screen',
+                                  detail: 'Tap "To Bank & Self A/c"',
                                 },
                                 {
+                                  icon: <AlternateEmailRoundedIcon sx={{ fontSize: 22, color: "#fff" }} />,
+                                  bg: "linear-gradient(135deg, #7B6CF0, #9D8DF5)",
+                                  screen: "Send Money",
+                                  tap: "To UPI ID or Number",
                                   label: "Tap 'To UPI ID or Number'",
-                                  detail: "Choose 'Transfer to any UPI app' option",
+                                  detail: "Transfer to any UPI app",
                                 },
                                 {
-                                  label: 'Tap "+ UPI ID / Number" button',
+                                  icon: <AddCircleRoundedIcon sx={{ fontSize: 22, color: "#fff" }} />,
+                                  bg: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
+                                  screen: "Add Recipient",
+                                  tap: "+ UPI ID / Number",
+                                  label: 'Tap "+ UPI ID / Number"',
                                   detail: "Add a new UPI recipient",
                                 },
                                 {
-                                  label: "Paste the UPI ID below → Proceed",
-                                  detail: `PhonePe will verify and show the account holder name`,
+                                  icon: <VerifiedUserRoundedIcon sx={{ fontSize: 22, color: "#fff" }} />,
+                                  bg: "linear-gradient(135deg, #2E7D32, #43A047)",
+                                  screen: "Verified ✓",
+                                  tap: "PROCEED",
+                                  label: "Paste UPI ID → Proceed",
+                                  detail: "PhonePe verifies & shows account name",
                                 },
                               ].map((step, i) => (
-                                <Box key={i} sx={{ display: "flex", gap: 1.25, mb: i < 3 ? 1 : 0 }}>
+                                <Box key={i} sx={{ display: "flex", gap: 1.25, mb: i < 3 ? 1.25 : 0, alignItems: "flex-start" }}>
+
+                                  {/* Mini phone screen thumbnail */}
                                   <Box sx={{
-                                    width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
-                                    background: "linear-gradient(135deg, #5A4EE8, #7B6CF0)",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    width: 52, height: 68, flexShrink: 0,
+                                    borderRadius: 1.5,
+                                    border: "1.5px solid #D8D0F7",
+                                    backgroundColor: "#fff",
+                                    overflow: "hidden",
+                                    display: "flex", flexDirection: "column",
+                                    boxShadow: "0 2px 6px rgba(90,78,232,0.12)",
                                   }}>
-                                    <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "0.65rem", lineHeight: 1 }}>
-                                      {i + 1}
-                                    </Typography>
+                                    {/* Phone status bar */}
+                                    <Box sx={{
+                                      height: 6, backgroundColor: "#EDE9FE",
+                                      display: "flex", alignItems: "center", px: 0.5, gap: 0.3,
+                                    }}>
+                                      {[4, 3, 2].map((w) => (
+                                        <Box key={w} sx={{ width: w, height: 2, borderRadius: 1, backgroundColor: "#C5B9F7" }} />
+                                      ))}
+                                    </Box>
+                                    {/* App header */}
+                                    <Box sx={{ background: step.bg, display: "flex", alignItems: "center", justifyContent: "center", py: 0.75 }}>
+                                      {step.icon}
+                                    </Box>
+                                    {/* Screen label */}
+                                    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", px: 0.5, gap: 0.4 }}>
+                                      <Typography sx={{ fontSize: "0.38rem", fontWeight: 700, color: "#3D2EA0", textAlign: "center", lineHeight: 1.2 }}>
+                                        {step.screen}
+                                      </Typography>
+                                      <Box sx={{
+                                        backgroundColor: step.i === 3 ? "#E8F5E9" : "#EDE9FE",
+                                        borderRadius: 0.5, px: 0.4, py: 0.2,
+                                        border: `0.5px solid ${i === 3 ? "#A5D6A7" : "#C5B9F7"}`,
+                                        maxWidth: "100%",
+                                      }}>
+                                        <Typography sx={{ fontSize: "0.32rem", fontWeight: 800, color: i === 3 ? "#2E7D32" : "#5A4EE8", textAlign: "center", lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                          {step.tap}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
                                   </Box>
-                                  <Box>
-                                    <Typography variant="caption" sx={{ fontWeight: 700, color: "#3D2EA0", display: "block", lineHeight: 1.4 }}>
-                                      {step.label}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.4 }}>
+
+                                  {/* Step number + text */}
+                                  <Box sx={{ flex: 1, pt: 0.25 }}>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.25 }}>
+                                      <Box sx={{
+                                        width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                                        background: step.bg,
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                      }}>
+                                        <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "0.6rem", lineHeight: 1 }}>
+                                          {i + 1}
+                                        </Typography>
+                                      </Box>
+                                      <Typography variant="caption" sx={{ fontWeight: 700, color: "#3D2EA0", lineHeight: 1.3 }}>
+                                        {step.label}
+                                      </Typography>
+                                    </Box>
+                                    <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.4, pl: 0.25 }}>
                                       {step.detail}
                                     </Typography>
                                   </Box>
