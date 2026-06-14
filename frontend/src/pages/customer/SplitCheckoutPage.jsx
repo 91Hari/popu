@@ -386,8 +386,8 @@ export default function SplitCheckoutPage() {
                                   detail: 'Tap "To Bank & Self A/c" on the home screen',
                                 },
                                 {
-                                  label: "Tap "To UPI ID or Number"",
-                                  detail: "Choose "Transfer to any UPI app" option",
+                                  label: "Tap 'To UPI ID or Number'",
+                                  detail: "Choose 'Transfer to any UPI app' option",
                                 },
                                 {
                                   label: 'Tap "+ UPI ID / Number" button',
