@@ -31,12 +31,12 @@ import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded"
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
 import EventNoteRoundedIcon         from "@mui/icons-material/EventNoteRounded";
 import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
-import ToggleOnRoundedIcon          from "@mui/icons-material/ToggleOnRounded";
 import Logo from "./Logo";
 import { brand } from "../theme";
 import { useCart }          from "../contexts/CartContext";
 import { useNotifications } from "../contexts/NotificationContext";
 import LogoutConfirmationDialog from "./LogoutConfirmationDialog";
+import OrderAlertToast from "./OrderAlertToast";
 import Footer from "./Footer";
 
 export const DRAWER_WIDTH = 240;
@@ -75,7 +75,6 @@ const ADMIN_NAV = [
   { label: "Catering Bookings", path: "/admin/catering-bookings",  icon: <EventRoundedIcon /> },
   { label: "Notifications",     path: "/admin/notifications",      icon: <NotificationsNoneRoundedIcon /> },
   { label: "Reports",            path: "/admin/reports",             icon: <AssessmentRoundedIcon /> },
-  { label: "Service Management", path: "/admin/services",           icon: <ToggleOnRoundedIcon /> },
   { label: "Platform Settings", path: "/admin/platform-settings",  icon: <TuneRoundedIcon /> },
   { label: "Payments",          path: "/admin/payments",            icon: <PaymentsRoundedIcon /> },
   { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },
@@ -200,12 +199,27 @@ export default function AppLayout({ children }) {
   const isMobile  = useMediaQuery(theme.breakpoints.down("md"));
 
   const { cartCount }   = useCart();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, alertQueue, dismissAlert, hasAlert } = useNotifications();
 
   const path = location.pathname;
   const role = (() => {
     try { return JSON.parse(localStorage.getItem("user"))?.role || "customer"; } catch { return "customer"; }
   })();
+
+  function getUserRole() {
+    try { return JSON.parse(localStorage.getItem("user"))?.role || "customer"; } catch { return "customer"; }
+  }
+
+  const bellSx = hasAlert ? {
+    animation: "bellShake 0.5s ease-in-out 6",
+    "@keyframes bellShake": {
+      "0%, 100%": { transform: "rotate(0deg)" },
+      "20%":      { transform: "rotate(-15deg)" },
+      "40%":      { transform: "rotate(15deg)" },
+      "60%":      { transform: "rotate(-10deg)" },
+      "80%":      { transform: "rotate(10deg)" },
+    },
+  } : {};
 
   let navItems;
   if      (path.startsWith("/admin")   || role === "admin")   navItems = ADMIN_NAV;
@@ -310,7 +324,7 @@ export default function AppLayout({ children }) {
                       </>
                     )}
                     {navItems === CATERER_NAV && (
-                      <IconButton size="small" sx={{ color: brand.orange }}
+                      <IconButton size="small" sx={{ color: brand.orange, ...bellSx }}
                         onClick={() => navigate("/caterer/notifications")}>
                         <Badge badgeContent={unreadCount > 0 ? unreadCount : null} max={99}
                           sx={{ "& .MuiBadge-badge": { backgroundColor: brand.gold, color: brand.text, fontSize: "0.6rem", minWidth: 16, height: 16 } }}>
@@ -351,6 +365,11 @@ export default function AppLayout({ children }) {
           Thank you for visiting PO.PU. See you again soon!
         </Alert>
       </Snackbar>
+
+      {/* Order alert toasts — caterer only */}
+      {getUserRole() === "caterer" && (
+        <OrderAlertToast alerts={alertQueue} onDismiss={dismissAlert} />
+      )}
     </Box>
   );
 }

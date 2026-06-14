@@ -12,18 +12,22 @@ async function getSettings(req, res) {
               phonepe_client_id, phonepe_env, phonepe_client_version,
               CASE WHEN phonepe_client_secret IS NOT NULL AND phonepe_client_secret <> ''
                    THEN TRUE ELSE FALSE END AS phonepe_secret_set,
+              order_reminder_delay_secs, order_whatsapp_delay_secs, order_autocancel_delay_secs,
               updated_by, updated_at
        FROM platform_settings ORDER BY created_at ASC LIMIT 1`
     );
     res.json(rows[0] || {
-      commission_enabled:    false,
-      commission_percentage: 0,
-      platform_fee_enabled:  false,
-      platform_fee_amount:   0,
-      phonepe_client_id:     null,
-      phonepe_secret_set:    false,
-      phonepe_env:           'uat',
-      phonepe_client_version:'1',
+      commission_enabled:           false,
+      commission_percentage:        0,
+      platform_fee_enabled:         false,
+      platform_fee_amount:          0,
+      phonepe_client_id:            null,
+      phonepe_secret_set:           false,
+      phonepe_env:                  'uat',
+      phonepe_client_version:       '1',
+      order_reminder_delay_secs:    30,
+      order_whatsapp_delay_secs:    120,
+      order_autocancel_delay_secs:  300,
     });
   } catch (err) {
     console.error('[PlatformSettings] getSettings:', err.message);
@@ -41,6 +45,9 @@ async function updateSettings(req, res) {
     phonepe_client_secret,
     phonepe_env,
     phonepe_client_version,
+    order_reminder_delay_secs,
+    order_whatsapp_delay_secs,
+    order_autocancel_delay_secs,
   } = req.body;
 
   if (commission_percentage != null) {
@@ -65,30 +72,36 @@ async function updateSettings(req, res) {
     if (existing.length > 0) {
       const { rows } = await pool.query(
         `UPDATE platform_settings
-         SET commission_enabled    = COALESCE($1, commission_enabled),
-             commission_percentage = COALESCE($2, commission_percentage),
-             platform_fee_enabled  = COALESCE($3, platform_fee_enabled),
-             platform_fee_amount   = COALESCE($4, platform_fee_amount),
-             phonepe_client_id     = COALESCE($5, phonepe_client_id),
-             phonepe_client_secret = CASE WHEN $6::text IS NOT NULL AND $6 <> ''
-                                          THEN $6 ELSE phonepe_client_secret END,
-             phonepe_env           = COALESCE($7, phonepe_env),
-             phonepe_client_version= COALESCE($8, phonepe_client_version),
-             updated_by            = $9,
-             updated_at            = NOW()
+         SET commission_enabled           = COALESCE($1,  commission_enabled),
+             commission_percentage        = COALESCE($2,  commission_percentage),
+             platform_fee_enabled         = COALESCE($3,  platform_fee_enabled),
+             platform_fee_amount          = COALESCE($4,  platform_fee_amount),
+             phonepe_client_id            = COALESCE($5,  phonepe_client_id),
+             phonepe_client_secret        = CASE WHEN $6::text IS NOT NULL AND $6 <> ''
+                                                 THEN $6 ELSE phonepe_client_secret END,
+             phonepe_env                  = COALESCE($7,  phonepe_env),
+             phonepe_client_version       = COALESCE($8,  phonepe_client_version),
+             order_reminder_delay_secs    = COALESCE($11, order_reminder_delay_secs),
+             order_whatsapp_delay_secs    = COALESCE($12, order_whatsapp_delay_secs),
+             order_autocancel_delay_secs  = COALESCE($13, order_autocancel_delay_secs),
+             updated_by                   = $9,
+             updated_at                   = NOW()
          WHERE id = $10
          RETURNING *`,
         [
-          commission_enabled    ?? null,
-          commission_percentage ?? null,
-          platform_fee_enabled  ?? null,
-          platform_fee_amount   ?? null,
-          phonepe_client_id     || null,
-          phonepe_client_secret || null,
-          phonepe_env           || null,
-          phonepe_client_version|| null,
+          commission_enabled          ?? null,
+          commission_percentage       ?? null,
+          platform_fee_enabled        ?? null,
+          platform_fee_amount         ?? null,
+          phonepe_client_id           || null,
+          phonepe_client_secret       || null,
+          phonepe_env                 || null,
+          phonepe_client_version      || null,
           req.user.id,
           existing[0].id,
+          order_reminder_delay_secs   ?? null,
+          order_whatsapp_delay_secs   ?? null,
+          order_autocancel_delay_secs ?? null,
         ]
       );
       result = rows[0];
@@ -96,17 +109,22 @@ async function updateSettings(req, res) {
       const { rows } = await pool.query(
         `INSERT INTO platform_settings
            (commission_enabled, commission_percentage, platform_fee_enabled, platform_fee_amount,
-            phonepe_client_id, phonepe_client_secret, phonepe_env, phonepe_client_version, updated_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            phonepe_client_id, phonepe_client_secret, phonepe_env, phonepe_client_version,
+            order_reminder_delay_secs, order_whatsapp_delay_secs, order_autocancel_delay_secs,
+            updated_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
         [
-          commission_enabled    ?? false,
-          commission_percentage ?? 0,
-          platform_fee_enabled  ?? false,
-          platform_fee_amount   ?? 0,
-          phonepe_client_id     || null,
-          phonepe_client_secret || null,
-          phonepe_env           || 'uat',
-          phonepe_client_version|| '1',
+          commission_enabled          ?? false,
+          commission_percentage       ?? 0,
+          platform_fee_enabled        ?? false,
+          platform_fee_amount         ?? 0,
+          phonepe_client_id           || null,
+          phonepe_client_secret       || null,
+          phonepe_env                 || 'uat',
+          phonepe_client_version      || '1',
+          order_reminder_delay_secs   ?? 30,
+          order_whatsapp_delay_secs   ?? 120,
+          order_autocancel_delay_secs ?? 300,
           req.user.id,
         ]
       );

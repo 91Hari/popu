@@ -1,13 +1,17 @@
 require('dotenv').config();
-const app  = require('./app');
-const pool = require('./config/db');
+const app                 = require('./app');
+const pool                = require('./config/db');
+const escalationScheduler = require('./services/orderEscalationScheduler');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
 pool.query('SELECT 1')
   .then(() => {
     console.log('Database connected');
-    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+    app.listen(PORT, () => {
+      console.log(`Server listening on port ${PORT}`);
+      escalationScheduler.start();
+    });
   })
   .catch((err) => {
     console.error('Database connection failed:', err.message);
