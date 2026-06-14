@@ -28,7 +28,7 @@ const STATUS_CFG = {
 const ACTION_LABELS = {
   ACCEPTED:  "Accept Order",
   PREPARING: "Start Preparing",
-  READY:     "Mark Ready",
+  READY:     "Ready For Delivery",
   DELIVERED: "Mark Delivered",
   CANCELLED: "Cancel",
 };

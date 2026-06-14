@@ -65,7 +65,7 @@ function getActions(status, orderId, busy, onAction) {
       ];
     case "PREPARING":
       return [
-        btn("Mark Ready",     "READY",     <TwoWheelerRoundedIcon />, null, brand.orange),
+        btn("Ready For Delivery", "READY", <TwoWheelerRoundedIcon />, null, brand.orange),
         btn("Cancel",         "CANCELLED", <CancelOutlinedIcon />,    "error", null),
       ];
     case "READY":
