@@ -1,36 +1,37 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Skeleton } from "@mui/material";
-import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import FoodCard from "./FoodCard";
 import { CARD_TOTAL_HEIGHT } from "./CommonCard";
 import foodService from "../services/foodService";
-import { brand } from "../theme";
 
-const CARD_W    = 200;
-const PAGE_SIZE = 5;
+const CARD_W     = 200;
+const PAGE_SIZE  = 5;
+const SCROLL_SPD = 0.8; // px per animation frame
 
 export default function LatestFoodsCarousel() {
-  const [foods, setFoods]               = useState([]);
-  const [page, setPage]                 = useState(1);
-  const [hasMore, setHasMore]           = useState(true);
-  const [loading, setLoading]           = useState(true);
-  const [loadingMore, setLoadingMore]   = useState(false);
+  const [foods, setFoods]             = useState([]);
+  const [page, setPage]               = useState(1);
+  const [hasMore, setHasMore]         = useState(true);
+  const [loading, setLoading]         = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const navigate     = useNavigate();
-  const scrollRef    = useRef(null);
-  const sentinelRef  = useRef(null);
-  const dragRef      = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
+  const navigate    = useNavigate();
+  const scrollRef   = useRef(null);
+  const sentinelRef = useRef(null);
+  const rafRef      = useRef(null);
+  const pausedRef   = useRef(false); // true while hovered or dragging
+  const dragRef     = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
 
-  // Mirror state into refs so the stable IntersectionObserver callback reads fresh values
+  // Refs that mirror state so RAF/Observer callbacks always read fresh values
   const hasMoreRef     = useRef(hasMore);
   const loadingMoreRef = useRef(loadingMore);
   const loadingRef     = useRef(loading);
   const pageRef        = useRef(page);
-  useEffect(() => { hasMoreRef.current = hasMore; },       [hasMore]);
+  useEffect(() => { hasMoreRef.current = hasMore; },         [hasMore]);
   useEffect(() => { loadingMoreRef.current = loadingMore; }, [loadingMore]);
-  useEffect(() => { loadingRef.current = loading; },       [loading]);
-  useEffect(() => { pageRef.current = page; },             [page]);
+  useEffect(() => { loadingRef.current = loading; },         [loading]);
+  useEffect(() => { pageRef.current = page; },               [page]);
 
   const loadPage = useCallback(async (pg) => {
     if (pg === 1) setLoading(true);
@@ -50,8 +51,37 @@ export default function LatestFoodsCarousel() {
 
   useEffect(() => { loadPage(1); }, [loadPage]);
 
-  // IntersectionObserver with horizontal scroll container as root.
-  // Depends on `loading` so it re-runs after the carousel mounts (refs are null during skeleton phase).
+  // Auto-scroll loop — starts after initial load, pauses on hover/drag
+  useEffect(() => {
+    if (loading || foods.length === 0) return;
+
+    const tick = () => {
+      const el = scrollRef.current;
+      if (el && !pausedRef.current) {
+        el.scrollLeft += SCROLL_SPD;
+
+        const nearEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 40;
+
+        if (nearEnd) {
+          if (hasMoreRef.current && !loadingMoreRef.current) {
+            // Load next page — new cards will extend the scroll width
+            loadPage(pageRef.current + 1);
+          } else if (!hasMoreRef.current) {
+            // All items loaded — loop back to start seamlessly
+            el.scrollLeft = 0;
+          }
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [loading, foods.length, loadPage]);
+
+  // IntersectionObserver (fallback trigger for manual scroll)
   useEffect(() => {
     const sentinel = sentinelRef.current;
     const root     = scrollRef.current;
@@ -74,7 +104,7 @@ export default function LatestFoodsCarousel() {
     return () => observer.disconnect();
   }, [loadPage, loading]);
 
-  // Non-passive wheel → horizontal scroll
+  // Non-passive wheel → manual horizontal scroll
   const handleWheel = useCallback((e) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -82,7 +112,6 @@ export default function LatestFoodsCarousel() {
     el.scrollLeft += e.deltaY + e.deltaX;
   }, []);
 
-  // Re-runs when `loading` changes so the listener attaches after the carousel renders.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -90,10 +119,11 @@ export default function LatestFoodsCarousel() {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [handleWheel, loading]);
 
-  // Mouse drag scroll
+  // Drag scroll
   const onMouseDown = (e) => {
     const el = scrollRef.current;
     if (!el) return;
+    pausedRef.current = true;
     dragRef.current = { dragging: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
     el.style.cursor     = "grabbing";
     el.style.userSelect = "none";
@@ -106,6 +136,7 @@ export default function LatestFoodsCarousel() {
   };
   const onMouseUp = () => {
     dragRef.current.dragging = false;
+    // Keep paused while mouse is still over the element (onMouseLeave will unpause)
     if (scrollRef.current) {
       scrollRef.current.style.cursor     = "grab";
       scrollRef.current.style.userSelect = "";
@@ -116,7 +147,7 @@ export default function LatestFoodsCarousel() {
     return (
       <Box sx={{ mb: 3.5 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>
-          🔥 Latest Foods Added
+          Latest Foods Added
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
           {[...Array(PAGE_SIZE)].map((_, i) => (
@@ -136,15 +167,16 @@ export default function LatestFoodsCarousel() {
   return (
     <Box sx={{ mb: 3.5 }}>
       <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>
-        🔥 Latest Foods Added
+        Latest Foods Added
       </Typography>
 
       <Box
         ref={scrollRef}
+        onMouseEnter={() => { pausedRef.current = true; }}
+        onMouseLeave={() => { pausedRef.current = false; dragRef.current.dragging = false; }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
         sx={{
           display: "flex",
           gap: 2,
@@ -177,18 +209,9 @@ export default function LatestFoodsCarousel() {
           />
         ))}
 
-        {/* Sentinel for IntersectionObserver — triggers next page load when scrolled into view */}
+        {/* Sentinel for IntersectionObserver (manual scroll fallback) */}
         <Box ref={sentinelRef} sx={{ width: 4, flexShrink: 0, alignSelf: "stretch" }} />
       </Box>
-
-      {!hasMore && foods.length > 0 && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1, justifyContent: "center" }}>
-          <DinnerDiningRoundedIcon sx={{ fontSize: 16, color: brand.border }} />
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            You've seen all available items
-          </Typography>
-        </Box>
-      )}
     </Box>
   );
 }
