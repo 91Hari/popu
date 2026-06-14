@@ -5,7 +5,7 @@ import {
   Typography, CircularProgress, IconButton, Grid,
 } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import DiningIcon from "@mui/icons-material/Dining";
+import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
@@ -119,7 +119,7 @@ export default function FoodSearchPage() {
                     background: `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    <DiningIcon sx={{ fontSize: 30, color: brand.orange, opacity: 0.8 }} />
+                    <DinnerDiningRoundedIcon sx={{ fontSize: 30, color: brand.orange, opacity: 0.8 }} />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>

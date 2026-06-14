@@ -8,7 +8,7 @@ import {
 import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
 import BackButton from "../../components/BackButton";
 import CancelRoundedIcon         from "@mui/icons-material/CancelRounded";
-import DiningIcon   from "@mui/icons-material/Dining";
+import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import AccessTimeRoundedIcon     from "@mui/icons-material/AccessTimeRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
@@ -153,7 +153,7 @@ export default function OrdersPage() {
                             background: `linear-gradient(135deg, ${brand.greenLight}, #A5D6A7)`,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
-                            <DiningIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
+                            <DinnerDiningRoundedIcon sx={{ fontSize: 18, color: brand.orange, opacity: 0.7 }} />
                           </Box>
                           <Box sx={{ flex: 1 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{it.food_name || it.foodName}</Typography>
@@ -193,7 +193,7 @@ export default function OrdersPage() {
                       hasEta ? (
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                            <DiningIcon sx={{ fontSize: 16, color: brand.orange }} />
+                            <DinnerDiningRoundedIcon sx={{ fontSize: 16, color: brand.orange }} />
                             <Box>
                               <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>Preparing Your Order</Typography>
                               <Typography variant="caption" sx={{ color: brand.orange }}>Estimated Delivery: {etaRange(Number(order.eta_minutes))}</Typography>
@@ -211,7 +211,7 @@ export default function OrdersPage() {
                         </Box>
                       ) : (
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
-                          <DiningIcon sx={{ fontSize: 15, color: brand.orange }} />
+                          <DinnerDiningRoundedIcon sx={{ fontSize: 15, color: brand.orange }} />
                           <Box>
                             <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 700, display: "block", lineHeight: 1.2 }}>Preparing Your Order</Typography>
                             <Typography variant="caption" sx={{ color: brand.orange }}>Delivery time will be confirmed shortly</Typography>

@@ -5,7 +5,7 @@ import {
   ListItemIcon, Typography, CircularProgress, Divider,
 } from "@mui/material";
 import SearchRoundedIcon        from "@mui/icons-material/SearchRounded";
-import DiningIcon   from "@mui/icons-material/Dining";
+import LunchDiningRoundedIcon   from "@mui/icons-material/LunchDiningRounded";
 import StorefrontRoundedIcon    from "@mui/icons-material/StorefrontRounded";
 import { brand } from "../theme";
 import api from "../services/api";
@@ -123,7 +123,7 @@ export default function SearchSuggestions({ placeholder = "Search food, caterers
                 {suggestions.foods.map((item) => (
                   <ListItemButton key={item.id} onClick={() => handleSelect(item)} sx={{ py: 0.75, px: 2 }}>
                     <ListItemIcon sx={{ minWidth: 32 }}>
-                      <DiningIcon sx={{ fontSize: 18, color: brand.orange }} />
+                      <LunchDiningRoundedIcon sx={{ fontSize: 18, color: brand.orange }} />
                     </ListItemIcon>
                     <ListItemText
                       primary={item.label}

@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import DiningIcon from "@mui/icons-material/Dining";
+import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
 import SortRoundedIcon from "@mui/icons-material/SortRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
@@ -92,7 +92,7 @@ export default function TiffinsPage() {
           <IconButton size="small" onClick={() => navigate("/services")} sx={{ color: brand.muted }}>
             <ArrowBackRoundedIcon />
           </IconButton>
-          <DiningIcon sx={{ color: brand.orange, fontSize: 26 }} />
+          <LunchDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Food Marketplace</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -163,7 +163,7 @@ export default function TiffinsPage() {
           </Box>
         ) : displayed.length === 0 ? (
           <EmptyState
-            icon={<DiningIcon sx={{ fontSize: 64, color: brand.border, mb: 0.5 }} />}
+            icon={<LunchDiningRoundedIcon sx={{ fontSize: 64, color: brand.border, mb: 0.5 }} />}
             title="0 Results Found"
             message="No food items match your search."
             hint="Try another food name, caterer, or adjust your filters."

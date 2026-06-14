@@ -4,11 +4,12 @@ import {
   Box, Container, Typography, Button, CircularProgress, Grid,
 } from "@mui/material";
 import RestaurantRoundedIcon    from "@mui/icons-material/RestaurantRounded";
-import DiningIcon               from "@mui/icons-material/Dining";
+import LunchDiningRoundedIcon   from "@mui/icons-material/LunchDiningRounded";
 import PeopleAltRoundedIcon     from "@mui/icons-material/PeopleAltRounded";
 import HomeRoundedIcon          from "@mui/icons-material/HomeRounded";
 import SchoolRoundedIcon        from "@mui/icons-material/SchoolRounded";
 import SetMealRoundedIcon       from "@mui/icons-material/SetMealRounded";
+import DinnerDiningRoundedIcon  from "@mui/icons-material/DinnerDiningRounded";
 import RocketLaunchRoundedIcon  from "@mui/icons-material/RocketLaunchRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
@@ -19,7 +20,7 @@ import { useCustomerGeo } from "../../utils/geoUtils";
 
 const CATEGORIES = [
   { icon: <RestaurantRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,  label: "Catering",  to: "/services/catering" },
-  { icon: <DiningIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",      to: "/services/food-marketplace" },
+  { icon: <LunchDiningRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />, label: "Food",      to: "/services/food-marketplace" },
   { icon: <SetMealRoundedIcon sx={{ fontSize: 26, color: brand.orange }} />,    label: "Lunch Box", to: "/services/tiffin-box" },
   { icon: <PeopleAltRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,    label: "Book Cook", to: "/services/book-cook" },
   { icon: <HomeRoundedIcon sx={{ fontSize: 26, color: brand.muted }} />,         label: "Home Food", to: "/services/home-food" },
@@ -101,7 +102,7 @@ export default function CustomerDashboard() {
               Explore Now
             </Button>
           </Box>
-          <DiningIcon
+          <DinnerDiningRoundedIcon
             sx={{ fontSize: { xs: 60, md: 100 }, opacity: 0.18, display: { xs: "none", sm: "block" }, flexShrink: 0 }}
           />
         </Box>
@@ -151,7 +152,7 @@ export default function CustomerDashboard() {
           </Box>
         ) : foods.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
-            <DiningIcon sx={{ fontSize: 48, color: brand.border, mb: 1 }} />
+            <DinnerDiningRoundedIcon sx={{ fontSize: 48, color: brand.border, mb: 1 }} />
             <Typography variant="body2" sx={{ color: "text.secondary" }}>No food items available right now.</Typography>
           </Box>
         ) : (

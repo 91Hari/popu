@@ -10,7 +10,7 @@ import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
 import StorefrontRoundedIcon     from "@mui/icons-material/StorefrontRounded";
 import TodayRoundedIcon          from "@mui/icons-material/TodayRounded";
 import DateRangeRoundedIcon      from "@mui/icons-material/DateRangeRounded";
-import DiningIcon   from "@mui/icons-material/Dining";
+import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
 import AddRoundedIcon            from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon         from "@mui/icons-material/RemoveRounded";
 import AppLayout                 from "../../components/AppLayout";
@@ -229,7 +229,7 @@ function StepBoxType({ caterer, onNext }) {
           >
             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: "14px !important" }}>
               <Box sx={{ width: 46, height: 46, borderRadius: 2, backgroundColor: brand.orangeLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <DiningIcon sx={{ color: brand.orange, fontSize: 24 }} />
+                <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />
               </Box>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{box.label}</Typography>
@@ -346,7 +346,7 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
                     <Box component="img" src={food.imageUrl} alt={food.food_name}
                       sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <DiningIcon sx={{ color: brand.orange, fontSize: 26 }} />
+                    <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
                   )}
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -520,7 +520,7 @@ export default function TiffinBoxPage() {
       <Container maxWidth="sm" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
           <Box sx={{ width: 38, height: 38, borderRadius: 2, backgroundColor: brand.orangeLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <DiningIcon sx={{ color: brand.orange, fontSize: 22 }} />
+            <DinnerDiningRoundedIcon sx={{ color: brand.orange, fontSize: 22 }} />
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1 }}>Lunch Box</Typography>

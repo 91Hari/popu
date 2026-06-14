@@ -1,5 +1,5 @@
 import { Box, Card, Tooltip, Typography } from "@mui/material";
-import DiningIcon from "@mui/icons-material/Dining";
+import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import { brand } from "../theme";
 
 export const CARD_IMG_HEIGHT  = 120;
@@ -56,7 +56,7 @@ export default function CommonCard({
         }}
       >
         {!imageSrc && (placeholderIcon || (
-          <DiningIcon sx={{ fontSize: 42, color: brand.orange, opacity: 0.65 }} />
+          <DinnerDiningRoundedIcon sx={{ fontSize: 42, color: brand.orange, opacity: 0.65 }} />
         ))}
         {badge && (
           <Box sx={{ position: "absolute", top: 8, right: 8 }}>{badge}</Box>

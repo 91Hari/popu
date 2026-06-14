@@ -4,7 +4,7 @@ import {
   Button, CircularProgress, Alert, TextField, InputAdornment, Divider,
 } from "@mui/material";
 import SearchRoundedIcon       from "@mui/icons-material/SearchRounded";
-import DiningIcon from "@mui/icons-material/Dining";
+import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import PersonRoundedIcon       from "@mui/icons-material/PersonRounded";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
@@ -123,7 +123,7 @@ export default function RiderOrderLookupPage() {
                     {order.items.map((it, i) => (
                       <Box key={i} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                          <DiningIcon sx={{ fontSize: 14, color: brand.orange }} />
+                          <DinnerDiningRoundedIcon sx={{ fontSize: 14, color: brand.orange }} />
                           <Typography variant="body2">{it.food_name}</Typography>
                         </Box>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>
