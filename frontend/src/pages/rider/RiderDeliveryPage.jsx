@@ -11,6 +11,7 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import PersonRoundedIcon       from "@mui/icons-material/PersonRounded";
 import LocalAtmRoundedIcon     from "@mui/icons-material/LocalAtmRounded";
 import GpsFixedRoundedIcon     from "@mui/icons-material/GpsFixedRounded";
+import NavigationRoundedIcon   from "@mui/icons-material/NavigationRounded";
 import AppLayout from "../../components/AppLayout";
 import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
@@ -343,6 +344,23 @@ export default function RiderDeliveryPage() {
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                   Pick up the order from the caterer and tap Start when you leave for delivery.
                 </Typography>
+                {order.customer_lat && order.customer_lng && (
+                  <Button
+                    fullWidth variant="outlined"
+                    component="a"
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${order.customer_lat},${order.customer_lng}&travelmode=driving`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<NavigationRoundedIcon />}
+                    sx={{
+                      fontWeight: 700, py: 1.25, mb: 1.5, textTransform: "none",
+                      borderColor: "#1565C0", color: "#1565C0",
+                      "&:hover": { backgroundColor: "#E3F2FD" },
+                    }}
+                  >
+                    Open Navigation
+                  </Button>
+                )}
                 <Button
                   fullWidth variant="contained"
                   onClick={handleStart}
@@ -358,6 +376,23 @@ export default function RiderDeliveryPage() {
             {/* ── Confirm delivery (code entry) ── */}
             {order.status === "OUT_FOR_DELIVERY" && (
               <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2, p: 2.5 }}>
+                {order.customer_lat && order.customer_lng && (
+                  <Button
+                    fullWidth variant="outlined"
+                    component="a"
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${order.customer_lat},${order.customer_lng}&travelmode=driving`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={<NavigationRoundedIcon />}
+                    sx={{
+                      fontWeight: 700, py: 1.1, mb: 2, textTransform: "none",
+                      borderColor: "#1565C0", color: "#1565C0",
+                      "&:hover": { backgroundColor: "#E3F2FD" },
+                    }}
+                  >
+                    Open Navigation
+                  </Button>
+                )}
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
                   Enter Confirmation Code
                 </Typography>

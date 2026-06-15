@@ -1,0 +1,1 @@
+import{f as e}from"./index-DHddPJYv.js";const t={async getServices(){return e.request("/customer/services")},async adminGetServices(){return e.request("/admin/services")},async adminUpdateService(r,s){return e.request(`/admin/services/${r}`,{method:"PUT",body:JSON.stringify({isEnabled:s})})}};export{t as s};

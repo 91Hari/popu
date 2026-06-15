@@ -1,181 +1,312 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Loader } from "@googlemaps/js-api-loader";
 import {
   Box, Card, CardContent, Typography, Chip, IconButton,
   CircularProgress, Alert, Divider, Stack, Button,
 } from "@mui/material";
-import ArrowBackRoundedIcon        from "@mui/icons-material/ArrowBackRounded";
-import TwoWheelerRoundedIcon       from "@mui/icons-material/TwoWheelerRounded";
-import AccessTimeRoundedIcon       from "@mui/icons-material/AccessTimeRounded";
-import PhoneRoundedIcon            from "@mui/icons-material/PhoneRounded";
-import CheckCircleRoundedIcon      from "@mui/icons-material/CheckCircleRounded";
-import StorefrontRoundedIcon       from "@mui/icons-material/StorefrontRounded";
-import GpsOffRoundedIcon           from "@mui/icons-material/GpsOffRounded";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import ArrowBackRoundedIcon      from "@mui/icons-material/ArrowBackRounded";
+import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
+import AccessTimeRoundedIcon     from "@mui/icons-material/AccessTimeRounded";
+import RouteRoundedIcon          from "@mui/icons-material/RouteRounded";
+import PhoneRoundedIcon          from "@mui/icons-material/PhoneRounded";
+import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
+import StorefrontRoundedIcon     from "@mui/icons-material/StorefrontRounded";
+import GpsOffRoundedIcon         from "@mui/icons-material/GpsOffRounded";
+import MapRoundedIcon            from "@mui/icons-material/MapRounded";
 import riderService from "../../services/riderService";
 
-// ── Custom map icons ──────────────────────────────────────────────────────────
+// ── Singleton loader — prevents double-loading if component remounts ──────────
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
-const scooterIcon = new L.DivIcon({
-  html: `<div style="
-    background:#1565C0;border-radius:50%;width:40px;height:40px;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 3px 10px rgba(0,0,0,0.35);border:2.5px solid #fff;
-    animation:pulse-blue 2s ease-in-out infinite;
-  "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="22" height="22">
-    <path d="M19 7c0-1.1-.9-2-2-2h-3l-2-4H7L5 5H3C1.9 5 1 5.9 1 7v10c0 1.1.9 2 2 2h.17C3.59 20.23 4.69 21 6 21s2.41-.77 2.83-2h6.34c.42 1.23 1.52 2 2.83 2s2.41-.77 2.83-2H21c.55 0 1-.45 1-1v-6l-3-7zm-7.5 1.5h-3L10 6h1.5v2.5zM6 19.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm12 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zM17 13H3V7h14v6z"/>
-  </svg></div>
-  <style>@keyframes pulse-blue{0%,100%{box-shadow:0 0 0 0 rgba(21,101,192,0.5)}50%{box-shadow:0 0 0 8px rgba(21,101,192,0)}}</style>`,
-  className: "",
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -44],
+const mapsLoader = new Loader({
+  apiKey: API_KEY,
+  version: "weekly",
+  libraries: ["maps", "routes", "geometry", "marker"],
 });
 
-const homeIcon = new L.DivIcon({
-  html: `<div style="
-    background:#2E7D32;border-radius:50%;width:40px;height:40px;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 3px 10px rgba(0,0,0,0.3);border:2.5px solid #fff;
-  "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="22" height="22">
-    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-  </svg></div>`,
-  className: "",
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -44],
-});
-
-// ── Utilities ─────────────────────────────────────────────────────────────────
-
-function haversineKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+// ── SVG marker builder ────────────────────────────────────────────────────────
+function buildMarkerSvg(bg, iconPath, size = 44) {
+  const r = size / 2;
+  const iconOffset = (size - 22) / 2;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size + 8}" viewBox="0 0 ${size} ${size + 8}">` +
+    `<circle cx="${r}" cy="${r}" r="${r - 1}" fill="${bg}" stroke="white" stroke-width="2.5"/>` +
+    `<g transform="translate(${iconOffset},${iconOffset})">${iconPath}</g>` +
+    `<polygon points="${r - 5},${size - 1} ${r + 5},${size - 1} ${r},${size + 7}" fill="${bg}"/>` +
+    `</svg>`
+  );
 }
 
-function etaMinutes(distKm) {
-  // Bracket-based estimate matching delivery settings
-  if (distKm <= 1)  return 5;
-  if (distKm <= 3)  return 10;
-  if (distKm <= 8)  return 20;
-  if (distKm <= 15) return 30;
-  return 45;
+const SCOOTER_SVG = buildMarkerSvg(
+  "#1565C0",
+  `<path fill="white" d="M19 7c0-1.1-.9-2-2-2h-3l-2-4H7L5 5H3C1.9 5 1 5.9 1 7v10c0 1.1.9 2 2 2h.17C3.59 20.23 4.69 21 6 21s2.41-.77 2.83-2h6.34c.42 1.23 1.52 2 2.83 2s2.41-.77 2.83-2H21c.55 0 1-.45 1-1v-6l-3-7zm-7.5 1.5h-3L10 6h1.5v2.5zM6 19.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm12 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zM17 13H3V7h14v6z"/>`
+);
+
+const HOME_SVG = buildMarkerSvg(
+  "#2E7D32",
+  `<path fill="white" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>`
+);
+
+const SCOOTER_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(SCOOTER_SVG)}`;
+const HOME_URL    = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(HOME_SVG)}`;
+
+// ── Smooth marker animation (AdvancedMarkerElement) ───────────────────────────
+function animateMarkerTo(marker, from, to, google, duration = 1200) {
+  const start = Date.now();
+  let frameId;
+  function step() {
+    const t    = Math.min((Date.now() - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3); // cubic ease-out
+    marker.position = new google.maps.LatLng(
+      from.lat + (to.lat - from.lat) * ease,
+      from.lng + (to.lng - from.lng) * ease
+    );
+    if (t < 1) frameId = requestAnimationFrame(step);
+  }
+  frameId = requestAnimationFrame(step);
+  return () => cancelAnimationFrame(frameId);
 }
 
-function fmtDist(distKm) {
-  return distKm < 1
-    ? `${Math.round(distKm * 1000)} m`
-    : `${distKm.toFixed(1)} km`;
-}
-
-// Smoothly pan map to rider position on each update
-function FlyToRider({ position }) {
-  const map = useMap();
-  const first = useRef(true);
-  useEffect(() => {
-    if (!position) return;
-    if (first.current) {
-      map.setView(position, 15);
-      first.current = false;
-    } else {
-      map.panTo(position, { animate: true, duration: 0.8 });
-    }
-  }, [position, map]);
-  return null;
-}
-
-// ── Status config ─────────────────────────────────────────────────────────────
-
+// ── Status label config ───────────────────────────────────────────────────────
 const STATUS_CFG = {
-  ASSIGNED_TO_RIDER: { label: "Rider Assigned",   color: "#1565C0", bg: "#E3F2FD" },
-  OUT_FOR_DELIVERY:  { label: "Out for Delivery",  color: "#E65100", bg: "#FFF3E0" },
-  DELIVERED:         { label: "Delivered",         color: "#2E7D32", bg: "#E8F5E9" },
+  ASSIGNED_TO_RIDER: { label: "Rider Assigned",   chipBg: "rgba(255,255,255,0.22)" },
+  OUT_FOR_DELIVERY:  { label: "Out for Delivery",  chipBg: "rgba(255,255,255,0.22)" },
+  DELIVERED:         { label: "Delivered",         chipBg: "rgba(255,255,255,0.22)" },
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
+// ─────────────────────────────────────────────────────────────────────────────
 export default function RiderTrackingPage() {
   const { orderId } = useParams();
   const navigate    = useNavigate();
 
-  const [data,   setData]   = useState(null);
-  const [error,  setError]  = useState(null);
-  const intervalRef         = useRef(null);
+  // DOM + map refs (never trigger re-renders)
+  const mapDivRef     = useRef(null);
+  const mapObj        = useRef(null);      // google.maps.Map
+  const riderMarker   = useRef(null);      // AdvancedMarkerElement for rider
+  const custMarker    = useRef(null);      // AdvancedMarkerElement for customer
+  const dirRenderer   = useRef(null);      // DirectionsRenderer
+  const cancelAnim    = useRef(null);      // cancel smooth animation
+  const prevRiderPos  = useRef(null);      // last known rider position
+  const lastRoutePos  = useRef(null);      // position at last route calculation
+  const pollInterval  = useRef(null);
+  const googleRef     = useRef(null);      // google namespace, available after load
 
-  const fetchLocation = async () => {
+  // UI state
+  const [trackData,  setTrackData]  = useState(null);
+  const [distance,   setDistance]   = useState(null);
+  const [eta,        setEta]        = useState(null);
+  const [mapReady,   setMapReady]   = useState(false);
+  const [mapError,   setMapError]   = useState(null);
+  const [fetchError, setFetchError] = useState(null);
+
+  // ── Route + ETA via Directions API ─────────────────────────────────────────
+  const calcRoute = useCallback((origin, destination) => {
+    const google = googleRef.current;
+    if (!google || !dirRenderer.current) return;
+
+    new google.maps.DirectionsService().route(
+      { origin, destination, travelMode: google.maps.TravelMode.DRIVING },
+      (result, status) => {
+        if (status !== "OK") return;
+        dirRenderer.current.setDirections(result);
+        const leg = result.routes[0]?.legs[0];
+        if (leg) {
+          setDistance(leg.distance?.text || null);
+          setEta(leg.duration?.text || null);
+        }
+        lastRoutePos.current = { ...origin };
+      }
+    );
+  }, []);
+
+  // ── Poll handler: fetch location + update map objects ─────────────────────
+  const fetchAndUpdate = useCallback(async () => {
+    const google = googleRef.current;
     try {
-      const res = await riderService.getOrderRiderLocation(orderId);
-      setData(res);
-      setError(null);
-      // Stop polling once delivered — no more updates needed
-      if (res.order_status === "DELIVERED" && intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      const data = await riderService.getOrderRiderLocation(orderId);
+      setTrackData(data);
+      setFetchError(null);
+
+      if (data.order_status === "DELIVERED") {
+        clearInterval(pollInterval.current);
+        pollInterval.current = null;
+      }
+
+      // No map yet or no rider location — nothing to draw
+      if (!mapObj.current || !google || !data.location) return;
+
+      const riderPos = {
+        lat: parseFloat(data.location.latitude),
+        lng: parseFloat(data.location.longitude),
+      };
+
+      // Place / animate rider marker
+      if (!riderMarker.current) {
+        const img = Object.assign(document.createElement("img"), {
+          src: SCOOTER_URL,
+        });
+        img.style.cssText = "width:44px;height:52px;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.4));";
+
+        riderMarker.current = new google.maps.marker.AdvancedMarkerElement({
+          position: riderPos,
+          map:      mapObj.current,
+          content:  img,
+          title:    data.rider?.name || "Rider",
+        });
+        mapObj.current.panTo(riderPos);
+        mapObj.current.setZoom(15);
+      } else if (prevRiderPos.current) {
+        if (cancelAnim.current) cancelAnim.current();
+        cancelAnim.current = animateMarkerTo(
+          riderMarker.current, prevRiderPos.current, riderPos, google
+        );
+      } else {
+        riderMarker.current.position = new google.maps.LatLng(riderPos.lat, riderPos.lng);
+      }
+      prevRiderPos.current = riderPos;
+
+      // Place customer marker once (position is static)
+      if (data.customer_lat && data.customer_lng && !custMarker.current) {
+        const custPos = {
+          lat: parseFloat(data.customer_lat),
+          lng: parseFloat(data.customer_lng),
+        };
+        const img = Object.assign(document.createElement("img"), { src: HOME_URL });
+        img.style.cssText = "width:44px;height:52px;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.3));";
+
+        custMarker.current = new google.maps.marker.AdvancedMarkerElement({
+          position: custPos,
+          map:      mapObj.current,
+          content:  img,
+          title:    "Delivery Location",
+        });
+
+        // Fit both markers in view
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(riderPos);
+        bounds.extend(custPos);
+        mapObj.current.fitBounds(bounds, { top: 80, right: 24, bottom: 24, left: 24 });
+      }
+
+      // Recalculate route only if rider moved > 100 m since last calculation
+      if (data.customer_lat && data.customer_lng) {
+        const custPos = {
+          lat: parseFloat(data.customer_lat),
+          lng: parseFloat(data.customer_lng),
+        };
+        const shouldRecalc = !lastRoutePos.current ||
+          google.maps.geometry.spherical.computeDistanceBetween(
+            new google.maps.LatLng(riderPos.lat, riderPos.lng),
+            new google.maps.LatLng(lastRoutePos.current.lat, lastRoutePos.current.lng)
+          ) > 100;
+
+        if (shouldRecalc) calcRoute(riderPos, custPos);
       }
     } catch (err) {
-      setError(err.message || "Failed to fetch rider location");
+      setFetchError(err.message || "Failed to fetch rider location");
     }
-  };
+  }, [orderId, calcRoute]);
 
+  // ── Mount: load Google Maps then start polling ────────────────────────────
   useEffect(() => {
-    fetchLocation();
-    intervalRef.current = setInterval(fetchLocation, 10_000);
-    return () => clearInterval(intervalRef.current);
+    if (!mapDivRef.current) return;
+    let destroyed = false;
+
+    (async () => {
+      try {
+        if (!API_KEY) {
+          setMapError("Google Maps API key is not set. Add VITE_GOOGLE_MAPS_API_KEY to your .env file.");
+          return;
+        }
+
+        // Load the SDK (returns the google namespace)
+        const google = await mapsLoader.load();
+        if (destroyed) return;
+        googleRef.current = google;
+
+        const { Map } = await google.maps.importLibrary("maps");
+        if (destroyed) return;
+
+        mapObj.current = new Map(mapDivRef.current, {
+          zoom:              14,
+          center:            { lat: 20.5937, lng: 78.9629 }, // India center fallback
+          mapId:             "DEMO_MAP_ID",                   // required for AdvancedMarkerElement
+          mapTypeControl:    false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl:       true,
+          gestureHandling:   "greedy",
+          clickableIcons:    false,
+        });
+
+        // Route renderer on the map
+        dirRenderer.current = new google.maps.DirectionsRenderer({
+          map:             mapObj.current,
+          suppressMarkers: true, // we render custom markers ourselves
+          polylineOptions: {
+            strokeColor:   "#1565C0",
+            strokeWeight:  4,
+            strokeOpacity: 0.85,
+          },
+        });
+
+        setMapReady(true);
+
+        // First fetch, then poll every 10 s
+        await fetchAndUpdate();
+        if (!destroyed) {
+          pollInterval.current = setInterval(fetchAndUpdate, 10_000);
+        }
+      } catch (err) {
+        if (!destroyed) {
+          setMapError("Unable to load Google Maps. " + (err.message || "Check your API key and network."));
+        }
+      }
+    })();
+
+    return () => {
+      destroyed = true;
+      clearInterval(pollInterval.current);
+      if (cancelAnim.current) cancelAnim.current();
+      if (riderMarker.current) { riderMarker.current.map = null; riderMarker.current = null; }
+      if (custMarker.current)  { custMarker.current.map  = null; custMarker.current  = null; }
+      if (dirRenderer.current) { dirRenderer.current.setMap(null); dirRenderer.current = null; }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  const riderPos =
-    data?.location
-      ? [parseFloat(data.location.latitude), parseFloat(data.location.longitude)]
-      : null;
+  // ── Derived UI values ─────────────────────────────────────────────────────
+  const status      = trackData?.order_status;
+  const rider       = trackData?.rider;
+  const statusCfg   = STATUS_CFG[status] || { label: status || "Loading…", chipBg: "rgba(255,255,255,0.22)" };
+  const isDelivered = status === "DELIVERED";
+  const isAssigned  = status === "ASSIGNED_TO_RIDER";
+  const hasLoc      = !!trackData?.location;
 
-  const customerPos =
-    data?.customer_lat && data?.customer_lng
-      ? [parseFloat(data.customer_lat), parseFloat(data.customer_lng)]
-      : null;
-
-  const distKm =
-    riderPos && customerPos
-      ? haversineKm(riderPos[0], riderPos[1], customerPos[0], customerPos[1])
-      : null;
-
-  const eta = distKm !== null ? etaMinutes(distKm) : null;
-  const mapCenter = riderPos || customerPos || [20.5937, 78.9629];
-  const statusCfg = STATUS_CFG[data?.order_status] || { label: data?.order_status || "…", color: "#555", bg: "#f5f5f5" };
-  const isDelivered = data?.order_status === "DELIVERED";
-  const isAssigned  = data?.order_status === "ASSIGNED_TO_RIDER";
-
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#F5F5F5", pb: 4 }}>
+
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          position: "sticky", top: 0, zIndex: 100,
-          background: "linear-gradient(135deg, #FF6B00 0%, #FF8C38 100%)",
-          color: "#fff", px: 2, py: 1.5,
-          display: "flex", alignItems: "center", gap: 1,
-          boxShadow: "0 2px 12px rgba(255,107,0,0.3)",
-        }}
-      >
+      <Box sx={{
+        position: "sticky", top: 0, zIndex: 1200,
+        background: "linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)",
+        color: "#fff", px: 2, py: 1.5,
+        display: "flex", alignItems: "center", gap: 1,
+        boxShadow: "0 2px 16px rgba(27,94,32,0.4)",
+      }}>
         <IconButton size="small" sx={{ color: "#fff" }} onClick={() => navigate(-1)}>
           <ArrowBackRoundedIcon />
         </IconButton>
-        <Box sx={{ flex: 1 }}>
+        <Box flex={1} minWidth={0}>
           <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-            Live Tracking
+            Track Order
           </Typography>
-          {data && (
-            <Typography variant="caption" sx={{ opacity: 0.85 }}>
-              Order #{orderId.slice(0, 8).toUpperCase()}
-              {data.caterer_name ? ` · ${data.caterer_name}` : ""}
+          {trackData && (
+            <Typography variant="caption" sx={{ opacity: 0.85 }} noWrap>
+              #{orderId.slice(0, 8).toUpperCase()}
+              {trackData.caterer_name ? ` · ${trackData.caterer_name}` : ""}
             </Typography>
           )}
         </Box>
@@ -183,25 +314,21 @@ export default function RiderTrackingPage() {
           label={statusCfg.label}
           size="small"
           sx={{
-            backgroundColor: "rgba(255,255,255,0.25)",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: "0.7rem",
+            backgroundColor: statusCfg.chipBg,
+            color: "#fff", fontWeight: 700, fontSize: "0.7rem", flexShrink: 0,
           }}
         />
       </Box>
 
-      {/* ── Delivered banner ────────────────────────────────────────────────── */}
+      {/* ── Delivered banner ─────────────────────────────────────────────────── */}
       {isDelivered && (
-        <Box
-          sx={{
-            mx: 2, mt: 2, p: 2, borderRadius: 2,
-            background: "linear-gradient(135deg, #E8F5E9, #C8E6C9)",
-            border: "1px solid #A5D6A7",
-            display: "flex", alignItems: "center", gap: 1.5,
-          }}
-        >
-          <CheckCircleRoundedIcon sx={{ color: "#2E7D32", fontSize: 28 }} />
+        <Box sx={{
+          mx: 2, mt: 2, p: 2, borderRadius: 2.5,
+          background: "linear-gradient(135deg, #E8F5E9, #C8E6C9)",
+          border: "1px solid #A5D6A7",
+          display: "flex", alignItems: "center", gap: 1.5,
+        }}>
+          <CheckCircleRoundedIcon sx={{ color: "#2E7D32", fontSize: 30 }} />
           <Box>
             <Typography variant="subtitle1" fontWeight={800} sx={{ color: "#1B5E20" }}>
               Order Delivered!
@@ -213,118 +340,109 @@ export default function RiderTrackingPage() {
         </Box>
       )}
 
-      {/* ── Map ─────────────────────────────────────────────────────────────── */}
-      <Box sx={{ height: isDelivered ? 280 : 360, position: "relative", mt: isDelivered ? 1.5 : 0 }}>
-        {!data && !error && (
+      {/* ── Google Map ──────────────────────────────────────────────────────── */}
+      <Box sx={{
+        height: isDelivered ? 260 : 390,
+        mt: isDelivered ? 1.5 : 0,
+        position: "relative",
+        backgroundColor: "#E8EAF6",
+      }}>
+        {/* The map div — always rendered so ref is stable */}
+        <Box ref={mapDivRef} sx={{ height: "100%", width: "100%" }} />
+
+        {/* Loading overlay */}
+        {!mapReady && !mapError && (
           <Box sx={{
             position: "absolute", inset: 0, zIndex: 10,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            backgroundColor: "rgba(255,255,255,0.75)",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: 1.5,
+            backgroundColor: "rgba(255,255,255,0.88)",
           }}>
-            <CircularProgress sx={{ color: "#FF6B00" }} />
+            <CircularProgress sx={{ color: "#1B5E20" }} />
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              Loading Google Maps…
+            </Typography>
           </Box>
         )}
 
-        {error && (
-          <Box sx={{ position: "absolute", inset: 0, zIndex: 10, p: 2 }}>
-            <Alert severity="error" icon={<GpsOffRoundedIcon />}>{error}</Alert>
+        {/* Map load failure */}
+        {mapError && (
+          <Box sx={{
+            position: "absolute", inset: 0, zIndex: 10,
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: 1.5, p: 3, backgroundColor: "#F5F5F5",
+          }}>
+            <MapRoundedIcon sx={{ fontSize: 52, color: "#BDBDBD" }} />
+            <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center" }}>
+              {mapError}
+            </Typography>
           </Box>
         )}
 
-        <MapContainer
-          center={mapCenter}
-          zoom={14}
-          style={{ height: "100%", width: "100%" }}
-          zoomControl={false}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-          {riderPos && (
-            <>
-              <FlyToRider position={riderPos} />
-              <Marker position={riderPos} icon={scooterIcon}>
-                <Popup>
-                  <strong>{data?.rider?.name || "Rider"}</strong>
-                  {data?.rider?.vehicle_type && (
-                    <><br />{data.rider.vehicle_type}
-                    {data.rider.vehicle_number ? ` · ${data.rider.vehicle_number}` : ""}</>
-                  )}
-                </Popup>
-              </Marker>
-            </>
-          )}
-
-          {customerPos && (
-            <Marker position={customerPos} icon={homeIcon}>
-              <Popup>Your delivery location</Popup>
-            </Marker>
-          )}
-
-          {/* Route line — dashed from rider to customer */}
-          {riderPos && customerPos && (
-            <Polyline
-              positions={[riderPos, customerPos]}
-              pathOptions={{
-                color: "#1565C0",
-                weight: 3,
-                dashArray: "10, 7",
-                opacity: 0.75,
-              }}
-            />
-          )}
-        </MapContainer>
+        {/* Floating "picking up" pill when assigned but no GPS yet */}
+        {mapReady && !mapError && isAssigned && !hasLoc && (
+          <Box sx={{
+            position: "absolute", bottom: 14, left: "50%",
+            transform: "translateX(-50%)", zIndex: 10,
+            backgroundColor: "rgba(255,255,255,0.95)",
+            borderRadius: 3, px: 2.5, py: 1,
+            boxShadow: "0 2px 16px rgba(0,0,0,0.18)",
+            display: "flex", alignItems: "center", gap: 1, whiteSpace: "nowrap",
+          }}>
+            <TwoWheelerRoundedIcon sx={{ color: "#1565C0", fontSize: 20 }} />
+            <Typography variant="caption" fontWeight={700} sx={{ color: "#1565C0" }}>
+              Rider is picking up · Live map coming soon
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* ── Info panels ─────────────────────────────────────────────────────── */}
       <Box sx={{ px: 2, mt: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
 
-        {/* ASSIGNED_TO_RIDER — rider picking up, no live location yet */}
-        {isAssigned && !riderPos && (
-          <Card elevation={0} sx={{ border: "1px solid #BBDEFB", borderRadius: 2.5, background: "#E3F2FD" }}>
-            <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-              <Stack direction="row" alignItems="center" spacing={1.5}>
-                <TwoWheelerRoundedIcon sx={{ color: "#1565C0", fontSize: 26 }} />
-                <Box>
-                  <Typography variant="subtitle2" fontWeight={700} sx={{ color: "#1565C0" }}>
-                    Rider is on the way to pick up your order
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: "#1565C0", opacity: 0.8 }}>
-                    Live location will appear once the rider starts delivery
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
+        {/* Non-fatal fetch error */}
+        {fetchError && (
+          <Alert severity="warning" icon={<GpsOffRoundedIcon />} sx={{ borderRadius: 2 }}>
+            {fetchError}
+          </Alert>
         )}
 
-        {/* ETA / distance card — only when live location available */}
-        {distKm !== null && !isDelivered && (
-          <Card elevation={0} sx={{ border: "1px solid #FFE0B2", borderRadius: 2.5, background: "#FFF8F0" }}>
+        {/* GPS off for OUT_FOR_DELIVERY */}
+        {!isAssigned && !isDelivered && !hasLoc && mapReady && !fetchError && (
+          <Alert severity="info" icon={<GpsOffRoundedIcon />} sx={{ borderRadius: 2 }}>
+            Live tracking unavailable — rider's GPS may be off. Your order is still on its way!
+          </Alert>
+        )}
+
+        {/* ETA + Distance  */}
+        {(distance || eta) && !isDelivered && (
+          <Card elevation={0} sx={{ border: "1px solid #FFE0B2", borderRadius: 2.5, background: "#FFFBF5" }}>
             <CardContent sx={{ py: 1.75, "&:last-child": { pb: 1.75 } }}>
-              <Stack direction="row" spacing={0} justifyContent="space-around" alignItems="center">
+              <Stack direction="row" justifyContent="space-around" alignItems="center">
                 <Box textAlign="center">
-                  <Typography variant="h5" fontWeight={800} sx={{ color: "#E65100", lineHeight: 1.1 }}>
-                    {fmtDist(distKm)}
-                  </Typography>
+                  <Stack direction="row" alignItems="center" spacing={0.5} justifyContent="center">
+                    <RouteRoundedIcon sx={{ color: "#E65100", fontSize: 20 }} />
+                    <Typography variant="h6" fontWeight={900} sx={{ color: "#E65100", lineHeight: 1 }}>
+                      {distance || "—"}
+                    </Typography>
+                  </Stack>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
                     Distance away
                   </Typography>
                 </Box>
 
-                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                <Divider orientation="vertical" flexItem />
 
                 <Box textAlign="center">
                   <Stack direction="row" alignItems="center" spacing={0.5} justifyContent="center">
                     <AccessTimeRoundedIcon sx={{ color: "#E65100", fontSize: 20 }} />
-                    <Typography variant="h5" fontWeight={800} sx={{ color: "#E65100", lineHeight: 1.1 }}>
-                      {eta} min
+                    <Typography variant="h6" fontWeight={900} sx={{ color: "#E65100", lineHeight: 1 }}>
+                      {eta || "—"}
                     </Typography>
                   </Stack>
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-                    Estimated arrival
+                    ETA
                   </Typography>
                 </Box>
               </Stack>
@@ -332,50 +450,40 @@ export default function RiderTrackingPage() {
           </Card>
         )}
 
-        {/* Rider info card */}
-        {data?.rider && (
+        {/* Rider card */}
+        {rider && (
           <Card elevation={0} sx={{ border: "1px solid #E0E0E0", borderRadius: 2.5 }}>
             <CardContent sx={{ py: 1.75, "&:last-child": { pb: 1.75 } }}>
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Box
-                  sx={{
-                    width: 48, height: 48, borderRadius: "50%",
-                    background: "linear-gradient(135deg, #1565C0 0%, #1976D2 100%)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
+                <Box sx={{
+                  width: 50, height: 50, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(135deg, #1565C0, #1976D2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
                   <TwoWheelerRoundedIcon sx={{ color: "#fff", fontSize: 24 }} />
                 </Box>
 
                 <Box flex={1} minWidth={0}>
                   <Typography variant="subtitle1" fontWeight={800} noWrap>
-                    {data.rider.name || "Your Rider"}
+                    {rider.name || "Your Rider"}
                   </Typography>
-                  {(data.rider.vehicle_type || data.rider.vehicle_number) && (
+                  {(rider.vehicle_type || rider.vehicle_number) && (
                     <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
-                      {[data.rider.vehicle_type, data.rider.vehicle_number]
-                        .filter(Boolean)
-                        .join(" · ")}
+                      {[rider.vehicle_type, rider.vehicle_number].filter(Boolean).join(" · ")}
                     </Typography>
                   )}
                 </Box>
 
-                {data.rider.mobile && (
+                {rider.mobile && (
                   <Button
                     component="a"
-                    href={`tel:${data.rider.mobile}`}
+                    href={`tel:${rider.mobile}`}
                     variant="outlined"
                     size="small"
                     startIcon={<PhoneRoundedIcon fontSize="small" />}
                     sx={{
-                      fontWeight: 700,
-                      textTransform: "none",
-                      borderColor: "#1565C0",
-                      color: "#1565C0",
-                      borderRadius: 2,
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
+                      fontWeight: 700, textTransform: "none", flexShrink: 0,
+                      borderColor: "#1565C0", color: "#1565C0", borderRadius: 2,
                       "&:hover": { backgroundColor: "#E3F2FD" },
                     }}
                   >
@@ -387,18 +495,18 @@ export default function RiderTrackingPage() {
           </Card>
         )}
 
-        {/* Caterer name */}
-        {data?.caterer_name && (
+        {/* Caterer */}
+        {trackData?.caterer_name && (
           <Card elevation={0} sx={{ border: "1px solid #E0E0E0", borderRadius: 2.5 }}>
             <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}>
               <Stack direction="row" alignItems="center" spacing={1.25}>
-                <StorefrontRoundedIcon sx={{ color: "#FF6B00", fontSize: 20 }} />
+                <StorefrontRoundedIcon sx={{ color: "#F4B400", fontSize: 22 }} />
                 <Box>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1 }}>
                     Caterer
                   </Typography>
                   <Typography variant="body2" fontWeight={700}>
-                    {data.caterer_name}
+                    {trackData.caterer_name}
                   </Typography>
                 </Box>
               </Stack>
@@ -407,18 +515,14 @@ export default function RiderTrackingPage() {
         )}
 
         {/* Location freshness */}
-        {data?.location?.updated_at && !isDelivered && (
+        {trackData?.location?.updated_at && !isDelivered && (
           <Typography variant="caption" sx={{ color: "text.disabled", textAlign: "center" }}>
-            Last updated {new Date(data.location.updated_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-            {" · "}refreshes every 10 seconds
+            Last updated{" "}
+            {new Date(trackData.location.updated_at).toLocaleTimeString("en-IN", {
+              hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
+            })}
+            {" · "}auto-refreshes every 10 s
           </Typography>
-        )}
-
-        {/* No location yet for OUT_FOR_DELIVERY (GPS not available on rider device) */}
-        {data && !riderPos && !isAssigned && !isDelivered && (
-          <Alert severity="info" icon={<GpsOffRoundedIcon />}>
-            Live tracking unavailable — the rider's GPS may be off. Your order is still on its way.
-          </Alert>
         )}
       </Box>
     </Box>

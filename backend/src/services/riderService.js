@@ -228,7 +228,7 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
   const { rows } = await pool.query(
     `SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code, co.rider_id,
             co.payment_method, co.payment_status,
-            mo.customer_id,
+            mo.customer_id, mo.customer_lat, mo.customer_lng,
             u.name  AS customer_name,
             u.email AS customer_email,
             u.phone AS customer_phone,
@@ -252,7 +252,8 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
      JOIN food_items f ON f.id = coi.food_item_id
      WHERE co.id = $1
        AND (co.caterer_id = $2 OR co.rider_id = $3)
-     GROUP BY co.id, mo.customer_id, u.name, u.email, u.phone,
+     GROUP BY co.id, mo.customer_id, mo.customer_lat, mo.customer_lng,
+              u.name, u.email, u.phone,
               uc.upi_id, uc.phonepe_id, uc.payment_name, uc.qr_code_image_url`,
     [caterer_order_id, caterer_id, rider_id]
   );
