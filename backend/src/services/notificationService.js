@@ -1,7 +1,6 @@
 'use strict';
 
-const pool          = require('../config/db');
-const fast2sms      = require('./fast2smsService');
+const pool = require('../config/db');
 
 const NOTIFICATION_TYPES = {
   NEW_FOOD_ITEM:        'NEW_FOOD_ITEM',
@@ -112,59 +111,6 @@ async function getUnreadCountForUser(user_id) {
   return parseInt(rows[0].count, 10);
 }
 
-// ─── SMS / OTP delivery ───────────────────────────────────────────────────────
-//
-// Abstraction layer for sending OTPs and SMS messages.
-// Callers always go through notificationService — never directly to fast2smsService.
-// Switching SMS providers later only requires changing this file.
-
-/**
- * Send a 6-digit OTP to a mobile number.
- *
- * Development (NODE_ENV !== 'production'):
- *   Prints OTP to console — no SMS sent. Useful for local testing.
- *
- * Production (NODE_ENV === 'production') or when FAST2SMS_API_KEY is set:
- *   Delivers real SMS via Fast2SMS.
- *
- * @param {string} mobileNumber  10-digit Indian mobile number
- * @param {string} otp           6-digit OTP string
- */
-async function sendOtp(mobileNumber, otp) {
-  const hasKey = !!(process.env.FAST2SMS_API_KEY || '').trim();
-
-  if (hasKey) {
-    // API key is configured — always use Fast2SMS, never fall back silently.
-    // If Fast2SMS fails, throw so the caller gets a real error (not a 200 with no SMS).
-    await fast2sms.sendOtp(mobileNumber, otp);
-    console.log(`[NotificationService] OTP SMS sent to ${mobileNumber}`);
-    return;
-  }
-
-  // No API key → development console fallback only.
-  // OTP is printed to the server terminal / Render logs.
-  console.log(`\n🔑 [OTP] ${mobileNumber} → ${otp}  (valid 5 min)\n`);
-  console.warn(
-    '[NotificationService] FAST2SMS_API_KEY is not set — OTP printed to console only. ' +
-    'Set FAST2SMS_API_KEY in Render → Environment to deliver real SMS.'
-  );
-}
-
-/**
- * Send a generic text message via Fast2SMS (non-OTP).
- * Requires a DLT-registered template in production.
- *
- * @param {string} mobileNumber  10-digit Indian mobile number
- * @param {string} message       Full message text
- */
-async function sendSms(mobileNumber, message) {
-  if (!process.env.FAST2SMS_API_KEY) {
-    console.warn(`[NotificationService] No FAST2SMS_API_KEY — skipping SMS to ${mobileNumber}.`);
-    return;
-  }
-  await fast2sms.sendMessage(mobileNumber, message);
-}
-
 module.exports = {
   NOTIFICATION_TYPES,
   notifyAllCustomers,
@@ -174,6 +120,4 @@ module.exports = {
   getUnreadCountForUser,
   markAsRead,
   markAllAsRead,
-  sendOtp,
-  sendSms,
 };

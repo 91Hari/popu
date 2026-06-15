@@ -11,7 +11,10 @@ import { brand } from "../theme";
 import ErrorBoundary from "../components/ErrorBoundary";
 
 // Auth
-const LoginPage    = React.lazy(() => import("../pages/auth/LoginPage"));
+const LoginPage           = React.lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage        = React.lazy(() => import("../pages/auth/RegisterPage"));
+const ForgotPasswordPage  = React.lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage   = React.lazy(() => import("../pages/auth/ResetPasswordPage"));
 
 // Customer
 const CustomerDashboard  = React.lazy(() => import("../pages/customer/CustomerDashboard"));
@@ -135,8 +138,10 @@ export default function AppRoutes() {
       <ScrollToTop />
       <Suspense fallback={<Loader />}>
         <Routes>
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<Navigate to="/login" replace />} />
+          <Route path="/login"            element={<LoginPage />} />
+          <Route path="/register"         element={<RegisterPage />} />
+          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"   element={<ResetPasswordPage />} />
 
           {/* Customer */}
           <Route path="/customer"               element={<ErrorBoundary><C allowed={CUST} element={<CustomerDashboard />} /></ErrorBoundary>} />
