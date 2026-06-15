@@ -7,7 +7,8 @@ const crypto = require('crypto');
 
 const OTP_EXPIRY_MINUTES   = 5;
 const MAX_ATTEMPTS         = 5;
-const MAX_RESENDS_PER_HOUR = 5;
+// Configurable via OTP_RATE_LIMIT env var — set to a higher number during testing
+const MAX_RESENDS_PER_HOUR = parseInt(process.env.OTP_RATE_LIMIT || '10', 10);
 
 // Cryptographically secure 6-digit OTP (000000–999999)
 function generateOtp() {
