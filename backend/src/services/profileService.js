@@ -1,12 +1,16 @@
 'use strict';
 
 const pool = require('../config/db');
+const jwt  = require('jsonwebtoken');
+
+const JWT_SECRET  = process.env.JWT_SECRET;
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
 
 // ─── Profile settings ────────────────────────────────────────────────────────
 
 async function getProfile(userId) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, phone, date_of_birth, gender, role, created_at
+    `SELECT id, name, email, phone, mobile_number, date_of_birth, gender, role, created_at
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -23,10 +27,97 @@ async function updateProfile(userId, { name, phone, date_of_birth, gender }) {
          gender        = NULLIF($4,''),
          updated_at    = NOW()
      WHERE id = $5
-     RETURNING id, name, email, phone, date_of_birth, gender`,
+     RETURNING id, name, email, phone, mobile_number, date_of_birth, gender`,
     [name || null, phone || null, date_of_birth || null, gender || null, userId]
   );
   return rows[0];
+}
+
+// ─── Mobile number update ─────────────────────────────────────────────────────
+//
+// Dedicated endpoint so we can:
+//   1. Enforce uniqueness before touching the row
+//   2. Write an audit record atomically
+//   3. Return a fresh JWT so the client's session reflects the new mobile
+
+async function updateMobile(userId, newMobile) {
+  if (!newMobile || !/^\d{10}$/.test(String(newMobile).trim())) {
+    throw Object.assign(
+      new Error('A valid 10-digit mobile number is required'),
+      { status: 400 }
+    );
+  }
+
+  const mobile = String(newMobile).trim();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Fetch current row — needed for audit log and JWT refresh
+    const { rows: current } = await client.query(
+      'SELECT id, name, email, mobile_number, role FROM users WHERE id = $1 FOR UPDATE',
+      [userId]
+    );
+    if (!current[0]) throw Object.assign(new Error('User not found'), { status: 404 });
+
+    const user = current[0];
+
+    // No-op if same number is being "saved" again
+    if (user.mobile_number === mobile) {
+      await client.query('ROLLBACK');
+      return { success: true, message: 'Mobile number is already set to this value.' };
+    }
+
+    // Uniqueness check — exclude the current user
+    const { rows: dup } = await client.query(
+      'SELECT id FROM users WHERE mobile_number = $1 AND id != $2',
+      [mobile, userId]
+    );
+    if (dup.length) {
+      throw Object.assign(
+        new Error('This mobile number is already registered.'),
+        { status: 409 }
+      );
+    }
+
+    // Update mobile_number
+    await client.query(
+      'UPDATE users SET mobile_number = $1, updated_at = NOW() WHERE id = $2',
+      [mobile, userId]
+    );
+
+    // Audit record
+    await client.query(
+      'INSERT INTO user_mobile_audit (user_id, old_mobile, new_mobile) VALUES ($1, $2, $3)',
+      [userId, user.mobile_number || null, mobile]
+    );
+
+    await client.query('COMMIT');
+
+    console.log(
+      `[Audit] Mobile update — user ${userId}: ` +
+      `${user.mobile_number || 'none'} → ${mobile}`
+    );
+
+    // Issue a fresh JWT so the client's token reflects the new mobile immediately
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email, mobile: mobile },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES }
+    );
+
+    return {
+      success: true,
+      message: 'Mobile number updated successfully.',
+      token,
+      user: { ...user, mobile_number: mobile },
+    };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ─── Addresses ───────────────────────────────────────────────────────────────
@@ -202,7 +293,7 @@ async function deletePaymentMethod(userId, methodId) {
 }
 
 module.exports = {
-  getProfile, updateProfile,
+  getProfile, updateProfile, updateMobile,
   getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress,
   getPaymentMethods, savePaymentMethod, updatePaymentMethod, deletePaymentMethod,
   lookupVpa,

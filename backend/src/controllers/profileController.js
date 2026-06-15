@@ -16,6 +16,7 @@ function handle(fn) {
 // Profile settings
 const getProfile    = handle((req) => svc.getProfile(req.user.id));
 const updateProfile = handle((req) => svc.updateProfile(req.user.id, req.body));
+const updateMobile  = handle((req) => svc.updateMobile(req.user.id, req.body.mobileNumber));
 
 // Addresses
 const getAddresses       = handle((req) => svc.getAddresses(req.user.id));
@@ -38,7 +39,7 @@ const updatePaymentMethod  = handle((req) => svc.updatePaymentMethod(req.user.id
 const deletePaymentMethod  = handle(async (req) => { await svc.deletePaymentMethod(req.user.id, req.params.id); return { success: true }; });
 
 module.exports = {
-  getProfile, updateProfile,
+  getProfile, updateProfile, updateMobile,
   getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress,
   getPaymentMethods, savePaymentMethod, updatePaymentMethod, deletePaymentMethod,
   lookupVpa,

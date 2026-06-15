@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   Container, Box, Typography, Button, IconButton, Card,
   TextField, CircularProgress, Alert, Snackbar, MenuItem, Stack,
+  Divider, InputAdornment,
 } from "@mui/material";
-import SettingsRoundedIcon   from "@mui/icons-material/SettingsRounded";
-import ArrowBackRoundedIcon  from "@mui/icons-material/ArrowBackRounded";
-import SaveRoundedIcon        from "@mui/icons-material/SaveRounded";
+import SettingsRoundedIcon  from "@mui/icons-material/SettingsRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import SaveRoundedIcon      from "@mui/icons-material/SaveRounded";
+import PhoneRoundedIcon     from "@mui/icons-material/PhoneRounded";
 import AppLayout from "../../components/AppLayout";
 import api       from "../../services/api";
 import { brand } from "../../theme";
@@ -15,14 +17,28 @@ const GENDER_OPTIONS = ["male", "female", "non-binary", "prefer not to say"];
 
 export default function ProfileSettingsPage() {
   const navigate = useNavigate();
+
+  // ── general profile ─────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [saving,  setSaving]  = useState(false);
-  const [snack,   setSnack]   = useState({ open: false, message: "", severity: "success" });
   const [errors,  setErrors]  = useState({});
   const [form, setForm] = useState({
     name: "", phone: "", email: "", date_of_birth: "", gender: "",
   });
 
+  // ── mobile number (auth field) ───────────────────────────────────────────────
+  const [currentMobile, setCurrentMobile] = useState("");   // displayed read-only label
+  const [newMobile,     setNewMobile]     = useState("");   // editable field
+  const [mobileError,   setMobileError]   = useState("");
+  const [savingMobile,  setSavingMobile]  = useState(false);
+  const [mobileEditing, setMobileEditing] = useState(false);
+
+  // ── snackbar ─────────────────────────────────────────────────────────────────
+  const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
+  const showSnack = (message, severity = "success") =>
+    setSnack({ open: true, message, severity });
+
+  // ── load profile ─────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -34,6 +50,8 @@ export default function ProfileSettingsPage() {
           date_of_birth: data.date_of_birth ? data.date_of_birth.slice(0, 10) : "",
           gender:        data.gender        || "",
         });
+        setCurrentMobile(data.mobile_number || "");
+        setNewMobile(data.mobile_number     || "");
       } catch {
         showSnack("Failed to load profile.", "error");
       } finally {
@@ -42,9 +60,7 @@ export default function ProfileSettingsPage() {
     })();
   }, []);
 
-  const showSnack = (message, severity = "success") =>
-    setSnack({ open: true, message, severity });
-
+  // ── general profile save ─────────────────────────────────────────────────────
   const set = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
     setErrors((e2) => ({ ...e2, [field]: "" }));
@@ -52,14 +68,12 @@ export default function ProfileSettingsPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim())  e.name  = "Full name is required";
-    if (!form.phone.trim()) e.phone = "Mobile number is required";
-    else if (!/^\d{10}$/.test(form.phone.trim())) e.phone = "Enter a valid 10-digit mobile number";
-    if (!form.email.trim()) e.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(form.email.trim())) e.email = "Enter a valid email address";
+    if (!form.name.trim()) e.name = "Full name is required";
+    if (form.email.trim() && !/\S+@\S+\.\S+/.test(form.email.trim()))
+      e.email = "Enter a valid email address";
     if (form.date_of_birth) {
       const dob = new Date(form.date_of_birth);
-      if (isNaN(dob.getTime())) e.date_of_birth = "Enter a valid date";
+      if (isNaN(dob.getTime()))  e.date_of_birth = "Enter a valid date";
       else if (dob > new Date()) e.date_of_birth = "Date of birth cannot be in the future";
     }
     setErrors(e);
@@ -70,20 +84,24 @@ export default function ProfileSettingsPage() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const payload = {
-        name:          form.name.trim(),
-        phone:         form.phone.trim(),
-        email:         form.email.trim(),
-        date_of_birth: form.date_of_birth || null,
-        gender:        form.gender        || null,
-      };
       const updated = await api.request("/profile", {
-        method: "PUT", body: JSON.stringify(payload),
+        method: "PUT",
+        body: JSON.stringify({
+          name:          form.name.trim(),
+          phone:         form.phone.trim(),
+          email:         form.email.trim(),
+          date_of_birth: form.date_of_birth || null,
+          gender:        form.gender        || null,
+        }),
       });
-      // Sync localStorage so nav avatar/name reflects change
       try {
         const stored = JSON.parse(localStorage.getItem("user") || "{}");
-        localStorage.setItem("user", JSON.stringify({ ...stored, name: updated.name, email: updated.email, phone: updated.phone }));
+        localStorage.setItem("user", JSON.stringify({
+          ...stored,
+          name:  updated.name,
+          email: updated.email,
+          phone: updated.phone,
+        }));
       } catch {}
       showSnack("Profile updated successfully.");
     } catch (err) {
@@ -91,6 +109,58 @@ export default function ProfileSettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // ── mobile number save ───────────────────────────────────────────────────────
+  const handleMobileSave = async () => {
+    const trimmed = newMobile.replace(/\D/g, "");
+    if (!trimmed) { setMobileError("Mobile number is required"); return; }
+    if (!/^\d{10}$/.test(trimmed)) { setMobileError("Enter a valid 10-digit mobile number"); return; }
+
+    setMobileError("");
+    setSavingMobile(true);
+    try {
+      const result = await api.request("/profile/update-mobile", {
+        method: "PUT",
+        body: JSON.stringify({ mobileNumber: trimmed }),
+      });
+
+      // Refresh JWT and localStorage so new mobile works for login immediately
+      if (result.token) {
+        localStorage.setItem("token", result.token);
+      }
+      try {
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem("user", JSON.stringify({
+          ...stored,
+          mobile_number: trimmed,
+        }));
+      } catch {}
+
+      setCurrentMobile(trimmed);
+      setNewMobile(trimmed);
+      setMobileEditing(false);
+      showSnack(result.message || "Mobile number updated successfully.");
+    } catch (err) {
+      setMobileError(err?.message || "Failed to update mobile number.");
+    } finally {
+      setSavingMobile(false);
+    }
+  };
+
+  const handleMobileCancel = () => {
+    setNewMobile(currentMobile);
+    setMobileError("");
+    setMobileEditing(false);
+  };
+
+  const sectionLabel = {
+    fontWeight: 700,
+    mb: 1.5,
+    color: "text.secondary",
+    textTransform: "uppercase",
+    fontSize: "0.7rem",
+    letterSpacing: 1,
   };
 
   return (
@@ -110,64 +180,160 @@ export default function ProfileSettingsPage() {
             <CircularProgress sx={{ color: brand.orange }} />
           </Box>
         ) : (
-          <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 3 }}>
-            <Stack spacing={2.5}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: "text.secondary", textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: 1 }}>
-                  Personal Info
-                </Typography>
-                <Stack spacing={2}>
-                  <TextField fullWidth size="small" label="Full Name *"
-                    value={form.name} onChange={set("name")}
-                    error={!!errors.name} helperText={errors.name} />
-                  <TextField fullWidth size="small" label="Mobile Number *"
-                    value={form.phone} onChange={set("phone")}
-                    inputProps={{ maxLength: 10 }}
-                    error={!!errors.phone} helperText={errors.phone} />
-                  <TextField fullWidth size="small" label="Email Address *"
-                    type="email" value={form.email} onChange={set("email")}
-                    error={!!errors.email} helperText={errors.email} />
-                </Stack>
-              </Box>
+          <Stack spacing={2.5}>
+            {/* ── Mobile Number ──────────────────────────────────────────────── */}
+            <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 3 }}>
+              <Typography variant="subtitle2" sx={sectionLabel}>
+                Mobile Number
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+                Used to sign in. Changing this will update your login credentials immediately.
+              </Typography>
 
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: "text.secondary", textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: 1 }}>
-                  Optional Details
-                </Typography>
-                <Stack spacing={2}>
-                  <TextField fullWidth size="small" label="Date of Birth"
-                    type="date" value={form.date_of_birth} onChange={set("date_of_birth")}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                    error={!!errors.date_of_birth} helperText={errors.date_of_birth} />
-                  <TextField fullWidth size="small" select label="Gender"
-                    value={form.gender} onChange={set("gender")}>
-                    <MenuItem value=""><em>Prefer not to say</em></MenuItem>
-                    {GENDER_OPTIONS.map((g) => (
-                      <MenuItem key={g} value={g} sx={{ textTransform: "capitalize" }}>{g}</MenuItem>
-                    ))}
-                  </TextField>
-                </Stack>
-              </Box>
+              <TextField
+                fullWidth
+                size="small"
+                label="Mobile Number"
+                value={newMobile}
+                onChange={(e) => {
+                  setNewMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
+                  setMobileError("");
+                  setMobileEditing(true);
+                }}
+                inputMode="numeric"
+                disabled={savingMobile}
+                error={!!mobileError}
+                helperText={mobileError}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PhoneRoundedIcon sx={{ fontSize: 16, color: brand.orange }} />
+                        <Typography sx={{ ml: 0.5, color: "text.secondary", fontWeight: 600, fontSize: "0.85rem" }}>
+                          +91
+                        </Typography>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
 
-              <Button
-                fullWidth variant="contained" size="large"
-                startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveRoundedIcon />}
-                onClick={handleSave}
-                disabled={saving}
-                sx={{ fontWeight: 700, mt: 1 }}
-              >
-                {saving ? "Saving…" : "Save Changes"}
-              </Button>
-            </Stack>
-          </Card>
+              {mobileEditing && (
+                <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleMobileSave}
+                    disabled={savingMobile}
+                    startIcon={savingMobile ? <CircularProgress size={14} color="inherit" /> : null}
+                    sx={{
+                      fontWeight: 700,
+                      textTransform: "none",
+                      background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
+                      "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
+                      "&.Mui-disabled": { background: "#E0E0E0" },
+                    }}
+                  >
+                    {savingMobile ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleMobileCancel}
+                    disabled={savingMobile}
+                    sx={{
+                      fontWeight: 600,
+                      textTransform: "none",
+                      borderColor: brand.border,
+                      color: "text.secondary",
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Stack>
+              )}
+            </Card>
+
+            {/* ── Personal Info ──────────────────────────────────────────────── */}
+            <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 3 }}>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography variant="subtitle2" sx={sectionLabel}>
+                    Personal Info
+                  </Typography>
+                  <Stack spacing={2}>
+                    <TextField
+                      fullWidth size="small" label="Full Name *"
+                      value={form.name} onChange={set("name")}
+                      error={!!errors.name} helperText={errors.name}
+                    />
+                    <TextField
+                      fullWidth size="small" label="Email Address"
+                      type="email" value={form.email} onChange={set("email")}
+                      error={!!errors.email} helperText={errors.email}
+                    />
+                    <TextField
+                      fullWidth size="small" label="Phone (alternate)"
+                      value={form.phone} onChange={set("phone")}
+                      inputProps={{ maxLength: 15 }}
+                      helperText="Optional alternate contact number"
+                    />
+                  </Stack>
+                </Box>
+
+                <Divider />
+
+                <Box>
+                  <Typography variant="subtitle2" sx={sectionLabel}>
+                    Optional Details
+                  </Typography>
+                  <Stack spacing={2}>
+                    <TextField
+                      fullWidth size="small" label="Date of Birth"
+                      type="date" value={form.date_of_birth} onChange={set("date_of_birth")}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      error={!!errors.date_of_birth} helperText={errors.date_of_birth}
+                    />
+                    <TextField
+                      fullWidth size="small" select label="Gender"
+                      value={form.gender} onChange={set("gender")}
+                    >
+                      <MenuItem value=""><em>Prefer not to say</em></MenuItem>
+                      {GENDER_OPTIONS.map((g) => (
+                        <MenuItem key={g} value={g} sx={{ textTransform: "capitalize" }}>
+                          {g}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+                </Box>
+
+                <Button
+                  fullWidth variant="contained" size="large"
+                  startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveRoundedIcon />}
+                  onClick={handleSave}
+                  disabled={saving}
+                  sx={{ fontWeight: 700, mt: 1 }}
+                >
+                  {saving ? "Saving…" : "Save Changes"}
+                </Button>
+              </Stack>
+            </Card>
+          </Stack>
         )}
       </Container>
 
-      <Snackbar open={snack.open} autoHideDuration={3500}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
         onClose={() => setSnack((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert severity={snack.severity} variant="filled"
-          onClose={() => setSnack((s) => ({ ...s, open: false }))}>
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snack.severity}
+          variant="filled"
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
+        >
           {snack.message}
         </Alert>
       </Snackbar>

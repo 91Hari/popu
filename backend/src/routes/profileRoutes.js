@@ -9,8 +9,9 @@ router.use(authenticate);
 router.get('/validate-upi', ctrl.lookupVpa);
 
 // Profile settings
-router.get('/',    ctrl.getProfile);
-router.put('/',    ctrl.updateProfile);
+router.get('/',               ctrl.getProfile);
+router.put('/',               ctrl.updateProfile);
+router.put('/update-mobile',  ctrl.updateMobile);
 
 // Addresses
 router.get('/addresses',           ctrl.getAddresses);
