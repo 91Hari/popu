@@ -72,16 +72,13 @@ async function sendOtp(req, res, next) {
     const result = await authService.sendOtp(String(mobileNumber));
     res.json(result); // { success: true, message: 'OTP sent successfully' }
   } catch (err) {
-    // Rate-limit and validation errors → pass their status code
+    // Rate-limit / validation errors have a .status set by the service layer
     if (err.status) {
       return res.status(err.status).json({ success: false, message: err.message });
     }
-    // SMS delivery failures (Fast2SMS / network) → 502 with user-friendly message
-    if (err.message?.startsWith('Fast2SMS') || err.message?.includes('SMS delivery')) {
-      console.error('[AuthController] SMS delivery error:', err.message);
-      return res.status(502).json({ success: false, message: 'Failed to send OTP. Please try again.' });
-    }
-    next(err);
+    // SMS / Fast2SMS errors — return the exact error so it's visible in the network tab
+    console.error('[AuthController] sendOtp error:', err.message);
+    return res.status(502).json({ success: false, message: err.message });
   }
 }
 

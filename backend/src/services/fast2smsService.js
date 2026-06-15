@@ -1,102 +1,66 @@
 'use strict';
 
-// Fast2SMS REST API client
-// Docs: https://docs.fast2sms.com
-// OTP route: no DLT registration required — uses TRAI-approved OTP template.
-// Quick SMS (sendMessage): requires DLT-registered sender ID + template.
+// Fast2SMS REST API client — uses Node 18+ native fetch (no npm packages needed).
+// OTP route: no DLT registration required.
 //
 // Required env var:
-//   FAST2SMS_API_KEY=<your key from fast2sms.com dashboard → Dev API>
+//   FAST2SMS_API_KEY=<key from fast2sms.com → Dashboard → Dev API>
 
-const https = require('https');
-
-const FAST2SMS_HOST    = 'www.fast2sms.com';
-const FAST2SMS_PATH    = '/dev/bulkV2';
-const REQUEST_TIMEOUT  = 10_000; // 10 s
-
-// Safe logger — never prints OTP values in production
-function log(level, message, meta = {}) {
-  const safe = { ...meta };
-  if (process.env.NODE_ENV === 'production') {
-    delete safe.otp;
-    delete safe.variables_values;
-  }
-  const extra = Object.keys(safe).length ? ` ${JSON.stringify(safe)}` : '';
-  console[level](`[Fast2SMS] ${message}${extra}`);
-}
-
-// Internal: make a GET request to the Fast2SMS bulk API
-function _request(params) {
-  const query   = new URLSearchParams(params).toString();
-  const options = {
-    hostname: FAST2SMS_HOST,
-    path:     `${FAST2SMS_PATH}?${query}`,
-    method:   'GET',
-    headers:  { 'cache-control': 'no-cache' },
-    timeout:  REQUEST_TIMEOUT,
-  };
-
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let raw = '';
-      res.on('data', (chunk) => { raw += chunk; });
-      res.on('end', () => {
-        try {
-          resolve({ statusCode: res.statusCode, body: JSON.parse(raw) });
-        } catch {
-          reject(new Error(
-            `Fast2SMS: unexpected non-JSON response [${res.statusCode}]: ${raw.slice(0, 200)}`
-          ));
-        }
-      });
-    });
-
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('Fast2SMS: request timed out after 10 s'));
-    });
-
-    req.on('error', (err) => {
-      reject(new Error(`Fast2SMS: network error — ${err.message}`));
-    });
-
-    req.end();
-  });
-}
+const REQUEST_TIMEOUT_MS = 10_000;
 
 function _requireApiKey() {
-  const key = process.env.FAST2SMS_API_KEY;
-  if (!key || !key.trim()) {
+  const key = (process.env.FAST2SMS_API_KEY || '').trim();
+  if (!key) {
     throw new Error(
-      'Fast2SMS: FAST2SMS_API_KEY is not set. ' +
-      'Add it to your environment variables (Render → Environment → FAST2SMS_API_KEY).'
+      'FAST2SMS_API_KEY is not set. ' +
+      'Add it in Render → your service → Environment → FAST2SMS_API_KEY.'
     );
   }
-  return key.trim();
+  return key;
 }
 
-function _extractError(body) {
-  if (Array.isArray(body.message)) return body.message.join(', ');
-  if (typeof body.message === 'string') return body.message;
-  return JSON.stringify(body);
+async function _call(params) {
+  const qs  = new URLSearchParams(params).toString();
+  const url = `https://www.fast2sms.com/dev/bulkV2?${qs}`;
+
+  const controller = new AbortController();
+  const timer      = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res, raw, body;
+  try {
+    res  = await fetch(url, {
+      method:  'GET',
+      headers: { 'cache-control': 'no-cache' },
+      signal:  controller.signal,
+    });
+    raw  = await res.text();
+    body = JSON.parse(raw);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Fast2SMS: request timed out after 10 s');
+    }
+    throw new Error(`Fast2SMS: network/parse error — ${err.message}`);
+  } finally {
+    clearTimeout(timer);
+  }
+
+  // Always log the raw response so it appears in Render logs for debugging
+  console.log(`[Fast2SMS] HTTP ${res.status} → ${raw}`);
+  return body;
 }
 
 /**
- * Send a 6-digit OTP to an Indian mobile number.
- * Uses Fast2SMS OTP route — no DLT registration required.
+ * Send a 6-digit OTP via the Fast2SMS OTP route (no DLT needed).
+ * Fast2SMS delivers: "Your OTP is XXXXXX. Please do not share it with anyone."
  *
- * Fast2SMS delivers: "Your OTP is <otp>. Please do not share it with anyone."
- *
- * @param {string} mobileNumber  10-digit number, no country code (+91 is added internally by Fast2SMS)
+ * @param {string} mobileNumber  10-digit Indian mobile number, no country code
  * @param {string} otp           6-digit OTP string
- * @throws {Error} on API failure, network error, or missing API key
  */
 async function sendOtp(mobileNumber, otp) {
   const apiKey = _requireApiKey();
+  console.log(`[Fast2SMS] Sending OTP to ${mobileNumber}`);
 
-  log('info', `Sending OTP to ${mobileNumber}`);
-
-  const { statusCode, body } = await _request({
+  const body = await _call({
     authorization:    apiKey,
     route:            'otp',
     variables_values: otp,
@@ -105,27 +69,27 @@ async function sendOtp(mobileNumber, otp) {
   });
 
   if (body.return !== true) {
-    const reason = _extractError(body);
-    log('error', `OTP delivery failed for ${mobileNumber}`, { statusCode, reason });
-    throw new Error(`Fast2SMS OTP delivery failed: ${reason}`);
+    const reason = Array.isArray(body.message)
+      ? body.message.join(', ')
+      : String(body.message ?? JSON.stringify(body));
+    throw new Error(`Fast2SMS OTP failed: ${reason}`);
   }
 
-  log('info', `OTP delivered to ${mobileNumber}`, { requestId: body.request_id });
+  console.log(`[Fast2SMS] OTP dispatched to ${mobileNumber} (request_id: ${body.request_id})`);
 }
 
 /**
  * Send a custom text message via Fast2SMS Quick SMS route.
- * NOTE: Requires a DLT-registered sender ID and template for production traffic.
+ * Requires DLT-registered sender + template for production traffic.
  *
- * @param {string} mobileNumber  10-digit number
- * @param {string} message       Full message text (must match DLT template)
+ * @param {string} mobileNumber  10-digit Indian mobile number
+ * @param {string} message       Full message text
  */
 async function sendMessage(mobileNumber, message) {
   const apiKey = _requireApiKey();
+  console.log(`[Fast2SMS] Sending message to ${mobileNumber}`);
 
-  log('info', `Sending message to ${mobileNumber}`);
-
-  const { statusCode, body } = await _request({
+  const body = await _call({
     authorization: apiKey,
     route:         'q',
     message,
@@ -134,12 +98,13 @@ async function sendMessage(mobileNumber, message) {
   });
 
   if (body.return !== true) {
-    const reason = _extractError(body);
-    log('error', `Message delivery failed for ${mobileNumber}`, { statusCode, reason });
-    throw new Error(`Fast2SMS message delivery failed: ${reason}`);
+    const reason = Array.isArray(body.message)
+      ? body.message.join(', ')
+      : String(body.message ?? JSON.stringify(body));
+    throw new Error(`Fast2SMS message failed: ${reason}`);
   }
 
-  log('info', `Message delivered to ${mobileNumber}`, { requestId: body.request_id });
+  console.log(`[Fast2SMS] Message dispatched to ${mobileNumber} (request_id: ${body.request_id})`);
 }
 
 module.exports = { sendOtp, sendMessage };

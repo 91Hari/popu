@@ -131,38 +131,22 @@ async function getUnreadCountForUser(user_id) {
  * @param {string} otp           6-digit OTP string
  */
 async function sendOtp(mobileNumber, otp) {
-  const isDev   = process.env.NODE_ENV !== 'production';
-  const hasKey  = !!process.env.FAST2SMS_API_KEY;
+  const hasKey = !!(process.env.FAST2SMS_API_KEY || '').trim();
 
-  // Always attempt real SMS if FAST2SMS_API_KEY is present, regardless of NODE_ENV.
-  // This lets developers test real SMS in a local environment by setting the key.
   if (hasKey) {
-    try {
-      await fast2sms.sendOtp(mobileNumber, otp);
-      console.log(`[NotificationService] SMS OTP sent to ${mobileNumber}`);
-      return;
-    } catch (err) {
-      console.error(`[NotificationService] Fast2SMS failed for ${mobileNumber}: ${err.message}`);
-      // In development, fall through to console fallback so login still works.
-      if (!isDev) throw err;
-      console.warn('[NotificationService] Falling back to console OTP (development mode).');
-    }
-  }
-
-  if (isDev) {
-    // Development fallback — print OTP to server console.
-    // Check your terminal or Render logs to find the OTP.
-    console.log(`\n🔑 [OTP] ${mobileNumber} → ${otp}  (valid 5 min)\n`);
-    console.warn(
-      '[NotificationService] No FAST2SMS_API_KEY set. ' +
-      'OTP printed to console only. Set FAST2SMS_API_KEY to send real SMS.'
-    );
+    // API key is configured — always use Fast2SMS, never fall back silently.
+    // If Fast2SMS fails, throw so the caller gets a real error (not a 200 with no SMS).
+    await fast2sms.sendOtp(mobileNumber, otp);
+    console.log(`[NotificationService] OTP SMS sent to ${mobileNumber}`);
     return;
   }
 
-  // Production without API key — hard fail.
-  throw new Error(
-    'SMS delivery not configured. Set FAST2SMS_API_KEY in your environment variables.'
+  // No API key → development console fallback only.
+  // OTP is printed to the server terminal / Render logs.
+  console.log(`\n🔑 [OTP] ${mobileNumber} → ${otp}  (valid 5 min)\n`);
+  console.warn(
+    '[NotificationService] FAST2SMS_API_KEY is not set — OTP printed to console only. ' +
+    'Set FAST2SMS_API_KEY in Render → Environment to deliver real SMS.'
   );
 }
 
