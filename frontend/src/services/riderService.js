@@ -25,6 +25,9 @@ const riderService = {
   startDelivery: (id) =>
     api.request(`/riders/orders/${id}/start`, { method: "PATCH" }),
 
+  confirmCodPayment: (id) =>
+    api.request(`/riders/orders/${id}/confirm-cod`, { method: "POST" }),
+
   confirmDelivery: (id, code) =>
     api.request(`/riders/orders/${id}/confirm`, { method: "POST", body: JSON.stringify({ code }) }),
 };

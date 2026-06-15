@@ -2,12 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box, Container, Typography, Card, CardContent, Stack, Button,
-  CircularProgress, Alert, TextField, Divider, Chip,
+  CircularProgress, Alert, TextField, Divider, Chip, Dialog,
+  DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import CheckCircleRoundedIcon  from "@mui/icons-material/CheckCircleRounded";
 import TwoWheelerRoundedIcon   from "@mui/icons-material/TwoWheelerRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import PersonRoundedIcon       from "@mui/icons-material/PersonRounded";
+import LocalAtmRoundedIcon     from "@mui/icons-material/LocalAtmRounded";
+import QrCodeRoundedIcon       from "@mui/icons-material/QrCodeRounded";
 import AppLayout from "../../components/AppLayout";
 import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
@@ -17,13 +20,15 @@ export default function RiderDeliveryPage() {
   const { id }     = useParams();
   const navigate   = useNavigate();
 
-  const [order, setOrder]         = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState("");
-  const [code, setCode]           = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [order, setOrder]               = useState(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState("");
+  const [code, setCode]                 = useState("");
+  const [submitting, setSubmitting]     = useState(false);
   const [startingDelivery, setStartingDelivery] = useState(false);
-  const [done, setDone]           = useState(false);
+  const [done, setDone]                 = useState(false);
+  const [codDialog, setCodDialog]       = useState(false);
+  const [confirmingCod, setConfirmingCod] = useState(false);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -51,7 +56,20 @@ export default function RiderDeliveryPage() {
     }
   };
 
-  const handleConfirm = async () => {
+  const handleConfirmCod = async () => {
+    setConfirmingCod(true);
+    try {
+      await riderService.confirmCodPayment(id);
+      setCodDialog(false);
+      await loadOrder();
+    } catch (err) {
+      setError(err?.message || "Failed to confirm payment.");
+    } finally {
+      setConfirmingCod(false);
+    }
+  };
+
+  const handleConfirmDelivery = async () => {
     if (code.length !== 6) return;
     setSubmitting(true);
     setError("");
@@ -64,6 +82,10 @@ export default function RiderDeliveryPage() {
       setSubmitting(false);
     }
   };
+
+  const isCod            = order?.payment_method === "COD";
+  const codPaymentPaid   = order?.payment_status === "PAID";
+  const codPaymentPending = isCod && !codPaymentPaid;
 
   if (done) {
     return (
@@ -103,6 +125,7 @@ export default function RiderDeliveryPage() {
           <Alert severity="error">{error}</Alert>
         ) : order ? (
           <>
+            {/* ── Order summary card ── */}
             <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2, mb: 2 }}>
               <CardContent sx={{ p: 2.5 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.5 }}>
@@ -110,12 +133,22 @@ export default function RiderDeliveryPage() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
                       Order #{order.id?.slice(0, 8).toUpperCase()}
                     </Typography>
-                    <Chip
-                      label={order.status?.replace(/_/g, " ")}
-                      size="small"
-                      color={order.status === "OUT_FOR_DELIVERY" ? "warning" : "info"}
-                      sx={{ fontWeight: 700, mt: 0.5 }}
-                    />
+                    <Stack direction="row" spacing={0.75} sx={{ mt: 0.5 }} flexWrap="wrap" useFlexGap>
+                      <Chip
+                        label={order.status?.replace(/_/g, " ")}
+                        size="small"
+                        color={order.status === "OUT_FOR_DELIVERY" ? "warning" : "info"}
+                        sx={{ fontWeight: 700 }}
+                      />
+                      {isCod && (
+                        <Chip
+                          icon={<LocalAtmRoundedIcon sx={{ fontSize: 13 }} />}
+                          label="Cash on Delivery"
+                          size="small"
+                          sx={{ fontWeight: 700, backgroundColor: "#E8F5E9", color: "#2E7D32" }}
+                        />
+                      )}
+                    </Stack>
                   </Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 900, color: brand.orange }}>
                     ₹{Number(order.subtotal || 0).toFixed(2)}
@@ -151,6 +184,99 @@ export default function RiderDeliveryPage() {
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+            {/* ── COD Payment Collection section ── */}
+            {isCod && order.status === "OUT_FOR_DELIVERY" && (
+              <Card elevation={0} sx={{
+                border: `2px solid ${codPaymentPaid ? "#2E7D32" : "#E65100"}`,
+                borderRadius: 2, mb: 2,
+                backgroundColor: codPaymentPaid ? "#F1F8F1" : "#FFF8F5",
+              }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                    <LocalAtmRoundedIcon sx={{ color: codPaymentPaid ? "#2E7D32" : "#E65100" }} />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: codPaymentPaid ? "#2E7D32" : "#E65100" }}>
+                      {codPaymentPaid ? "Payment Collected ✓" : "Payment Collection Required"}
+                    </Typography>
+                  </Box>
+
+                  {!codPaymentPaid && (
+                    <>
+                      <Box sx={{ p: 1.5, mb: 1.5, borderRadius: 1.5, backgroundColor: "#FFF3E0", border: "1px solid #FFB74D" }}>
+                        <Typography variant="caption" sx={{ color: "#E65100", display: "block", fontWeight: 700, mb: 0.25 }}>
+                          Amount to Collect
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 900, color: "#E65100" }}>
+                          ₹{Number(order.subtotal || 0).toFixed(2)}
+                        </Typography>
+                      </Box>
+
+                      {/* Caterer QR code */}
+                      {order.caterer_qr_url && (
+                        <Box sx={{ mb: 1.5, textAlign: "center" }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 0.75 }}>
+                            Show this QR code to the customer
+                          </Typography>
+                          <Box
+                            component="img"
+                            src={order.caterer_qr_url}
+                            alt="Caterer QR"
+                            sx={{
+                              width: 180, height: 180, objectFit: "contain",
+                              border: `2px solid ${brand.border}`, borderRadius: 2,
+                              p: 1, backgroundColor: "#fff",
+                            }}
+                          />
+                        </Box>
+                      )}
+
+                      {/* Caterer UPI ID */}
+                      {(order.caterer_phonepe_id || order.caterer_upi_id) && (
+                        <Box sx={{ mb: 1.5, p: 1.25, borderRadius: 1.5, backgroundColor: "#F5F3FF", border: "1px solid #D8D0F7" }}>
+                          <Typography variant="caption" sx={{ color: "#5A4EE8", fontWeight: 700, display: "block", mb: 0.25 }}>
+                            Caterer UPI ID
+                          </Typography>
+                          <Typography sx={{ fontFamily: "monospace", fontWeight: 800, fontSize: "0.95rem", color: "#3D2EA0" }}>
+                            {order.caterer_phonepe_id || order.caterer_upi_id}
+                          </Typography>
+                          {order.caterer_payment_name && (
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {order.caterer_payment_name}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+
+                      {!order.caterer_qr_url && !order.caterer_phonepe_id && !order.caterer_upi_id && (
+                        <Alert severity="warning" sx={{ mb: 1.5, fontSize: "0.8rem" }}>
+                          The caterer hasn't set up a QR code or UPI. Collect cash directly.
+                        </Alert>
+                      )}
+
+                      <Button
+                        fullWidth variant="contained"
+                        onClick={() => setCodDialog(true)}
+                        startIcon={<CheckCircleRoundedIcon />}
+                        sx={{
+                          fontWeight: 700, py: 1.25, textTransform: "none",
+                          backgroundColor: "#2E7D32",
+                          "&:hover": { backgroundColor: "#1B5E20" },
+                        }}
+                      >
+                        Payment Received
+                      </Button>
+                    </>
+                  )}
+
+                  {codPaymentPaid && (
+                    <Typography variant="body2" sx={{ color: "#2E7D32", fontWeight: 600 }}>
+                      Cash of ₹{Number(order.subtotal || 0).toFixed(2)} has been confirmed. You can now complete the delivery.
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ── Pick up step ── */}
             {order.status === "ASSIGNED_TO_RIDER" && (
               <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2, p: 2.5 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
@@ -171,6 +297,7 @@ export default function RiderDeliveryPage() {
               </Card>
             )}
 
+            {/* ── Confirm delivery (code entry) ── */}
             {order.status === "OUT_FOR_DELIVERY" && (
               <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2, p: 2.5 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
@@ -188,10 +315,15 @@ export default function RiderDeliveryPage() {
                   inputProps={{ maxLength: 6, style: { letterSpacing: "0.4em", fontSize: "1.4rem", fontWeight: 700, textAlign: "center" } }}
                   sx={{ mb: 2 }}
                 />
+                {codPaymentPending && (
+                  <Alert severity="warning" sx={{ mb: 2, fontSize: "0.8rem" }}>
+                    Confirm cash payment collection above before marking as delivered.
+                  </Alert>
+                )}
                 <Button
                   fullWidth variant="contained"
-                  onClick={handleConfirm}
-                  disabled={submitting || code.length !== 6}
+                  onClick={handleConfirmDelivery}
+                  disabled={submitting || code.length !== 6 || codPaymentPending}
                   startIcon={submitting ? <CircularProgress size={14} color="inherit" /> : <CheckCircleRoundedIcon />}
                   sx={{ background: `linear-gradient(135deg, ${brand.orange}, ${brand.orangeMid})`, textTransform: "none", fontWeight: 700, py: 1.25 }}
                 >
@@ -202,6 +334,29 @@ export default function RiderDeliveryPage() {
           </>
         ) : null}
       </Container>
+
+      {/* COD Payment Confirmation Dialog */}
+      <Dialog open={codDialog} onClose={() => !confirmingCod && setCodDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Confirm Payment Received?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            Have you verified that the customer has paid{" "}
+            <strong>₹{Number(order?.subtotal || 0).toFixed(2)}</strong> to the caterer's QR / UPI?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setCodDialog(false)} disabled={confirmingCod}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmCod}
+            disabled={confirmingCod}
+            startIcon={confirmingCod ? <CircularProgress size={14} color="inherit" /> : <CheckCircleRoundedIcon />}
+            sx={{ backgroundColor: "#2E7D32", "&:hover": { backgroundColor: "#1B5E20" }, fontWeight: 700 }}
+          >
+            Yes, Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppLayout>
   );
 }

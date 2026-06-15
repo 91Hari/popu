@@ -12,6 +12,8 @@ import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
 import VerifiedRoundedIcon       from "@mui/icons-material/VerifiedRounded";
 import BlockRoundedIcon          from "@mui/icons-material/BlockRounded";
 import ImageSearchRoundedIcon    from "@mui/icons-material/ImageSearchRounded";
+import LocalAtmRoundedIcon       from "@mui/icons-material/LocalAtmRounded";
+import CreditCardRoundedIcon     from "@mui/icons-material/CreditCardRounded";
 import masterOrderService  from "../../services/masterOrderService";
 import riderService        from "../../services/riderService";
 import paymentProofService from "../../services/paymentProofService";
@@ -40,6 +42,7 @@ const ACTION_LABELS = {
 
 const PAY_CFG = {
   PENDING:            { label: "Payment Pending",     color: "#F57F17" },
+  PAID:               { label: "Cash Collected",      color: "#2E7D32" },
   PROOF_SUBMITTED:    { label: "Proof Received",      color: "#1565C0" },
   APPROVED:           { label: "Payment Approved",    color: "#2E7D32" },
   REJECTED:           { label: "Payment Rejected",    color: "#C62828" },
@@ -213,6 +216,7 @@ export default function CatererSubOrdersPage() {
               const payCfg     = PAY_CFG[order.payment_status] || PAY_CFG.PENDING;
               const items      = Array.isArray(order.items) ? order.items : [];
               const isUpdating = !!updating[order.id];
+              const isCod      = order.payment_method === "COD";
 
               return (
                 <Card key={order.id} elevation={0} sx={{
@@ -236,6 +240,18 @@ export default function CatererSubOrdersPage() {
                           size="small"
                           sx={{ fontWeight: 600, fontSize: "0.6rem", color: payCfg.color, border: `1px solid ${payCfg.color}`, backgroundColor: "transparent" }}
                           variant="outlined"
+                        />
+                        <Chip
+                          icon={isCod
+                            ? <LocalAtmRoundedIcon sx={{ fontSize: "12px !important" }} />
+                            : <CreditCardRoundedIcon sx={{ fontSize: "12px !important" }} />}
+                          label={isCod ? "Cash on Delivery" : "Online"}
+                          size="small"
+                          sx={{
+                            fontWeight: 700, fontSize: "0.6rem",
+                            backgroundColor: isCod ? "#E8F5E9" : "#EDE9FE",
+                            color: isCod ? "#2E7D32" : "#5A4EE8",
+                          }}
                         />
                       </Stack>
                     </Stack>
@@ -267,8 +283,25 @@ export default function CatererSubOrdersPage() {
 
                     <Divider sx={{ mb: 1.25 }} />
 
-                    {/* UPI payment reference — shown for PLACED orders before acceptance */}
-                    {statusKey === "PLACED" && (order.caterer_upi_id || order.caterer_phonepe_id) && (
+                    {/* COD info banner */}
+                    {isCod && (
+                      <Box sx={{ mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#E8F5E9", border: "1px solid #A5D6A7", display: "flex", alignItems: "center", gap: 1 }}>
+                        <LocalAtmRoundedIcon sx={{ fontSize: 16, color: "#2E7D32", flexShrink: 0 }} />
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#2E7D32", display: "block" }}>
+                            Cash on Delivery
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "#2E7D32" }}>
+                            {order.payment_status === "PAID"
+                              ? "Cash collected by rider."
+                              : "Rider will collect cash and show your QR code to customer."}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {/* UPI payment reference — shown for PLACED online orders before acceptance */}
+                    {!isCod && statusKey === "PLACED" && (order.caterer_upi_id || order.caterer_phonepe_id) && (
                       <Box sx={{ mb: 1.25, p: 1, borderRadius: 1.5, backgroundColor: "#f3f0ff", border: "1px solid #d8d0f7" }}>
                         <Typography variant="caption" sx={{ fontWeight: 700, color: "#5A4EE8", display: "block", mb: 0.25 }}>
                           Customer should pay to your UPI

@@ -18,9 +18,10 @@ router.post('/location',              requireRole('RIDER'), ctrl.pushLocation);
 router.get('/location/:rider_id',                          ctrl.getLocation);
 
 // Rider: delivery workflow
-router.get('/deliveries',             requireRole('RIDER'), ctrl.getAssignedDeliveries);
-router.get('/orders/:id',             requireRole('RIDER'), ctrl.lookupOrder);
-router.patch('/orders/:id/start',     requireRole('RIDER'), ctrl.startDelivery);
-router.post('/orders/:id/confirm',    requireRole('RIDER'), ctrl.confirmDelivery);
+router.get('/deliveries',                    requireRole('RIDER'), ctrl.getAssignedDeliveries);
+router.get('/orders/:id',                    requireRole('RIDER'), ctrl.lookupOrder);
+router.patch('/orders/:id/start',            requireRole('RIDER'), ctrl.startDelivery);
+router.post('/orders/:id/confirm-cod',       requireRole('RIDER'), ctrl.confirmCodPayment);
+router.post('/orders/:id/confirm',           requireRole('RIDER'), ctrl.confirmDelivery);
 
 module.exports = router;

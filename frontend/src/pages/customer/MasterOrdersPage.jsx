@@ -19,6 +19,8 @@ import DirectionsBikeRoundedIcon  from "@mui/icons-material/DirectionsBikeRounde
 import AccessTimeRoundedIcon      from "@mui/icons-material/AccessTimeRounded";
 import LockRoundedIcon           from "@mui/icons-material/LockRounded";
 import RateReviewRoundedIcon     from "@mui/icons-material/RateReviewRounded";
+import LocalAtmRoundedIcon       from "@mui/icons-material/LocalAtmRounded";
+import CreditCardRoundedIcon     from "@mui/icons-material/CreditCardRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
@@ -38,6 +40,7 @@ const STATUS_CFG = {
 
 const PAY_CFG = {
   PENDING:            { label: "Payment Pending",        color: "#F57F17", bg: "#FFF8E1" },
+  PAID:               { label: "Cash Collected",         color: "#2E7D32", bg: "#E8F5E9" },
   PROOF_SUBMITTED:    { label: "Proof Submitted",        color: "#1565C0", bg: "#E3F2FD" },
   APPROVED:           { label: "Payment Approved",       color: "#2E7D32", bg: "#E8F5E9" },
   REJECTED:           { label: "Payment Rejected",       color: "#C62828", bg: "#FFEBEE" },
@@ -240,7 +243,8 @@ export default function MasterOrdersPage() {
                           const cfg     = STATUS_CFG[co.status] || { label: co.status, color: "default" };
                           const payCfg  = PAY_CFG[co.payment_status] || PAY_CFG.PENDING;
                           const canCancel   = ["PLACED", "ACCEPTED"].includes(co.status);
-                          const needsProof  = ["PENDING", "REJECTED", "REUPLOAD_REQUESTED"].includes(co.payment_status);
+                          const isCod       = co.payment_method === "COD";
+                          const needsProof  = !isCod && ["PENDING", "REJECTED", "REUPLOAD_REQUESTED"].includes(co.payment_status);
 
                           return (
                             <Box key={co.id} sx={{ p: 1.5, border: `1px solid ${brand.border}`, borderRadius: 2 }}>
@@ -258,6 +262,18 @@ export default function MasterOrdersPage() {
                                     label={payCfg.label}
                                     size="small"
                                     sx={{ fontWeight: 600, fontSize: "0.6rem", backgroundColor: payCfg.bg, color: payCfg.color }}
+                                  />
+                                  <Chip
+                                    icon={isCod
+                                      ? <LocalAtmRoundedIcon sx={{ fontSize: "12px !important" }} />
+                                      : <CreditCardRoundedIcon sx={{ fontSize: "12px !important" }} />}
+                                    label={isCod ? "Cash on Delivery" : "Online"}
+                                    size="small"
+                                    sx={{
+                                      fontWeight: 600, fontSize: "0.6rem",
+                                      backgroundColor: isCod ? "#E8F5E9" : "#EDE9FE",
+                                      color: isCod ? "#2E7D32" : "#5A4EE8",
+                                    }}
                                   />
                                 </Stack>
                               </Box>
@@ -289,6 +305,28 @@ export default function MasterOrdersPage() {
                                     ))}
                                   </Stack>
                                   <Divider sx={{ mt: 1 }} />
+                                </Box>
+                              )}
+
+                              {/* COD payment status block */}
+                              {isCod && (
+                                <Box sx={{
+                                  mb: 1.25, p: 1.25, borderRadius: 1.5,
+                                  backgroundColor: co.payment_status === "PAID" ? "#E8F5E9" : "#FFF8E1",
+                                  border: `1px solid ${co.payment_status === "PAID" ? "#A5D6A7" : "#FFE082"}`,
+                                  display: "flex", alignItems: "center", gap: 1,
+                                }}>
+                                  <LocalAtmRoundedIcon sx={{ fontSize: 16, color: co.payment_status === "PAID" ? "#2E7D32" : "#F57F17", flexShrink: 0 }} />
+                                  <Box>
+                                    <Typography variant="caption" sx={{ fontWeight: 700, display: "block", color: co.payment_status === "PAID" ? "#2E7D32" : "#F57F17" }}>
+                                      {co.payment_status === "PAID" ? "Payment Received" : "Cash on Delivery"}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                      {co.payment_status === "PAID"
+                                        ? "Your rider has confirmed cash collection."
+                                        : "Pay the rider in cash when your food arrives."}
+                                    </Typography>
+                                  </Box>
                                 </Box>
                               )}
 

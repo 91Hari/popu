@@ -4,7 +4,7 @@ const pool = require('../config/db');
 const { notifyAllCustomers, notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 
 async function getDashboardStats() {
-  const [customers, caterers, foods, orderStats, financials] = await Promise.all([
+  const [customers, caterers, foods, orderStats, financials, codStats] = await Promise.all([
     pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CUSTOMER' AND is_active = TRUE`),
     pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CATERER' AND is_active = TRUE`),
     pool.query(`SELECT COUNT(*) FROM food_items WHERE is_available = TRUE`),
@@ -25,10 +25,21 @@ async function getDashboardStats() {
       JOIN master_orders mo ON mo.id = co.master_order_id
       WHERE co.status = 'DELIVERED'
     `),
+    pool.query(`
+      SELECT
+        COUNT(*)                                                             AS cod_orders,
+        COALESCE(SUM(co.subtotal), 0)                                       AS cod_revenue,
+        COUNT(CASE WHEN co.payment_status = 'PENDING' THEN 1 END)           AS cod_pending,
+        COUNT(CASE WHEN co.payment_status = 'PAID'    THEN 1 END)           AS cod_collected
+      FROM caterer_orders co
+      WHERE co.payment_method = 'COD'
+        AND co.status NOT IN ('CANCELLED', 'AUTO_CANCELLED')
+    `),
   ]);
 
   const o = orderStats.rows[0];
   const f = financials.rows[0];
+  const c = codStats.rows[0];
   return {
     totalCustomers:     Number(customers.rows[0].count),
     totalCaterers:      Number(caterers.rows[0].count),
@@ -40,6 +51,10 @@ async function getDashboardStats() {
     totalCommission:    parseFloat(f.total_commission     || 0).toFixed(2),
     totalPlatformFees:  parseFloat(f.total_platform_fees  || 0).toFixed(2),
     totalCatererPayout: parseFloat(f.total_caterer_payout || 0).toFixed(2),
+    codOrders:          Number(c.cod_orders),
+    codRevenue:         parseFloat(c.cod_revenue || 0).toFixed(2),
+    codPending:         Number(c.cod_pending),
+    codCollected:       Number(c.cod_collected),
   };
 }
 

@@ -85,6 +85,7 @@ async function getLatestLocation(rider_id) {
 async function getAssignedDeliveries(rider_id) {
   const { rows } = await pool.query(
     `SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code,
+            co.payment_method, co.payment_status,
             mo.customer_id,
             u.name  AS customer_name,
             u.email AS customer_email,
@@ -118,10 +119,15 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
 
   const { rows } = await pool.query(
     `SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code, co.rider_id,
+            co.payment_method, co.payment_status,
             mo.customer_id,
             u.name  AS customer_name,
             u.email AS customer_email,
             u.phone AS customer_phone,
+            uc.upi_id         AS caterer_upi_id,
+            uc.phonepe_id     AS caterer_phonepe_id,
+            uc.payment_name   AS caterer_payment_name,
+            uc.qr_code_image_url AS caterer_qr_url,
             json_agg(
               json_build_object(
                 'food_name',   f.food_name,
@@ -132,12 +138,14 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
             ) AS items
      FROM caterer_orders co
      JOIN master_orders mo ON mo.id = co.master_order_id
-     JOIN users u ON u.id = mo.customer_id
+     JOIN users u  ON u.id  = mo.customer_id
+     JOIN users uc ON uc.id = co.caterer_id
      JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
      JOIN food_items f ON f.id = coi.food_item_id
      WHERE co.id = $1
        AND (co.caterer_id = $2 OR co.rider_id = $3)
-     GROUP BY co.id, mo.customer_id, u.name, u.email, u.phone`,
+     GROUP BY co.id, mo.customer_id, u.name, u.email, u.phone,
+              uc.upi_id, uc.phonepe_id, uc.payment_name, uc.qr_code_image_url`,
     [caterer_order_id, caterer_id, rider_id]
   );
   if (!rows[0]) { const e = new Error('Order not found'); e.status = 404; throw e; }
@@ -178,6 +186,45 @@ async function startDelivery(caterer_order_id, rider_id) {
   return updated[0];
 }
 
+async function confirmCodPayment(caterer_order_id, rider_id) {
+  const { rows } = await pool.query(
+    `SELECT co.*, mo.customer_id
+     FROM caterer_orders co
+     JOIN master_orders mo ON mo.id = co.master_order_id
+     WHERE co.id = $1 AND co.rider_id = $2 AND co.payment_method = 'COD' AND co.status = 'OUT_FOR_DELIVERY'`,
+    [caterer_order_id, rider_id]
+  );
+  if (!rows[0]) { const e = new Error('Order not found, not COD, or not out for delivery'); e.status = 404; throw e; }
+  const order = rows[0];
+
+  if (order.payment_status === 'PAID') {
+    const e = new Error('Payment already confirmed'); e.status = 400; throw e;
+  }
+
+  const { rows: updated } = await pool.query(
+    `UPDATE caterer_orders
+     SET payment_status = 'PAID', payment_collected_at = NOW(), payment_collected_by_rider = $1
+     WHERE id = $2 RETURNING *`,
+    [rider_id, caterer_order_id]
+  );
+
+  setImmediate(async () => {
+    try {
+      const shortId = caterer_order_id.slice(0, 8).toUpperCase();
+      await notifyUser(order.customer_id, {
+        notification_type: 'COD_PAYMENT_RECEIVED',
+        title:        'Payment Received',
+        message:      `Cash payment for order #${shortId} has been confirmed by your rider.`,
+        reference_id: order.master_order_id,
+      });
+    } catch (err) {
+      console.error('[RiderService] confirmCodPayment notification failed:', err.message);
+    }
+  });
+
+  return updated[0];
+}
+
 async function confirmDelivery(caterer_order_id, rider_id, code) {
   const { rows } = await pool.query(
     `SELECT co.*, mo.customer_id
@@ -191,6 +238,12 @@ async function confirmDelivery(caterer_order_id, rider_id, code) {
 
   if (!order.delivery_confirmation_code || order.delivery_confirmation_code !== String(code)) {
     const e = new Error('Invalid confirmation code'); e.status = 400; throw e;
+  }
+
+  // COD orders must have payment confirmed before delivery
+  if (order.payment_method === 'COD' && order.payment_status !== 'PAID') {
+    const e = new Error('Please confirm cash payment collection before marking as delivered');
+    e.status = 400; throw e;
   }
 
   const { rows: updated } = await pool.query(
@@ -315,6 +368,7 @@ module.exports = {
   getAssignedDeliveries,
   lookupOrderForRider,
   startDelivery,
+  confirmCodPayment,
   confirmDelivery,
   assignRiderToOrder,
   getAllRiders,

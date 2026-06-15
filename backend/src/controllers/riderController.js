@@ -63,6 +63,15 @@ async function startDelivery(req, res, next) {
   }
 }
 
+async function confirmCodPayment(req, res, next) {
+  try {
+    res.json(await riderService.confirmCodPayment(req.params.id, req.user.id));
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
 async function confirmDelivery(req, res, next) {
   try {
     res.json(await riderService.confirmDelivery(req.params.id, req.user.id, req.body.code));
@@ -87,5 +96,5 @@ module.exports = {
   createRider, listRiders, deleteRider,
   pushLocation, getLocation,
   getAssignedDeliveries, lookupOrder,
-  startDelivery, confirmDelivery, assignRider,
+  startDelivery, confirmCodPayment, confirmDelivery, assignRider,
 };
