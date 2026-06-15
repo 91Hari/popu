@@ -11,10 +11,11 @@ const serviceConfigService = {
     return api.request("/admin/services");
   },
 
-  async adminUpdateService(serviceCode, isEnabled) {
+  // patch: { isEnabled?, isComingSoon?, displayOrder? }
+  async adminUpdateService(serviceCode, patch) {
     return api.request(`/admin/services/${serviceCode}`, {
       method: "PUT",
-      body: JSON.stringify({ isEnabled }),
+      body: JSON.stringify(patch),
     });
   },
 };

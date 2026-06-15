@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Container, Box, Typography, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow,
@@ -20,6 +20,7 @@ const STATUS_COLORS = {
 };
 
 const STATUSES = ["", "PENDING", "SUCCESS", "FAILED", "CANCELLED", "REFUNDED", "AUTO_CANCELLED"];
+const POLL_MS  = 15_000;
 
 export default function AdminPaymentsPage() {
   const [rows,    setRows]    = useState([]);
@@ -28,20 +29,27 @@ export default function AdminPaymentsPage() {
   const [status,  setStatus]  = useState("");
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
+  const pollRef               = useRef(null);
 
   const limit = 20;
 
-  useEffect(() => {
-    setLoading(true);
+  const load = (pg, st, showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     setError("");
-    adminService.getPayments({ page, limit, status: status || undefined })
+    adminService.getPayments({ page: pg, limit, status: st || undefined })
       .then((res) => {
         setRows(res.payments || []);
         setTotal(res.total   || 0);
       })
       .catch(() => setError("Failed to load payments."))
-      .finally(() => setLoading(false));
-  }, [page, status]);
+      .finally(() => { if (showSpinner) setLoading(false); });
+  };
+
+  useEffect(() => {
+    load(page, status, true);
+    pollRef.current = setInterval(() => load(page, status), POLL_MS);
+    return () => clearInterval(pollRef.current);
+  }, [page, status]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStatusChange = (e) => {
     setStatus(e.target.value);

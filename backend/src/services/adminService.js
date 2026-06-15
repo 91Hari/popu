@@ -135,23 +135,32 @@ async function getOrders({ status, page = 1, limit = 20 } = {}) {
   const params = [];
   let idx = 1;
   const conds = [];
-  if (status) { conds.push(`o.status = $${idx++}`); params.push(status.toUpperCase()); }
+  if (status) { conds.push(`co.status = $${idx++}`); params.push(status.toUpperCase()); }
   const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
   const { rows: cnt } = await pool.query(
-    `SELECT COUNT(DISTINCT o.id) FROM orders o ${where}`,
+    `SELECT COUNT(DISTINCT co.id) FROM caterer_orders co ${where}`,
     params
   );
   const total  = Number(cnt[0].count);
   const offset = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
-    `SELECT o.id, o.status, o.total_amount, o.eta_minutes, o.accepted_at,
-            o.expected_arrival_at, o.created_at,
-            uc.name AS customer_name, uc.email AS customer_email
-     FROM orders o
-     JOIN users uc ON uc.id = o.customer_id
+    `SELECT co.id,
+            co.status,
+            co.subtotal        AS total_amount,
+            co.payment_method,
+            co.payment_status,
+            co.master_order_id,
+            co.created_at,
+            uc.name            AS customer_name,
+            uc.email           AS customer_email,
+            ucat.name          AS caterer_name
+     FROM caterer_orders co
+     JOIN master_orders mo  ON mo.id   = co.master_order_id
+     JOIN users uc          ON uc.id   = mo.customer_id
+     JOIN users ucat        ON ucat.id = co.caterer_id
      ${where}
-     ORDER BY o.created_at DESC
+     ORDER BY co.created_at DESC
      LIMIT $${idx++} OFFSET $${idx}`,
     params
   );
@@ -177,12 +186,12 @@ async function setFoodStatus(id, is_available) {
 }
 
 async function updateOrderStatus(id, status) {
-  const valid = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'DELIVERED', 'CANCELLED'];
+  const valid = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'ASSIGNED_TO_RIDER', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
   if (!valid.includes(status)) {
     const e = new Error('Invalid status'); e.status = 400; throw e;
   }
   const { rows } = await pool.query(
-    `UPDATE orders SET status = $1 WHERE id = $2 RETURNING *`,
+    `UPDATE caterer_orders SET status = $1 WHERE id = $2 RETURNING *`,
     [status, id]
   );
   if (!rows[0]) { const e = new Error('Order not found'); e.status = 404; throw e; }

@@ -26,6 +26,7 @@ import SettingsRoundedIcon          from "@mui/icons-material/SettingsRounded";
 import TuneRoundedIcon              from "@mui/icons-material/TuneRounded";
 import PaymentsRoundedIcon          from "@mui/icons-material/PaymentsRounded";
 import CurrencyExchangeRoundedIcon  from "@mui/icons-material/CurrencyExchangeRounded";
+import ToggleOnRoundedIcon          from "@mui/icons-material/ToggleOnRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
@@ -78,6 +79,7 @@ const ADMIN_NAV = [
   { label: "Platform Settings", path: "/admin/platform-settings",  icon: <TuneRoundedIcon /> },
   { label: "Payments",          path: "/admin/payments",            icon: <PaymentsRoundedIcon /> },
   { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },
+  { label: "Service Management",path: "/admin/services",            icon: <ToggleOnRoundedIcon /> },
   { label: "Settings",          path: "/admin/settings",            icon: <SettingsRoundedIcon /> },
 ];
 
