@@ -1,16 +1,22 @@
 import api from "./api";
 
 export default {
-  async login({ email, password }) {
-    return api.request("/auth/login", {
+  async sendOtp(mobileNumber) {
+    return api.request("/auth/send-otp", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ mobileNumber }),
     });
   },
-  async register({ name, email, password, role, business_name, address, latitude, longitude }) {
-    return api.request("/auth/register", {
+
+  async verifyOtp(mobileNumber, otp) {
+    return api.request("/auth/verify-otp", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, role, business_name, address, latitude, longitude }),
+      body: JSON.stringify({ mobileNumber, otp }),
     });
+  },
+
+  logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   },
 };

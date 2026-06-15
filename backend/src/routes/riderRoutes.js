@@ -24,4 +24,7 @@ router.patch('/orders/:id/start',            requireRole('RIDER'), ctrl.startDel
 router.post('/orders/:id/confirm-cod',       requireRole('RIDER'), ctrl.confirmCodPayment);
 router.post('/orders/:id/confirm',           requireRole('RIDER'), ctrl.confirmDelivery);
 
+// Live tracking — accessible by CUSTOMER, CATERER, ADMIN (all authenticated)
+router.get('/orders/:id/rider-location',     ctrl.getOrderRiderLocation);
+
 module.exports = router;

@@ -30,6 +30,9 @@ const riderService = {
 
   confirmDelivery: (id, code) =>
     api.request(`/riders/orders/${id}/confirm`, { method: "POST", body: JSON.stringify({ code }) }),
+
+  getOrderRiderLocation: (orderId) =>
+    api.request(`/riders/orders/${orderId}/rider-location`),
 };
 
 export default riderService;

@@ -40,6 +40,15 @@ async function getLocation(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function getOrderRiderLocation(req, res, next) {
+  try {
+    res.json(await riderService.getLocationForOrder(req.params.id, req.user));
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
 async function getAssignedDeliveries(req, res, next) {
   try { res.json(await riderService.getAssignedDeliveries(req.user.id)); }
   catch (err) { next(err); }
@@ -94,7 +103,7 @@ async function assignRider(req, res, next) {
 
 module.exports = {
   createRider, listRiders, deleteRider,
-  pushLocation, getLocation,
+  pushLocation, getLocation, getOrderRiderLocation,
   getAssignedDeliveries, lookupOrder,
   startDelivery, confirmCodPayment, confirmDelivery, assignRider,
 };

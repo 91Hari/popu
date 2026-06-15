@@ -12,7 +12,6 @@ import ErrorBoundary from "../components/ErrorBoundary";
 
 // Auth
 const LoginPage    = React.lazy(() => import("../pages/auth/LoginPage"));
-const RegisterPage = React.lazy(() => import("../pages/auth/RegisterPage"));
 
 // Customer
 const CustomerDashboard  = React.lazy(() => import("../pages/customer/CustomerDashboard"));
@@ -24,6 +23,7 @@ const NotificationsPage  = React.lazy(() => import("../pages/customer/Notificati
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
 const SplitCheckoutPage  = React.lazy(() => import("../pages/customer/SplitCheckoutPage"));
 const MasterOrdersPage   = React.lazy(() => import("../pages/customer/MasterOrdersPage"));
+const RiderTrackingPage  = React.lazy(() => import("../pages/customer/RiderTrackingPage"));
 
 // Services
 const ServicesPage      = React.lazy(() => import("../pages/services/ServicesPage"));
@@ -136,7 +136,7 @@ export default function AppRoutes() {
       <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
 
           {/* Customer */}
           <Route path="/customer"               element={<ErrorBoundary><C allowed={CUST} element={<CustomerDashboard />} /></ErrorBoundary>} />
@@ -153,6 +153,7 @@ export default function AppRoutes() {
           <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
           <Route path="/checkout/split"           element={<ErrorBoundary><C allowed={CUST} element={<SplitCheckoutPage />} /></ErrorBoundary>} />
           <Route path="/customer/master-orders"   element={<ErrorBoundary><C allowed={CUST} element={<MasterOrdersPage />} /></ErrorBoundary>} />
+          <Route path="/customer/track/:orderId"  element={<ErrorBoundary><C allowed={CUST} element={<RiderTrackingPage />} /></ErrorBoundary>} />
           <Route path="/payment/callback"          element={<ErrorBoundary><C allowed={CUST} element={<PaymentCallbackPage />} /></ErrorBoundary>} />
 
           {/* Services */}

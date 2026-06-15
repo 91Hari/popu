@@ -21,6 +21,7 @@ import LockRoundedIcon           from "@mui/icons-material/LockRounded";
 import RateReviewRoundedIcon     from "@mui/icons-material/RateReviewRounded";
 import LocalAtmRoundedIcon       from "@mui/icons-material/LocalAtmRounded";
 import CreditCardRoundedIcon     from "@mui/icons-material/CreditCardRounded";
+import GpsFixedRoundedIcon       from "@mui/icons-material/GpsFixedRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
@@ -386,12 +387,27 @@ export default function MasterOrdersPage() {
                               {co.status !== "CANCELLED" && (
                                 <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
                                   {co.status === "OUT_FOR_DELIVERY" && co.rider_id && (
-                                    <Chip
-                                      icon={<TwoWheelerRoundedIcon fontSize="small" />}
-                                      label="On the way to you!"
-                                      size="small"
-                                      sx={{ backgroundColor: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: "0.7rem" }}
-                                    />
+                                    <>
+                                      <Chip
+                                        icon={<TwoWheelerRoundedIcon fontSize="small" />}
+                                        label="On the way to you!"
+                                        size="small"
+                                        sx={{ backgroundColor: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: "0.7rem" }}
+                                      />
+                                      <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<GpsFixedRoundedIcon fontSize="small" />}
+                                        onClick={() => navigate(`/customer/track/${co.id}`)}
+                                        sx={{
+                                          fontWeight: 700, fontSize: "0.75rem",
+                                          backgroundColor: "#1565C0", color: "#fff",
+                                          "&:hover": { backgroundColor: "#0D47A1" },
+                                        }}
+                                      >
+                                        Track Rider
+                                      </Button>
+                                    </>
                                   )}
                                   {needsProof && (
                                     <Button

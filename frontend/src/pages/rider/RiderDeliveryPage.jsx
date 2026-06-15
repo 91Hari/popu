@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box, Container, Typography, Card, CardContent, Stack, Button,
@@ -10,7 +10,7 @@ import TwoWheelerRoundedIcon   from "@mui/icons-material/TwoWheelerRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import PersonRoundedIcon       from "@mui/icons-material/PersonRounded";
 import LocalAtmRoundedIcon     from "@mui/icons-material/LocalAtmRounded";
-import QrCodeRoundedIcon       from "@mui/icons-material/QrCodeRounded";
+import GpsFixedRoundedIcon     from "@mui/icons-material/GpsFixedRounded";
 import AppLayout from "../../components/AppLayout";
 import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
@@ -29,6 +29,9 @@ export default function RiderDeliveryPage() {
   const [done, setDone]                 = useState(false);
   const [codDialog, setCodDialog]       = useState(false);
   const [confirmingCod, setConfirmingCod] = useState(false);
+  const [gpsActive, setGpsActive]       = useState(false);
+  const watchIdRef                      = useRef(null);
+  const lastPushRef                     = useRef(0);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -43,6 +46,45 @@ export default function RiderDeliveryPage() {
   }, [id]);
 
   useEffect(() => { loadOrder(); }, [loadOrder]);
+
+  // GPS tracking — active only while status = OUT_FOR_DELIVERY
+  useEffect(() => {
+    if (order?.status !== "OUT_FOR_DELIVERY") {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation?.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+        setGpsActive(false);
+      }
+      return;
+    }
+
+    if (!navigator.geolocation) return;
+
+    const handlePosition = (pos) => {
+      const now = Date.now();
+      if (now - lastPushRef.current < 10_000) return; // 10-second throttle
+      lastPushRef.current = now;
+      riderService.pushLocation({
+        latitude:  pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      }).catch(() => {});
+    };
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      handlePosition,
+      (err) => console.warn("[GPS]", err.message),
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 5_000 }
+    );
+    setGpsActive(true);
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+        setGpsActive(false);
+      }
+    };
+  }, [order?.status]);
 
   const handleStart = async () => {
     setStartingDelivery(true);
@@ -146,6 +188,21 @@ export default function RiderDeliveryPage() {
                           label="Cash on Delivery"
                           size="small"
                           sx={{ fontWeight: 700, backgroundColor: "#E8F5E9", color: "#2E7D32" }}
+                        />
+                      )}
+                      {gpsActive && (
+                        <Chip
+                          icon={<GpsFixedRoundedIcon sx={{ fontSize: 13 }} />}
+                          label="GPS Active"
+                          size="small"
+                          sx={{
+                            fontWeight: 700, backgroundColor: "#E3F2FD", color: "#1565C0",
+                            animation: "gps-pulse 2s ease-in-out infinite",
+                            "@keyframes gps-pulse": {
+                              "0%, 100%": { opacity: 1 },
+                              "50%":      { opacity: 0.55 },
+                            },
+                          }}
                         />
                       )}
                     </Stack>

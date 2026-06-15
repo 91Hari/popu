@@ -70,6 +70,93 @@ async function pushLocation(rider_id, { latitude, longitude }) {
     `INSERT INTO rider_locations (rider_id, latitude, longitude) VALUES ($1, $2, $3)`,
     [rider_id, latitude, longitude]
   );
+
+  // Trigger "Rider Nearby" notification when within 500 m of customer (async, non-blocking)
+  setImmediate(async () => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT co.id, mo.customer_id, mo.customer_lat, mo.customer_lng
+         FROM caterer_orders co
+         JOIN master_orders mo ON mo.id = co.master_order_id
+         WHERE co.rider_id = $1
+           AND co.status = 'OUT_FOR_DELIVERY'
+           AND co.rider_nearby_notified = FALSE
+         LIMIT 1`,
+        [rider_id]
+      );
+      if (!rows[0] || !rows[0].customer_lat || !rows[0].customer_lng) return;
+
+      const order = rows[0];
+      const { haversineKm } = require('./locationService');
+      const distKm = haversineKm(
+        parseFloat(latitude),          parseFloat(longitude),
+        parseFloat(order.customer_lat), parseFloat(order.customer_lng)
+      );
+
+      if (distKm <= 0.5) {
+        await pool.query(
+          `UPDATE caterer_orders SET rider_nearby_notified = TRUE WHERE id = $1`,
+          [order.id]
+        );
+        await notifyUser(order.customer_id, {
+          notification_type: 'RIDER_NEARBY',
+          title:        'Rider Nearby!',
+          message:      'Your rider is less than 500 m away. Your food is almost there!',
+          reference_id: order.id,
+        });
+      }
+    } catch (err) {
+      console.error('[RiderService] Rider nearby notification failed:', err.message);
+    }
+  });
+}
+
+async function getLocationForOrder(caterer_order_id, user) {
+  const { rows } = await pool.query(
+    `SELECT co.rider_id, co.status,
+            mo.customer_id, mo.customer_lat, mo.customer_lng,
+            u.name        AS rider_name,
+            rp.vehicle_type, rp.vehicle_number
+     FROM caterer_orders co
+     JOIN master_orders mo ON mo.id = co.master_order_id
+     LEFT JOIN users u           ON u.id  = co.rider_id
+     LEFT JOIN rider_profiles rp ON rp.user_id = co.rider_id
+     WHERE co.id = $1`,
+    [caterer_order_id]
+  );
+  const order = rows[0];
+  if (!order) { const e = new Error('Order not found'); e.status = 404; throw e; }
+
+  if (user.role === 'CUSTOMER' && order.customer_id !== user.id) {
+    const e = new Error('Forbidden'); e.status = 403; throw e;
+  }
+
+  if (!order.rider_id) {
+    return { location: null, rider: null, customer_lat: null, customer_lng: null };
+  }
+
+  const { rows: locRows } = await pool.query(
+    `SELECT latitude, longitude, created_at
+     FROM rider_locations
+     WHERE rider_id = $1
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [order.rider_id]
+  );
+
+  return {
+    location: locRows[0]
+      ? { latitude: parseFloat(locRows[0].latitude), longitude: parseFloat(locRows[0].longitude), updated_at: locRows[0].created_at }
+      : null,
+    rider: {
+      name:           order.rider_name,
+      vehicle_type:   order.vehicle_type,
+      vehicle_number: order.vehicle_number,
+    },
+    order_status:  order.status,
+    customer_lat:  order.customer_lat ? parseFloat(order.customer_lat) : null,
+    customer_lng:  order.customer_lng ? parseFloat(order.customer_lng) : null,
+  };
 }
 
 async function getLatestLocation(rider_id) {
@@ -365,6 +452,7 @@ module.exports = {
   deleteRider,
   pushLocation,
   getLatestLocation,
+  getLocationForOrder,
   getAssignedDeliveries,
   lookupOrderForRider,
   startDelivery,

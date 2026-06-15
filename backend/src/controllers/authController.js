@@ -1,4 +1,8 @@
+'use strict';
+
 const authService = require('../services/authService');
+
+// ─── Legacy email/password handlers (kept for backwards compatibility) ────────
 
 async function register(req, res, next) {
   try {
@@ -46,11 +50,9 @@ async function register(req, res, next) {
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ error: 'email and password are required' });
     }
-
     const result = await authService.login({ email, password });
     res.json(result);
   } catch (err) {
@@ -59,4 +61,40 @@ async function login(req, res, next) {
   }
 }
 
-module.exports = { register, login };
+// ─── Mobile OTP handlers ──────────────────────────────────────────────────────
+
+async function sendOtp(req, res, next) {
+  try {
+    const { mobileNumber } = req.body;
+    if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber))) {
+      return res.status(400).json({ error: 'mobileNumber must be exactly 10 digits' });
+    }
+    const result = await authService.sendOtp(String(mobileNumber));
+    res.json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function verifyOtp(req, res, next) {
+  try {
+    const { mobileNumber, otp } = req.body;
+    if (!mobileNumber || !otp) {
+      return res.status(400).json({ error: 'mobileNumber and otp are required' });
+    }
+    if (!/^\d{10}$/.test(String(mobileNumber))) {
+      return res.status(400).json({ error: 'mobileNumber must be exactly 10 digits' });
+    }
+    if (!/^\d{6}$/.test(String(otp))) {
+      return res.status(400).json({ error: 'otp must be exactly 6 digits' });
+    }
+    const result = await authService.verifyOtp(String(mobileNumber), String(otp));
+    res.json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+module.exports = { register, login, sendOtp, verifyOtp };
