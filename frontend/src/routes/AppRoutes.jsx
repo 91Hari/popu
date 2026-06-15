@@ -10,6 +10,9 @@ import { CircularProgress, Box } from "@mui/material";
 import { brand } from "../theme";
 import ErrorBoundary from "../components/ErrorBoundary";
 
+// Landing
+const LandingPage = React.lazy(() => import("../pages/LandingPage"));
+
 // Auth
 const LoginPage           = React.lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage        = React.lazy(() => import("../pages/auth/RegisterPage"));
@@ -223,7 +226,7 @@ export default function AppRoutes() {
           {/* Tiffin Box — admin */}
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
 
-          <Route path="/" element={<Navigate to="/customer" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />
         </Routes>
       </Suspense>
