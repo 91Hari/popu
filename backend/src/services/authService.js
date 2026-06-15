@@ -1,9 +1,10 @@
 'use strict';
 
-const bcrypt = require('bcrypt');
-const jwt    = require('jsonwebtoken');
-const pool   = require('../config/db');
-const otpSvc = require('./otpService');
+const bcrypt            = require('bcrypt');
+const jwt               = require('jsonwebtoken');
+const pool              = require('../config/db');
+const otpSvc            = require('./otpService');
+const notificationService = require('./notificationService');
 
 const SALT_ROUNDS = 12;
 const JWT_SECRET  = process.env.JWT_SECRET;
@@ -137,8 +138,10 @@ async function sendOtp(mobileNumber) {
     [mobileNumber, otpHash, expiresAt]
   );
 
-  await otpSvc.sendOtp(mobileNumber, otp);
-  return { success: true };
+  // Deliver OTP via SMS (Fast2SMS in prod, console.log in dev)
+  await notificationService.sendOtp(mobileNumber, otp);
+  console.log(`[AuthService] OTP generated for ${mobileNumber}`);
+  return { success: true, message: 'OTP sent successfully' };
 }
 
 async function verifyOtp(mobileNumber, otp) {
@@ -188,6 +191,7 @@ async function verifyOtp(mobileNumber, otp) {
     `UPDATE otp_verifications SET is_verified = TRUE WHERE id = $1`,
     [record.id]
   );
+  console.log(`[AuthService] OTP verified for ${mobileNumber}`);
 
   // Find or auto-create user
   const { rows: userRows } = await pool.query(

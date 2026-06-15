@@ -67,12 +67,20 @@ async function sendOtp(req, res, next) {
   try {
     const { mobileNumber } = req.body;
     if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber))) {
-      return res.status(400).json({ error: 'mobileNumber must be exactly 10 digits' });
+      return res.status(400).json({ success: false, message: 'mobileNumber must be exactly 10 digits' });
     }
     const result = await authService.sendOtp(String(mobileNumber));
-    res.json(result);
+    res.json(result); // { success: true, message: 'OTP sent successfully' }
   } catch (err) {
-    if (err.status) return res.status(err.status).json({ error: err.message });
+    // Rate-limit and validation errors → pass their status code
+    if (err.status) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    // SMS delivery failures (Fast2SMS / network) → 502 with user-friendly message
+    if (err.message?.startsWith('Fast2SMS') || err.message?.includes('SMS delivery')) {
+      console.error('[AuthController] SMS delivery error:', err.message);
+      return res.status(502).json({ success: false, message: 'Failed to send OTP. Please try again.' });
+    }
     next(err);
   }
 }

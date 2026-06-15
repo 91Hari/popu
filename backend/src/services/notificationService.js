@@ -1,4 +1,7 @@
-const pool = require('../config/db');
+'use strict';
+
+const pool          = require('../config/db');
+const fast2sms      = require('./fast2smsService');
 
 const NOTIFICATION_TYPES = {
   NEW_FOOD_ITEM:        'NEW_FOOD_ITEM',
@@ -109,6 +112,75 @@ async function getUnreadCountForUser(user_id) {
   return parseInt(rows[0].count, 10);
 }
 
+// ─── SMS / OTP delivery ───────────────────────────────────────────────────────
+//
+// Abstraction layer for sending OTPs and SMS messages.
+// Callers always go through notificationService — never directly to fast2smsService.
+// Switching SMS providers later only requires changing this file.
+
+/**
+ * Send a 6-digit OTP to a mobile number.
+ *
+ * Development (NODE_ENV !== 'production'):
+ *   Prints OTP to console — no SMS sent. Useful for local testing.
+ *
+ * Production (NODE_ENV === 'production') or when FAST2SMS_API_KEY is set:
+ *   Delivers real SMS via Fast2SMS.
+ *
+ * @param {string} mobileNumber  10-digit Indian mobile number
+ * @param {string} otp           6-digit OTP string
+ */
+async function sendOtp(mobileNumber, otp) {
+  const isDev   = process.env.NODE_ENV !== 'production';
+  const hasKey  = !!process.env.FAST2SMS_API_KEY;
+
+  // Always attempt real SMS if FAST2SMS_API_KEY is present, regardless of NODE_ENV.
+  // This lets developers test real SMS in a local environment by setting the key.
+  if (hasKey) {
+    try {
+      await fast2sms.sendOtp(mobileNumber, otp);
+      console.log(`[NotificationService] SMS OTP sent to ${mobileNumber}`);
+      return;
+    } catch (err) {
+      console.error(`[NotificationService] Fast2SMS failed for ${mobileNumber}: ${err.message}`);
+      // In development, fall through to console fallback so login still works.
+      if (!isDev) throw err;
+      console.warn('[NotificationService] Falling back to console OTP (development mode).');
+    }
+  }
+
+  if (isDev) {
+    // Development fallback — print OTP to server console.
+    // Check your terminal or Render logs to find the OTP.
+    console.log(`\n🔑 [OTP] ${mobileNumber} → ${otp}  (valid 5 min)\n`);
+    console.warn(
+      '[NotificationService] No FAST2SMS_API_KEY set. ' +
+      'OTP printed to console only. Set FAST2SMS_API_KEY to send real SMS.'
+    );
+    return;
+  }
+
+  // Production without API key — hard fail.
+  throw new Error(
+    'SMS delivery not configured. Set FAST2SMS_API_KEY in your environment variables.'
+  );
+}
+
+/**
+ * Send a generic text message via Fast2SMS (non-OTP).
+ * Requires a DLT-registered template in production.
+ *
+ * @param {string} mobileNumber  10-digit Indian mobile number
+ * @param {string} message       Full message text
+ */
+async function sendSms(mobileNumber, message) {
+  if (!process.env.FAST2SMS_API_KEY) {
+    console.warn(`[NotificationService] No FAST2SMS_API_KEY — skipping SMS to ${mobileNumber}.`);
+    return;
+  }
+  await fast2sms.sendMessage(mobileNumber, message);
+}
+
 module.exports = {
   NOTIFICATION_TYPES,
   notifyAllCustomers,
@@ -118,4 +190,6 @@ module.exports = {
   getUnreadCountForUser,
   markAsRead,
   markAllAsRead,
+  sendOtp,
+  sendSms,
 };
