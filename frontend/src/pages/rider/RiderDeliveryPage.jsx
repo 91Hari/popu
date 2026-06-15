@@ -67,6 +67,7 @@ export default function RiderDeliveryPage() {
       riderService.pushLocation({
         latitude:  pos.coords.latitude,
         longitude: pos.coords.longitude,
+        order_id:  id,
       }).catch(() => {});
     };
 

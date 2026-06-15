@@ -27,9 +27,9 @@ async function deleteRider(req, res, next) {
 
 async function pushLocation(req, res, next) {
   try {
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude, order_id } = req.body;
     if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude required' });
-    await riderService.pushLocation(req.user.id, { latitude, longitude });
+    await riderService.pushLocation(req.user.id, { latitude, longitude, order_id: order_id || null });
     res.json({ ok: true });
   } catch (err) { next(err); }
 }

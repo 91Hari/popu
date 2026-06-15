@@ -386,11 +386,11 @@ export default function MasterOrdersPage() {
 
                               {co.status !== "CANCELLED" && (
                                 <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
-                                  {co.status === "OUT_FOR_DELIVERY" && co.rider_id && (
+                                  {["ASSIGNED_TO_RIDER", "OUT_FOR_DELIVERY"].includes(co.status) && co.rider_id && (
                                     <>
                                       <Chip
                                         icon={<TwoWheelerRoundedIcon fontSize="small" />}
-                                        label="On the way to you!"
+                                        label={co.status === "OUT_FOR_DELIVERY" ? "On the way to you!" : "Rider assigned"}
                                         size="small"
                                         sx={{ backgroundColor: "#FFF3E0", color: "#E65100", fontWeight: 700, fontSize: "0.7rem" }}
                                       />
@@ -405,7 +405,7 @@ export default function MasterOrdersPage() {
                                           "&:hover": { backgroundColor: "#0D47A1" },
                                         }}
                                       >
-                                        Track Rider
+                                        Track Order
                                       </Button>
                                     </>
                                   )}

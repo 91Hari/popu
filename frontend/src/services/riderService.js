@@ -12,8 +12,8 @@ const riderService = {
   assignRider: (orderId, rider_id) =>
     api.request(`/riders/assign/${orderId}`, { method: "PATCH", body: JSON.stringify({ rider_id }) }),
 
-  pushLocation: ({ latitude, longitude }) =>
-    api.request("/riders/location", { method: "POST", body: JSON.stringify({ latitude, longitude }) }),
+  pushLocation: ({ latitude, longitude, order_id }) =>
+    api.request("/riders/location", { method: "POST", body: JSON.stringify({ latitude, longitude, order_id }) }),
 
   getRiderLocation: (riderId) =>
     api.request(`/riders/location/${riderId}`),

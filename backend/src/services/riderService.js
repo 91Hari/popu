@@ -65,10 +65,10 @@ async function deleteRider(rider_id, caterer_id) {
   return { ok: true };
 }
 
-async function pushLocation(rider_id, { latitude, longitude }) {
+async function pushLocation(rider_id, { latitude, longitude, order_id }) {
   await pool.query(
-    `INSERT INTO rider_locations (rider_id, latitude, longitude) VALUES ($1, $2, $3)`,
-    [rider_id, latitude, longitude]
+    `INSERT INTO rider_locations (rider_id, latitude, longitude, order_id) VALUES ($1, $2, $3, $4)`,
+    [rider_id, latitude, longitude, order_id || null]
   );
 
   // Trigger "Rider Nearby" notification when within 500 m of customer (async, non-blocking)
@@ -115,12 +115,16 @@ async function getLocationForOrder(caterer_order_id, user) {
   const { rows } = await pool.query(
     `SELECT co.rider_id, co.status,
             mo.customer_id, mo.customer_lat, mo.customer_lng,
-            u.name        AS rider_name,
-            rp.vehicle_type, rp.vehicle_number
+            u.name           AS rider_name,
+            u.mobile_number  AS rider_mobile,
+            u.phone          AS rider_phone,
+            rp.vehicle_type, rp.vehicle_number,
+            uc.name          AS caterer_name
      FROM caterer_orders co
-     JOIN master_orders mo ON mo.id = co.master_order_id
-     LEFT JOIN users u           ON u.id  = co.rider_id
-     LEFT JOIN rider_profiles rp ON rp.user_id = co.rider_id
+     JOIN master_orders mo  ON mo.id  = co.master_order_id
+     LEFT JOIN users u            ON u.id   = co.rider_id
+     LEFT JOIN rider_profiles rp  ON rp.user_id = co.rider_id
+     LEFT JOIN users uc           ON uc.id  = co.caterer_id
      WHERE co.id = $1`,
     [caterer_order_id]
   );
@@ -132,27 +136,44 @@ async function getLocationForOrder(caterer_order_id, user) {
   }
 
   if (!order.rider_id) {
-    return { location: null, rider: null, customer_lat: null, customer_lng: null };
+    return {
+      order_id:     caterer_order_id,
+      location:     null,
+      rider:        null,
+      caterer_name: order.caterer_name || null,
+      order_status: order.status,
+      customer_lat: null,
+      customer_lng: null,
+    };
   }
 
+  // Prefer order-scoped location if the order_id column is populated, else fall back to rider_id
   const { rows: locRows } = await pool.query(
     `SELECT latitude, longitude, created_at
      FROM rider_locations
      WHERE rider_id = $1
+       AND (order_id = $2 OR order_id IS NULL)
      ORDER BY created_at DESC
      LIMIT 1`,
-    [order.rider_id]
+    [order.rider_id, caterer_order_id]
   );
 
   return {
+    order_id:     caterer_order_id,
     location: locRows[0]
-      ? { latitude: parseFloat(locRows[0].latitude), longitude: parseFloat(locRows[0].longitude), updated_at: locRows[0].created_at }
+      ? {
+          latitude:   parseFloat(locRows[0].latitude),
+          longitude:  parseFloat(locRows[0].longitude),
+          updated_at: locRows[0].created_at,
+        }
       : null,
     rider: {
       name:           order.rider_name,
+      mobile:         order.rider_mobile || order.rider_phone || null,
       vehicle_type:   order.vehicle_type,
       vehicle_number: order.vehicle_number,
     },
+    caterer_name:  order.caterer_name || null,
     order_status:  order.status,
     customer_lat:  order.customer_lat ? parseFloat(order.customer_lat) : null,
     customer_lng:  order.customer_lng ? parseFloat(order.customer_lng) : null,
