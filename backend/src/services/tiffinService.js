@@ -40,7 +40,7 @@ async function getCatererTiffinSettings(caterer_id) {
 async function getTiffinFoods(caterer_id) {
   const { rows } = await pool.query(
     `SELECT f.id, f.food_name, f.description, f.price, f.is_available,
-            f.image_url AS "imageUrl",
+            f.image_url AS "imageUrl", f.food_category,
             COALESCE(tm.available_for_tiffin, TRUE) AS available_for_tiffin
      FROM food_items f
      LEFT JOIN tiffin_food_mapping tm
@@ -84,7 +84,7 @@ async function saveTiffinSettings(caterer_id, {
 async function getAllCatererFoodsForMapping(caterer_id) {
   const { rows } = await pool.query(
     `SELECT f.id, f.food_name, f.description, f.price, f.is_available,
-            f.image_url AS "imageUrl",
+            f.image_url AS "imageUrl", f.food_category,
             COALESCE(tm.available_for_tiffin, TRUE) AS available_for_tiffin
      FROM food_items f
      LEFT JOIN tiffin_food_mapping tm

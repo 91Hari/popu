@@ -39,10 +39,11 @@ export default function TiffinsPage() {
   const [error, setError]           = useState("");
   const [inputVal, setInputVal]     = useState("");
   const [catererFilter, setCaterer] = useState("");
+  const [categoryFilter, setCategory] = useState(""); // "" | "VEG" | "NON_VEG"
   const [sort, setSort]             = useState("default");
   const [catererNames, setCaterers] = useState([]);
 
-  const load = useCallback(async (foodName, catererName, coords) => {
+  const load = useCallback(async (foodName, catererName, foodCategory, coords) => {
     setLoading(true);
     setError("");
     try {
@@ -51,11 +52,13 @@ export default function TiffinsPage() {
       if (foodName || catererName) {
         data = await foodService.searchFoodsFull({
           foodName, catererName, available: true,
+          food_category: foodCategory || undefined,
           customerLat: geo?.lat, customerLng: geo?.lng,
         });
       } else {
         data = await foodService.getCustomerFoods({
           customerLat: geo?.lat, customerLng: geo?.lng,
+          food_category: foodCategory || undefined,
         });
       }
       setFoods(data || []);
@@ -66,19 +69,25 @@ export default function TiffinsPage() {
     } finally {
       setLoading(false);
     }
-  }, [customerCoords]);  // re-run whenever customer GPS resolves
+  }, [customerCoords]);
 
-  useEffect(() => { load("", ""); }, [load]);
+  useEffect(() => { load("", "", categoryFilter); }, [load]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    load(inputVal.trim(), catererFilter);
+    load(inputVal.trim(), catererFilter, categoryFilter);
   };
 
   const handleCatererChange = (e) => {
     const val = e.target.value;
     setCaterer(val);
-    load(inputVal.trim(), val);
+    load(inputVal.trim(), val, categoryFilter);
+  };
+
+  const handleCategoryChange = (_, val) => {
+    if (val === null) return;
+    setCategory(val);
+    load(inputVal.trim(), catererFilter, val);
   };
 
   const displayed = sortFoods(foods, sort);
@@ -100,6 +109,30 @@ export default function TiffinsPage() {
               {customerCoords && " · showing ETA"}
             </Typography>
           </Box>
+        </Stack>
+
+        {/* Category filter */}
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
+          <ToggleButtonGroup size="small" exclusive value={categoryFilter} onChange={handleCategoryChange}>
+            {[
+              { value: "", label: "All" },
+              { value: "VEG",     label: "🟢 Veg" },
+              { value: "NON_VEG", label: "🔴 Non-Veg" },
+            ].map((o) => (
+              <ToggleButton
+                key={o.value} value={o.value}
+                sx={{
+                  px: 2, fontWeight: 700, fontSize: "0.8rem", textTransform: "none",
+                  "&.Mui-selected": {
+                    backgroundColor: o.value === "VEG" ? "#E8F5E9" : o.value === "NON_VEG" ? "#FFEBEE" : brand.orangeLight,
+                    color:           o.value === "VEG" ? "#2E7D32" : o.value === "NON_VEG" ? "#B71C1C" : brand.orange,
+                  },
+                }}
+              >
+                {o.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
         </Stack>
 
         {/* Filters */}

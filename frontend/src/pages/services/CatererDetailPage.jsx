@@ -52,8 +52,32 @@ export default function CatererDetailPage() {
 
   const caterer   = data?.caterer;
   const foods     = data?.foods || [];
-  const available   = foods.filter((f) => f.is_available);
-  const unavailable = foods.filter((f) => !f.is_available);
+
+  const vegFoods    = foods.filter((f) => (f.food_category || "VEG") === "VEG");
+  const nonVegFoods = foods.filter((f) => f.food_category === "NON_VEG");
+
+  const FoodGroup = ({ title, dot, dotColor, borderColor, groupFoods }) => {
+    if (!groupFoods.length) return null;
+    return (
+      <>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, mt: 1 }}>
+          <Box sx={{ width: 12, height: 12, borderRadius: dot, backgroundColor: dotColor, border: `2px solid ${borderColor}`, flexShrink: 0 }} />
+          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{title}</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>({groupFoods.filter(f => f.is_available).length} available)</Typography>
+        </Box>
+        <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
+          {groupFoods.map((food) => (
+            <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
+              <FoodCard
+                food={{ ...food, catererName: caterer.catererName }}
+                onClick={food.is_available ? () => navigate(`/customer/food/${food.id}`) : undefined}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </>
+    );
+  };
 
   const hasDistance = customerCoords && caterer?.latitude != null && caterer?.longitude != null;
   const distKm = hasDistance
@@ -135,7 +159,7 @@ export default function CatererDetailPage() {
                   )}
                   <Chip
                     icon={<RestaurantMenuRoundedIcon sx={{ fontSize: "14px !important" }} />}
-                    label={`${available.length} item${available.length !== 1 ? "s" : ""} available`}
+                    label={`${foods.filter((f) => f.is_available).length} item${foods.filter((f) => f.is_available).length !== 1 ? "s" : ""} available`}
                     size="small"
                     sx={{ height: 26, backgroundColor: brand.goldLight, color: brand.text, fontSize: "0.75rem" }}
                   />
@@ -162,43 +186,21 @@ export default function CatererDetailPage() {
               </Box>
             </Paper>
 
-            {/* Available items */}
-            {available.length > 0 && (
-              <>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1.5 }}>
-                  Available Now
-                </Typography>
-                <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 3 }}>
-                  {available.map((food) => (
-                    <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
-                      <FoodCard
-                        food={{ ...food, catererName: caterer.catererName }}
-                        onClick={() => navigate(`/customer/food/${food.id}`)}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </>
-            )}
-
-            {/* Unavailable items */}
-            {unavailable.length > 0 && (
-              <>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.secondary", mb: 1.5 }}>
-                  Currently Unavailable
-                </Typography>
-                <Grid container spacing={2} alignItems="flex-start">
-                  {unavailable.map((food) => (
-                    <Grid item key={food.id} xs={6} sm={4} md={3} lg={2}>
-                      <FoodCard
-                        food={{ ...food, catererName: caterer.catererName }}
-                        onClick={undefined}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </>
-            )}
+            {/* Foods grouped by Veg / Non-Veg */}
+            <FoodGroup
+              title="Veg Items"
+              dot="50%"
+              dotColor="#4CAF50"
+              borderColor="#2E7D32"
+              groupFoods={vegFoods}
+            />
+            <FoodGroup
+              title="Non-Veg Items"
+              dot="2px"
+              dotColor="#E53935"
+              borderColor="#B71C1C"
+              groupFoods={nonVegFoods}
+            />
 
             {foods.length === 0 && (
               <Box sx={{ textAlign: "center", py: 6 }}>

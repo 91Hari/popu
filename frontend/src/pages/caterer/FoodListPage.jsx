@@ -33,13 +33,14 @@ export default function FoodListPage() {
         const data = await foodService.getFoods();
         const mine = user.id ? (data || []).filter((f) => f.caterer_id === user.id) : (data || []);
         setRows(mine.map((f) => ({
-          id:           f.id,
-          name:         f.food_name || "",
-          price:        Number(f.price ?? 0),
-          available:    !!f.is_available,
-          imageUrl:     f.imageUrl || f.image_url || null,
-          avg_rating:   f.avg_rating != null ? Number(f.avg_rating) : null,
-          review_count: f.review_count != null ? Number(f.review_count) : 0,
+          id:            f.id,
+          name:          f.food_name || "",
+          price:         Number(f.price ?? 0),
+          available:     !!f.is_available,
+          food_category: f.food_category || "VEG",
+          imageUrl:      f.imageUrl || f.image_url || null,
+          avg_rating:    f.avg_rating != null ? Number(f.avg_rating) : null,
+          review_count:  f.review_count != null ? Number(f.review_count) : 0,
         })));
       } catch {
         setRows([]);
@@ -149,9 +150,24 @@ export default function FoodListPage() {
                   )}
 
                   <CardContent sx={{ flex: 1, pb: 0.5 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.5, lineHeight: 1.3 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.25, lineHeight: 1.3 }}>
                       {r.name}
                     </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                      <Box sx={{
+                        width: 9, height: 9,
+                        borderRadius: r.food_category === "VEG" ? "50%" : "2px",
+                        backgroundColor: r.food_category === "VEG" ? "#4CAF50" : "#E53935",
+                        border: `1.5px solid ${r.food_category === "VEG" ? "#2E7D32" : "#B71C1C"}`,
+                        flexShrink: 0,
+                      }} />
+                      <Typography variant="caption" sx={{
+                        fontWeight: 700, fontSize: "0.6rem",
+                        color: r.food_category === "VEG" ? "#2E7D32" : "#B71C1C",
+                      }}>
+                        {r.food_category === "VEG" ? "Veg" : "Non-Veg"}
+                      </Typography>
+                    </Box>
                     <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange, mb: 0.5 }}>
                       ₹{r.price}
                     </Typography>

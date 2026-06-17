@@ -4,6 +4,7 @@ import {
   Box, Container, Typography, Card, CardContent, Button, Stack,
   CircularProgress, Alert, Chip, Checkbox, FormControlLabel,
   Divider, IconButton, Stepper, Step, StepLabel,
+  ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
 import ArrowBackRoundedIcon      from "@mui/icons-material/ArrowBackRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
@@ -269,11 +270,12 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
   const slots    = { ONE_CARRIAGE: 1, TWO_CARRIAGE: 2, THREE_CARRIAGE: 3 }[boxType];
   const boxLabel = { ONE_CARRIAGE: "1 Carriage", TWO_CARRIAGE: "2 Carriage", THREE_CARRIAGE: "3 Carriage" }[boxType];
 
-  const [foods,    setFoods]    = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState("");
-  const [warn,     setWarn]     = useState("");
+  const [foods,          setFoods]         = useState([]);
+  const [selected,       setSelected]      = useState([]);
+  const [loading,        setLoading]       = useState(true);
+  const [error,          setError]         = useState("");
+  const [warn,           setWarn]          = useState("");
+  const [categoryFilter, setCategoryFilter] = useState(""); // "" | "VEG" | "NON_VEG"
 
   useEffect(() => {
     tiffinService.getCatererItems(caterer.id)
@@ -320,8 +322,31 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
 
       {warn && <Alert severity="warning" sx={{ mb: 1.5, fontSize: "0.8rem" }}>{warn}</Alert>}
 
+      <ToggleButtonGroup size="small" exclusive value={categoryFilter}
+        onChange={(_, v) => { if (v !== null) setCategoryFilter(v); }}
+        sx={{ mb: 1.5 }}
+      >
+        {[
+          { value: "", label: "All" },
+          { value: "VEG",     label: "🟢 Veg" },
+          { value: "NON_VEG", label: "🔴 Non-Veg" },
+        ].map((o) => (
+          <ToggleButton key={o.value} value={o.value}
+            sx={{
+              px: 2, fontWeight: 700, fontSize: "0.75rem", textTransform: "none",
+              "&.Mui-selected": {
+                backgroundColor: o.value === "VEG" ? "#E8F5E9" : o.value === "NON_VEG" ? "#FFEBEE" : brand.orangeLight,
+                color:           o.value === "VEG" ? "#2E7D32" : o.value === "NON_VEG" ? "#B71C1C" : brand.orange,
+              },
+            }}
+          >
+            {o.label}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
+
       <Stack spacing={1.25} sx={{ mb: 2.5 }}>
-        {foods.map((food) => {
+        {foods.filter((f) => !categoryFilter || (f.food_category || "VEG") === categoryFilter).map((food) => {
           const isSelected = !!selected.find((s) => s.id === food.id);
           const disabled   = !food.is_available;
           return (
@@ -351,6 +376,23 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{food.food_name}</Typography>
+                  {food.food_category && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                      <Box sx={{
+                        width: 8, height: 8, flexShrink: 0,
+                        borderRadius: food.food_category === "VEG" ? "50%" : "2px",
+                        backgroundColor: food.food_category === "VEG" ? "#4CAF50" : "#E53935",
+                        border: `1.5px solid ${food.food_category === "VEG" ? "#2E7D32" : "#B71C1C"}`,
+                      }} />
+                      <Typography variant="caption" sx={{
+                        fontWeight: 700, fontSize: "0.58rem",
+                        color: food.food_category === "VEG" ? "#2E7D32" : "#B71C1C",
+                        lineHeight: 1,
+                      }}>
+                        {food.food_category === "VEG" ? "Veg" : "Non-Veg"}
+                      </Typography>
+                    </Box>
+                  )}
                   {food.description && (
                     <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.3, mt: 0.25 }}
                       noWrap>

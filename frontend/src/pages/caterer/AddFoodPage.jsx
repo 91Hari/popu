@@ -4,6 +4,7 @@ import {
   Container, Box, Toolbar, Card, CardContent, Typography,
   TextField, Button, Stack, Switch, FormControlLabel,
   CircularProgress, Alert, useTheme, useMediaQuery, InputAdornment,
+  ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
@@ -21,9 +22,10 @@ export default function AddFoodPage() {
   const [available, setAvailable]     = useState(true);
   const [imageFile, setImageFile]     = useState(null);
   const [imagePreview, setImagePreview] = useState("");
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
-  const [success, setSuccess]         = useState("");
+  const [foodCategory, setFoodCategory] = useState("VEG");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
+  const [success, setSuccess]           = useState("");
 
   const navigate  = useNavigate();
   const theme     = useTheme();
@@ -70,12 +72,13 @@ export default function AddFoodPage() {
     setLoading(true);
     try {
       await foodService.createFood({
-        name:                    name.trim(),
-        description:             description.trim(),
-        price:                   Number(price),
-        available:               !!available,
+        name:                     name.trim(),
+        description:              description.trim(),
+        price:                    Number(price),
+        available:                !!available,
+        food_category:            foodCategory,
         preparation_time_minutes: parseInt(prepTime, 10),
-        image_url:               imagePreview || null,
+        image_url:                imagePreview || null,
       });
       setSuccess("Food saved successfully.");
       setTimeout(() => navigate("/caterer/foods"), 900);
@@ -117,6 +120,34 @@ export default function AddFoodPage() {
                   label="Description" value={description} onChange={(e) => setDescription(e.target.value)}
                   fullWidth multiline rows={3} autoComplete="off"
                 />
+
+                {/* Food Category */}
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                    Food Category *
+                  </Typography>
+                  <ToggleButtonGroup
+                    exclusive
+                    value={foodCategory}
+                    onChange={(_, v) => v && setFoodCategory(v)}
+                    size="small"
+                  >
+                    <ToggleButton value="VEG" sx={{
+                      px: 3, fontWeight: 700, textTransform: "none",
+                      "&.Mui-selected": { backgroundColor: "#E8F5E9", color: "#2E7D32", borderColor: "#4CAF50" },
+                    }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#4CAF50", border: "1.5px solid #2E7D32", mr: 0.75 }} />
+                      Veg
+                    </ToggleButton>
+                    <ToggleButton value="NON_VEG" sx={{
+                      px: 3, fontWeight: 700, textTransform: "none",
+                      "&.Mui-selected": { backgroundColor: "#FFEBEE", color: "#B71C1C", borderColor: "#E53935" },
+                    }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: "2px", backgroundColor: "#E53935", border: "1.5px solid #B71C1C", mr: 0.75 }} />
+                      Non-Veg
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <TextField

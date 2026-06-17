@@ -6,11 +6,15 @@ async function createFood(req, res, next) {
   try {
     const {
       food_name, description, price, image_url,
-      is_available, category, preparation_time_minutes,
+      is_available, category, food_category, preparation_time_minutes,
     } = req.body;
 
     if (!food_name || price === undefined) {
       return res.status(400).json({ error: 'food_name and price are required' });
+    }
+
+    if (food_category && !['VEG', 'NON_VEG'].includes(food_category)) {
+      return res.status(400).json({ error: 'food_category must be VEG or NON_VEG' });
     }
 
     const prepTime = preparation_time_minutes != null
@@ -25,6 +29,7 @@ async function createFood(req, res, next) {
       image_url,
       is_available,
       category,
+      food_category: food_category || 'VEG',
       preparation_time_minutes: prepTime,
     });
     res.status(201).json({ food });

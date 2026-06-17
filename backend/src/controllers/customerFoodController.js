@@ -16,7 +16,8 @@ async function getCustomerFoods(req, res, next) {
   try {
     const { customerLat, customerLng } = _parseCoords(req);
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const foods = await foodService.getCustomerFoods({ customerLat, customerLng, limit });
+    const { food_category } = req.query;
+    const foods = await foodService.getCustomerFoods({ customerLat, customerLng, limit, food_category });
     res.json(foods);
   } catch (err) {
     next(err);
@@ -25,10 +26,10 @@ async function getCustomerFoods(req, res, next) {
 
 async function searchCustomerFoods(req, res, next) {
   try {
-    const { foodName, category, catererName, minPrice, maxPrice, available } = req.query;
+    const { foodName, category, food_category, catererName, minPrice, maxPrice, available } = req.query;
     const { customerLat, customerLng } = _parseCoords(req);
     const foods = await foodService.searchCustomerFoods({
-      foodName, category, catererName, minPrice, maxPrice, available,
+      foodName, category, food_category, catererName, minPrice, maxPrice, available,
       customerLat, customerLng,
     });
     res.json(foods);

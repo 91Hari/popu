@@ -122,7 +122,7 @@ async function getCatererFoods(caterer_id) {
     throw e;
   }
   const { rows: foods } = await pool.query(
-    `SELECT id, food_name, description, price, image_url, is_available, category, created_at
+    `SELECT id, food_name, description, price, image_url, is_available, category, food_category, created_at
      FROM food_items
      WHERE caterer_id = $1
      ORDER BY is_available DESC, food_name ASC`,

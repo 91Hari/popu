@@ -57,7 +57,7 @@ export default function AdminFoodsPage() {
         <Box component="form" onSubmit={handleSearch} sx={{ mb: 2, maxWidth: 400 }}>
           <TextField fullWidth size="small" placeholder="Search foods…" value={search}
             onChange={(e) => setSearch(e.target.value)}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ fontSize: 18 }} /></InputAdornment> }} />
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ fontSize: 18 }} /></InputAdornment> } }} />
         </Box>
 
         {loading ? (
@@ -81,7 +81,21 @@ export default function AdminFoodsPage() {
                   <TableRow key={f.id} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{f.food_name}</TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{f.caterer_name}</TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>{f.category || "—"}</TableCell>
+                    <TableCell>
+                      {f.food_category ? (
+                        <Chip
+                          label={f.food_category === "VEG" ? "🟢 Veg" : "🔴 Non-Veg"}
+                          size="small"
+                          sx={{
+                            fontWeight: 700, fontSize: "0.7rem",
+                            backgroundColor: f.food_category === "VEG" ? "#E8F5E9" : "#FFEBEE",
+                            color:           f.food_category === "VEG" ? "#2E7D32" : "#B71C1C",
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
+                      )}
+                    </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: brand.orange }}>₹{f.price}</TableCell>
                     <TableCell align="center">
                       {f.avg_rating != null ? (

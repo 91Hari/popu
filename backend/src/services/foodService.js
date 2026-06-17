@@ -53,15 +53,17 @@ function _enrichWithETA(row, customerLat, customerLng) {
 async function createFood({
   caterer_id, food_name, description, price,
   image_url, is_available = true, category,
+  food_category = 'VEG',
   preparation_time_minutes = 20,
 }) {
+  const validCategory = ['VEG', 'NON_VEG'].includes(food_category) ? food_category : 'VEG';
   const { rows } = await pool.query(
     `INSERT INTO food_items
-       (caterer_id, food_name, description, price, image_url, is_available, category, preparation_time_minutes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (caterer_id, food_name, description, price, image_url, is_available, category, food_category, preparation_time_minutes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [caterer_id, food_name, description || null, price,
-     image_url || null, is_available, category || null, preparation_time_minutes]
+     image_url || null, is_available, category || null, validCategory, preparation_time_minutes]
   );
   const food = rows[0];
 
@@ -103,7 +105,7 @@ async function updateFood(id, caterer_id, fields) {
   }
   const before = existing[0];
 
-  const allowed = ['food_name', 'description', 'price', 'image_url', 'is_available', 'category', 'preparation_time_minutes'];
+  const allowed = ['food_name', 'description', 'price', 'image_url', 'is_available', 'category', 'food_category', 'preparation_time_minutes'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -300,6 +302,7 @@ const CUSTOMER_FOOD_SELECT = `
     f.is_available                AS available,
     f.image_url                   AS "imageUrl",
     f.category,
+    f.food_category               AS "foodCategory",
     f.preparation_time_minutes    AS "preparationTime",
     u.id                          AS "catererId",
     u.name                        AS "catererName",
@@ -312,19 +315,27 @@ const CUSTOMER_FOOD_SELECT = `
   LEFT JOIN reviews r ON r.subject_type = 'food' AND r.subject_id = f.id
 `;
 
-async function getCustomerFoods({ customerLat, customerLng, limit } = {}) {
+async function getCustomerFoods({ customerLat, customerLng, limit, food_category } = {}) {
   const limitClause = limit ? ` LIMIT ${Math.min(100, Math.max(1, parseInt(limit, 10)))}` : '';
+  const conditions = ['u.is_active = TRUE'];
+  const params = [];
+  let idx = 1;
+  if (food_category && ['VEG', 'NON_VEG'].includes(food_category.toUpperCase())) {
+    conditions.push(`f.food_category = $${idx++}`);
+    params.push(food_category.toUpperCase());
+  }
   const { rows } = await pool.query(
     CUSTOMER_FOOD_SELECT +
-    `WHERE u.is_active = TRUE
+    `WHERE ${conditions.join(' AND ')}
      GROUP BY f.id, u.id, u.name, u.latitude, u.longitude
-     ORDER BY f.created_at DESC` + limitClause
+     ORDER BY f.created_at DESC` + limitClause,
+    params
   );
   return rows.map((r) => _enrichWithETA(r, customerLat, customerLng));
 }
 
 async function searchCustomerFoods({
-  foodName, category, catererName, minPrice, maxPrice, available,
+  foodName, category, food_category, catererName, minPrice, maxPrice, available,
   customerLat, customerLng,
 }) {
   const conditions = ['u.is_active = TRUE'];
@@ -333,6 +344,10 @@ async function searchCustomerFoods({
 
   if (foodName)    { conditions.push(`f.food_name ILIKE $${idx++}`);  params.push(`%${foodName}%`); }
   if (category)    { conditions.push(`f.category  ILIKE $${idx++}`);  params.push(`%${category}%`); }
+  if (food_category && ['VEG', 'NON_VEG'].includes(food_category.toUpperCase())) {
+    conditions.push(`f.food_category = $${idx++}`);
+    params.push(food_category.toUpperCase());
+  }
   if (catererName) { conditions.push(`u.name       ILIKE $${idx++}`); params.push(`%${catererName}%`); }
   if (minPrice != null && minPrice !== '') { conditions.push(`f.price >= $${idx++}`); params.push(Number(minPrice)); }
   if (maxPrice != null && maxPrice !== '') { conditions.push(`f.price <= $${idx++}`); params.push(Number(maxPrice)); }
