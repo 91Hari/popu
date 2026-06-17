@@ -6,6 +6,8 @@ import {
 } from "@mui/material";
 import VisibilityRoundedIcon    from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+import PersonRoundedIcon        from "@mui/icons-material/PersonRounded";
+import StorefrontRoundedIcon    from "@mui/icons-material/StorefrontRounded";
 import Logo from "../../components/Logo";
 import authService from "../../services/authService";
 import { brand } from "../../theme";
@@ -19,6 +21,7 @@ function validatePassword(pw) {
 }
 
 export default function RegisterPage() {
+  const [role, setRole]                 = useState("CUSTOMER");
   const [name, setName]                 = useState("");
   const [mobile, setMobile]             = useState("");
   const [email, setEmail]               = useState("");
@@ -61,6 +64,7 @@ export default function RegisterPage() {
         mobileNumber: mobile,
         email:        email.trim() || undefined,
         password,
+        role,
       });
       navigate("/login", { state: { registered: true } });
     } catch (err) {
@@ -105,9 +109,49 @@ export default function RegisterPage() {
           <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
             Create Account
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-            Join Popu to order food from local caterers
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2.5 }}>
+            {role === "CATERER"
+              ? "Join Popu to sell your food to customers"
+              : "Join Popu to order food from local caterers"}
           </Typography>
+
+          {/* Role selector */}
+          <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+            <Button
+              fullWidth
+              variant={role === "CUSTOMER" ? "contained" : "outlined"}
+              startIcon={<PersonRoundedIcon />}
+              onClick={() => setRole("CUSTOMER")}
+              sx={role === "CUSTOMER" ? {
+                background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
+                color: "#fff", fontWeight: 700, borderRadius: 1.5, textTransform: "none",
+                "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
+              } : {
+                borderColor: brand.border, color: "text.secondary", fontWeight: 600,
+                borderRadius: 1.5, textTransform: "none",
+                "&:hover": { borderColor: brand.orange, color: brand.orange, backgroundColor: brand.greenLight },
+              }}
+            >
+              Customer
+            </Button>
+            <Button
+              fullWidth
+              variant={role === "CATERER" ? "contained" : "outlined"}
+              startIcon={<StorefrontRoundedIcon />}
+              onClick={() => setRole("CATERER")}
+              sx={role === "CATERER" ? {
+                background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
+                color: "#fff", fontWeight: 700, borderRadius: 1.5, textTransform: "none",
+                "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
+              } : {
+                borderColor: brand.border, color: "text.secondary", fontWeight: 600,
+                borderRadius: 1.5, textTransform: "none",
+                "&:hover": { borderColor: brand.orange, color: brand.orange, backgroundColor: brand.greenLight },
+              }}
+            >
+              Caterer
+            </Button>
+          </Stack>
 
           {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
 

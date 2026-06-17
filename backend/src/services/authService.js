@@ -101,13 +101,18 @@ async function login({ username, password }) {
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 
-async function register({ name, mobileNumber, email, password }) {
+async function register({ name, mobileNumber, email, password, role }) {
   if (!name?.trim()) throw makeError('Name is required', 400);
   if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber).trim())) {
     throw makeError('A valid 10-digit mobile number is required', 400);
   }
 
   validatePasswordStrength(password);
+
+  const ALLOWED_ROLES = ['CUSTOMER', 'CATERER'];
+  const userRole = role && ALLOWED_ROLES.includes(String(role).toUpperCase())
+    ? String(role).toUpperCase()
+    : 'CUSTOMER';
 
   const mobile = String(mobileNumber).trim();
 
@@ -130,12 +135,12 @@ async function register({ name, mobileNumber, email, password }) {
 
   const { rows } = await pool.query(
     `INSERT INTO users (name, email, mobile_number, password_hash, role)
-     VALUES ($1, $2, $3, $4, 'CUSTOMER')
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id, name, email, mobile_number, role`,
-    [name.trim(), cleanEmail, mobile, password_hash]
+    [name.trim(), cleanEmail, mobile, password_hash, userRole]
   );
 
-  console.log(`[Auth] New CUSTOMER registered — mobile: ${mobile}`);
+  console.log(`[Auth] New ${userRole} registered — mobile: ${mobile}`);
   return { success: true, user: rows[0] };
 }
 
