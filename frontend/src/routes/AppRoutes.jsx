@@ -10,9 +10,14 @@ import { CircularProgress, Box } from "@mui/material";
 import { brand } from "../theme";
 import ErrorBoundary from "../components/ErrorBoundary";
 
+// Landing
+const LandingPage = React.lazy(() => import("../pages/LandingPage"));
+
 // Auth
-const LoginPage    = React.lazy(() => import("../pages/auth/LoginPage"));
-const RegisterPage = React.lazy(() => import("../pages/auth/RegisterPage"));
+const LoginPage           = React.lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage        = React.lazy(() => import("../pages/auth/RegisterPage"));
+const ForgotPasswordPage  = React.lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage   = React.lazy(() => import("../pages/auth/ResetPasswordPage"));
 
 // Customer
 const CustomerDashboard  = React.lazy(() => import("../pages/customer/CustomerDashboard"));
@@ -24,6 +29,7 @@ const NotificationsPage  = React.lazy(() => import("../pages/customer/Notificati
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
 const SplitCheckoutPage  = React.lazy(() => import("../pages/customer/SplitCheckoutPage"));
 const MasterOrdersPage   = React.lazy(() => import("../pages/customer/MasterOrdersPage"));
+const RiderTrackingPage  = React.lazy(() => import("../pages/customer/RiderTrackingPage"));
 
 // Services
 const ServicesPage      = React.lazy(() => import("../pages/services/ServicesPage"));
@@ -38,7 +44,6 @@ const TrainingPage      = React.lazy(() => import("../pages/services/TrainingPag
 const CatererDashboard        = React.lazy(() => import("../pages/caterer/CatererDashboard"));
 const AddFoodPage              = React.lazy(() => import("../pages/caterer/AddFoodPage"));
 const FoodListPage             = React.lazy(() => import("../pages/caterer/FoodListPage"));
-const CatererOrdersPage          = React.lazy(() => import("../pages/caterer/CatererOrdersPage"));
 const AvailabilityPage           = React.lazy(() => import("../pages/caterer/AvailabilityPage"));
 const CatererNotificationsPage   = React.lazy(() => import("../pages/caterer/CatererNotificationsPage"));
 const CatererSubOrdersPage       = React.lazy(() => import("../pages/caterer/CatererSubOrdersPage"));
@@ -135,8 +140,10 @@ export default function AppRoutes() {
       <ScrollToTop />
       <Suspense fallback={<Loader />}>
         <Routes>
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login"            element={<LoginPage />} />
+          <Route path="/register"         element={<RegisterPage />} />
+          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"   element={<ResetPasswordPage />} />
 
           {/* Customer */}
           <Route path="/customer"               element={<ErrorBoundary><C allowed={CUST} element={<CustomerDashboard />} /></ErrorBoundary>} />
@@ -153,6 +160,7 @@ export default function AppRoutes() {
           <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
           <Route path="/checkout/split"           element={<ErrorBoundary><C allowed={CUST} element={<SplitCheckoutPage />} /></ErrorBoundary>} />
           <Route path="/customer/master-orders"   element={<ErrorBoundary><C allowed={CUST} element={<MasterOrdersPage />} /></ErrorBoundary>} />
+          <Route path="/customer/track/:orderId"  element={<ErrorBoundary><C allowed={CUST} element={<RiderTrackingPage />} /></ErrorBoundary>} />
           <Route path="/payment/callback"          element={<ErrorBoundary><C allowed={CUST} element={<PaymentCallbackPage />} /></ErrorBoundary>} />
 
           {/* Services */}
@@ -170,7 +178,7 @@ export default function AppRoutes() {
           <Route path="/caterer/add-food"           element={<C allowed={CATR} element={<AddFoodPage />} />} />
           <Route path="/caterer/edit-food/:id"      element={<C allowed={CATR} element={<EditFoodPage />} />} />
           <Route path="/caterer/foods"              element={<C allowed={CATR} element={<FoodListPage />} />} />
-          <Route path="/caterer/orders"             element={<C allowed={CATR} element={<CatererOrdersPage />} />} />
+          <Route path="/caterer/orders"             element={<Navigate to="/caterer/sub-orders" replace />} />
           <Route path="/caterer/availability"       element={<C allowed={CATR} element={<AvailabilityPage />} />} />
           <Route path="/caterer/notifications"      element={<C allowed={CATR} element={<CatererNotificationsPage />} />} />
           <Route path="/caterer/sub-orders"         element={<C allowed={CATR} element={<CatererSubOrdersPage />} />} />
@@ -217,7 +225,7 @@ export default function AppRoutes() {
           {/* Tiffin Box — admin */}
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
 
-          <Route path="/" element={<Navigate to="/customer" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />
         </Routes>
       </Suspense>

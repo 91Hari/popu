@@ -1,55 +1,63 @@
 import { useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  Alert,
-  CircularProgress,
-  Stack,
+  Box, Card, CardContent, Typography, Button, TextField,
+  Alert, CircularProgress, Stack, InputAdornment, IconButton,
 } from "@mui/material";
+import VisibilityRoundedIcon    from "@mui/icons-material/VisibilityRounded";
+import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 import Logo from "../../components/Logo";
 import authService from "../../services/authService";
 import { brand } from "../../theme";
 
+function roleRoute(role) {
+  switch ((role || "").toLowerCase()) {
+    case "rider":   return "/rider";
+    case "caterer": return "/caterer";
+    case "admin":   return "/admin";
+    default:        return "/customer";
+  }
+}
+
+const primaryBtnSx = {
+  py: 1.5,
+  background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
+  textTransform: "none",
+  fontWeight: 700,
+  fontSize: "1rem",
+  borderRadius: 1,
+  "&:hover": {
+    background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)`,
+  },
+  "&.Mui-disabled": { background: "#E0E0E0" },
+};
+
 export default function LoginPage() {
-  const [email, setEmail]       = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
+
   const navigate  = useNavigate();
   const location  = useLocation();
-  const registered = location.state?.registered === true;
+  const registered = location.state?.registered;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError("Email and password are required");
-      return;
-    }
+    if (!username.trim()) { setError("Enter your email or mobile number"); return; }
+    if (!password)        { setError("Enter your password"); return; }
+
     setError("");
     setLoading(true);
     try {
-      const data = await authService.login({ email, password });
-      const user = {
-        ...data.user,
-        role: data.user.role.toLowerCase(),
-        latitude: data.user.latitude ?? null,
-        longitude: data.user.longitude ?? null,
-      };
+      const data = await authService.login({ username: username.trim(), password });
+      const user = { ...data.user, role: data.user.role.toLowerCase() };
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(user));
-      navigate(
-        user.role === "rider"   ? "/rider"   :
-        user.role === "caterer" ? "/caterer" :
-        user.role === "admin"   ? "/admin"   :
-        "/customer"
-      );
+      navigate(roleRoute(user.role), { replace: true });
     } catch (err) {
-      setError("Invalid email or password");
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -73,17 +81,18 @@ export default function LoginPage() {
           </Box>
 
           <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>
-            Welcome Back
+            Welcome back!
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-            Login to continue
+            Sign in with your email or mobile number
           </Typography>
 
           {registered && (
             <Alert severity="success" sx={{ mb: 2 }}>
-              Account created successfully. Please log in.
+              Account created! Please sign in.
             </Alert>
           )}
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
@@ -94,62 +103,88 @@ export default function LoginPage() {
             <Stack spacing={2.5}>
               <TextField
                 fullWidth
-                label="Email Address"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                label="Email or Mobile Number"
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setError(""); }}
                 disabled={loading}
-                autoComplete="email"
-                variant="outlined"
+                autoComplete="username"
+                placeholder="email@example.com or 10-digit mobile"
+                autoFocus
               />
+
               <TextField
                 fullWidth
                 label="Password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 disabled={loading}
                 autoComplete="current-password"
-                variant="outlined"
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword((v) => !v)}
+                          edge="end"
+                          size="small"
+                          tabIndex={-1}
+                        >
+                          {showPassword
+                            ? <VisibilityOffRoundedIcon fontSize="small" />
+                            : <VisibilityRoundedIcon fontSize="small" />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
+
+              <Box sx={{ textAlign: "right", mt: -1 }}>
+                <Button
+                  component={Link}
+                  to="/forgot-password"
+                  variant="text"
+                  size="small"
+                  sx={{
+                    textTransform: "none",
+                    color: brand.orange,
+                    fontWeight: 600,
+                    p: 0,
+                    minWidth: 0,
+                    fontSize: "0.82rem",
+                  }}
+                >
+                  Forgot password?
+                </Button>
+              </Box>
+
               <Button
                 fullWidth
                 type="submit"
                 variant="contained"
                 size="large"
                 disabled={loading}
-                sx={{
-                  py: 1.5,
-                  background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  borderRadius: 1,
-                  "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
-                }}
+                sx={primaryBtnSx}
               >
-                {loading ? <CircularProgress size={22} sx={{ color: "white" }} /> : "Login"}
+                {loading
+                  ? <CircularProgress size={22} sx={{ color: "white" }} />
+                  : "Sign In"}
               </Button>
 
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                component={Link}
-                to="/register"
-                disabled={loading}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  borderRadius: 1,
-                  borderColor: brand.orange,
-                  color: brand.orange,
-                  "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
-                }}
+              <Typography
+                variant="body2"
+                sx={{ textAlign: "center", color: "text.secondary" }}
               >
-                Create Account
-              </Button>
+                Don't have an account?{" "}
+                <Box
+                  component={Link}
+                  to="/register"
+                  sx={{ color: brand.orange, fontWeight: 700, textDecoration: "none" }}
+                >
+                  Register
+                </Box>
+              </Typography>
             </Stack>
           </Box>
         </CardContent>

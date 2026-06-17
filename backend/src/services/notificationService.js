@@ -1,3 +1,5 @@
+'use strict';
+
 const pool = require('../config/db');
 
 const NOTIFICATION_TYPES = {

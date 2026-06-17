@@ -61,7 +61,7 @@ export default function CatererDashboard() {
       const todayOrd  = orders.filter((o) => new Date(o.created_at).toDateString() === today).length;
       const pending   = orders.filter((o) => o.status === "PLACED").length;
       let revenue     = 0;
-      orders.filter((o) => o.status === "DELIVERED").forEach((o) => { revenue += Number(o.total_amount || 0); });
+      orders.filter((o) => o.status === "DELIVERED").forEach((o) => { revenue += Number(o.subtotal || 0); });
 
       setStats({ foods: myFoods.length, orders: orders.length, revenue: revenue.toFixed(2) });
       setWelcome({ todayOrders: todayOrd, totalFoods: myFoods.length, pendingOrders: pending });

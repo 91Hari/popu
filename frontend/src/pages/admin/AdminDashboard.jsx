@@ -13,6 +13,9 @@ import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSetting
 import StoreMallDirectoryRoundedIcon from "@mui/icons-material/StoreMallDirectoryRounded";
 import PercentRoundedIcon            from "@mui/icons-material/PercentRounded";
 import AccountBalanceRoundedIcon     from "@mui/icons-material/AccountBalanceRounded";
+import LocalAtmRoundedIcon           from "@mui/icons-material/LocalAtmRounded";
+import CheckCircleRoundedIcon        from "@mui/icons-material/CheckCircleRounded";
+import PendingActionsRoundedIcon     from "@mui/icons-material/PendingActionsRounded";
 import AppLayout    from "../../components/AppLayout";
 import adminService from "../../services/adminService";
 import { brand }    from "../../theme";
@@ -31,6 +34,13 @@ const FINANCIAL_DEFS = [
   { key: "totalCommission",    label: "Commission Collected",  color: "#C62828",     bg: "#FFEBEE",         icon: <PercentRoundedIcon />,            prefix: "₹" },
   { key: "totalPlatformFees",  label: "Platform Fees",         color: "#6A1B9A",     bg: "#F3E5F5",         icon: <AccountBalanceRoundedIcon />,     prefix: "₹" },
   { key: "totalCatererPayout", label: "Caterer Payout",        color: brand.green,   bg: brand.greenLight,  icon: <CurrencyRupeeRoundedIcon />,      prefix: "₹" },
+];
+
+const COD_DEFS = [
+  { key: "codOrders",    label: "COD Orders",          color: "#2E7D32", bg: "#E8F5E9", icon: <LocalAtmRoundedIcon /> },
+  { key: "codRevenue",   label: "COD Revenue",         color: "#1B5E20", bg: "#C8E6C9", icon: <CurrencyRupeeRoundedIcon />, prefix: "₹" },
+  { key: "codPending",   label: "Pending Collection",  color: "#F57F17", bg: "#FFF8E1", icon: <PendingActionsRoundedIcon /> },
+  { key: "codCollected", label: "Cash Collected",      color: "#2E7D32", bg: "#E8F5E9", icon: <CheckCircleRoundedIcon /> },
 ];
 
 function StatCard({ def, value, loading }) {
@@ -102,6 +112,21 @@ export default function AdminDashboard() {
         {/* Financial metrics */}
         <Grid container spacing={2}>
           {FINANCIAL_DEFS.map((def) => (
+            <Grid item xs={12} sm={6} md={3} key={def.key}>
+              <StatCard def={def} value={stats?.[def.key]} loading={loading} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <Divider sx={{ my: 3 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", px: 1 }}>
+            CASH ON DELIVERY
+          </Typography>
+        </Divider>
+
+        {/* COD metrics */}
+        <Grid container spacing={2}>
+          {COD_DEFS.map((def) => (
             <Grid item xs={12} sm={6} md={3} key={def.key}>
               <StatCard def={def} value={stats?.[def.key]} loading={loading} />
             </Grid>

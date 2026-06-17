@@ -1,0 +1,2818 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/Users/chaturyakrishna/Documents/GitHub/popu/node_modules/.bin/playwright",
+      "test"
+    ],
+    "configFile": "/Users/chaturyakrishna/Documents/GitHub/popu/playwright.config.ts",
+    "rootDir": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./playwright-report/results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "./playwright-report/html",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "admin.spec.ts",
+      "file": "admin.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Admin Flow",
+          "file": "admin.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "admin dashboard loads with stats",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16253,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:19:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:19:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:00:41.937Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-dashboard-loads-with-stats-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-dashboard-loads-with-stats-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-8b92b40fa8b996a2018c",
+              "file": "admin.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "admin orders page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16111,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:24:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:24:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:00:58.573Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-orders-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-orders-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-d273011ed3386cc9c1fa",
+              "file": "admin.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "admin payments page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16081,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:31:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:31:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:01:14.945Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-payments-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-payments-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-f55dc9f533d3cb2ef0c3",
+              "file": "admin.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "admin customers page loads and shows list",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16069,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:37:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:37:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:01:31.288Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-customers-page-loads-and-shows-list-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-customers-page-loads-and-shows-list-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-1c05c67b26822a4d002f",
+              "file": "admin.spec.ts",
+              "line": 36,
+              "column": 7
+            },
+            {
+              "title": "admin caterers page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16116,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:43:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:43:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:01:47.619Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-caterers-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-caterers-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-8eae3362f53bf589e70e",
+              "file": "admin.spec.ts",
+              "line": 42,
+              "column": 7
+            },
+            {
+              "title": "service management page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16097,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:49:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:49:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:03.989Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-service-management-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-service-management-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-dd7048128e7e6cb3a035",
+              "file": "admin.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "test results page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16100,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:55:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:55:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:20.336Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-test-results-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-test-results-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-0d930a4a8bf7ba1d5196",
+              "file": "admin.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "admin sidebar shows expected nav items",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16102,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:61:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                          "column": 24,
+                          "line": 15
+                        },
+                        "snippet": "  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                            "column": 24,
+                            "line": 15
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  13 |     await page.getByLabel(/password/i).fill(PASSWORD);\n  14 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 15 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  16 |   }\n  17 |\n  18 |   test('admin dashboard loads with stats', async ({ page }) => {\n    at loginAsAdmin (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:15:24)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts:61:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:36.695Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-sidebar-shows-expected-nav-items-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/admin-Admin-Flow-admin-sidebar-shows-expected-nav-items-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/admin.spec.ts",
+                        "column": 24,
+                        "line": 15
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-685a55851055fab0574e",
+              "file": "admin.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "non-admin role cannot access admin pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 161,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:53.063Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-681b226f1ec1af810476",
+              "file": "admin.spec.ts",
+              "line": 68,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "auth.spec.ts",
+      "file": "auth.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Authentication",
+          "file": "auth.spec.ts",
+          "line": 15,
+          "column": 6,
+          "specs": [
+            {
+              "title": "login page shows email and password fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 941,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:53.307Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-d98917b6ae71c0182695",
+              "file": "auth.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "rejects invalid credentials",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1066,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:54.252Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-1a39e76bf5c0020c3cc6",
+              "file": "auth.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "admin login redirects to /admin dashboard",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16108,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts:34:24",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                          "column": 24,
+                          "line": 34
+                        },
+                        "snippet": "  32 |     test.skip(!ADMIN_EMAIL, 'PLAYWRIGHT_ADMIN_EMAIL not set');\n  33 |     await fillLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);\n> 34 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  35 |     await expect(page.getByText(/dashboard/i).first()).toBeVisible();\n  36 |   });\n  37 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                            "column": 24,
+                            "line": 34
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  32 |     test.skip(!ADMIN_EMAIL, 'PLAYWRIGHT_ADMIN_EMAIL not set');\n  33 |     await fillLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);\n> 34 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  35 |     await expect(page.getByText(/dashboard/i).first()).toBeVisible();\n  36 |   });\n  37 |\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts:34:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:02:55.323Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/auth-Authentication-admin-login-redirects-to-admin-dashboard-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/auth-Authentication-admin-login-redirects-to-admin-dashboard-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                        "column": 24,
+                        "line": 34
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-5d9d106944c2379c422f",
+              "file": "auth.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "customer login redirects to /customer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16086,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts:41:24",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                          "column": 24,
+                          "line": 41
+                        },
+                        "snippet": "  39 |     test.skip(!CUST_EMAIL, 'PLAYWRIGHT_CUSTOMER_EMAIL not set');\n  40 |     await fillLogin(page, CUST_EMAIL, CUST_PASSWORD);\n> 41 |     await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                        ^\n  42 |   });\n  43 |\n  44 |   test('admin can logout', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                            "column": 24,
+                            "line": 41
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  39 |     test.skip(!CUST_EMAIL, 'PLAYWRIGHT_CUSTOMER_EMAIL not set');\n  40 |     await fillLogin(page, CUST_EMAIL, CUST_PASSWORD);\n> 41 |     await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                        ^\n  42 |   });\n  43 |\n  44 |   test('admin can logout', async ({ page }) => {\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts:41:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:03:11.623Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/auth-Authentication-customer-login-redirects-to-customer-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/auth-Authentication-customer-login-redirects-to-customer-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                        "column": 24,
+                        "line": 41
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-3731186d70c4bde1eb3d",
+              "file": "auth.spec.ts",
+              "line": 38,
+              "column": 7
+            },
+            {
+              "title": "admin can logout",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16081,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts:47:24",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                          "column": 24,
+                          "line": 47
+                        },
+                        "snippet": "  45 |     test.skip(!ADMIN_EMAIL, 'PLAYWRIGHT_ADMIN_EMAIL not set');\n  46 |     await fillLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);\n> 47 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  48 |     await page.getByRole('button', { name: /log out|logout|sign out/i }).click();\n  49 |     await expect(page).toHaveURL(/\\/login/, { timeout: 10000 });\n  50 |   });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                            "column": 24,
+                            "line": 47
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  45 |     test.skip(!ADMIN_EMAIL, 'PLAYWRIGHT_ADMIN_EMAIL not set');\n  46 |     await fillLogin(page, ADMIN_EMAIL, ADMIN_PASSWORD);\n> 47 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  48 |     await page.getByRole('button', { name: /log out|logout|sign out/i }).click();\n  49 |     await expect(page).toHaveURL(/\\/login/, { timeout: 10000 });\n  50 |   });\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts:47:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:03:27.977Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/auth-Authentication-admin-can-logout-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/auth-Authentication-admin-can-logout-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/auth.spec.ts",
+                        "column": 24,
+                        "line": 47
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "d748ac400d08b85935ef-ee8e29f2ba52e51dc5ab",
+              "file": "auth.spec.ts",
+              "line": 44,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "caterer.spec.ts",
+      "file": "caterer.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Caterer Flow",
+          "file": "caterer.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "caterer dashboard loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16115,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:19:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:19:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:03:44.323Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-dashboard-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-dashboard-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1760e34e147f0ca53360-7a376589d620abd9600e",
+              "file": "caterer.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "food management page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16071,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:24:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:24:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:04:00.695Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-food-management-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-food-management-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1760e34e147f0ca53360-e16c7cc5895ab616c707",
+              "file": "caterer.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "add food page renders form",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16112,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:30:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:30:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:04:17.023Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-add-food-page-renders-form-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-add-food-page-renders-form-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1760e34e147f0ca53360-2b3db8c8429eabb496fe",
+              "file": "caterer.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "caterer orders page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16105,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:36:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:36:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:04:33.393Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-orders-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-orders-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1760e34e147f0ca53360-7b82497499aa39f1e3cc",
+              "file": "caterer.spec.ts",
+              "line": 35,
+              "column": 7
+            },
+            {
+              "title": "caterer notifications page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16109,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:42:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:42:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:04:49.755Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-notifications-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-notifications-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1760e34e147f0ca53360-cedb839609f5c6a42602",
+              "file": "caterer.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "caterer availability page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16096,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:48:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Caterer Flow', () => {\n    at loginAsCaterer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts:48:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:05:06.110Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-availability-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/caterer-Caterer-Flow-caterer-availability-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/caterer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1760e34e147f0ca53360-8aec83b7d36afa0d156f",
+              "file": "caterer.spec.ts",
+              "line": 47,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "customer.spec.ts",
+      "file": "customer.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Customer Flow",
+          "file": "customer.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "customer dashboard loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16111,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:19:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:19:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:05:22.458Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-customer-dashboard-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-customer-dashboard-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-997d44ede5fd3517b8ba",
+              "file": "customer.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "services page renders available services",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16123,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:25:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:25:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:05:38.844Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-ser-ca562--renders-available-services-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-ser-ca562--renders-available-services-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-f9ec7f5534e6f41c35ab",
+              "file": "customer.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "food marketplace page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16110,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:31:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:31:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:05:55.233Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-food-marketplace-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-food-marketplace-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-fa1d12aeb8d42ad33c75",
+              "file": "customer.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "cart page is accessible",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 20,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16095,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:37:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:37:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:06:11.602Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-cart-page-is-accessible-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-cart-page-is-accessible-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-b40c7e3de812bbdc2919",
+              "file": "customer.spec.ts",
+              "line": 36,
+              "column": 7
+            },
+            {
+              "title": "my orders page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 21,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16122,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:43:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:43:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:06:27.961Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-my-orders-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-my-orders-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-5b722c4c098128d66e2a",
+              "file": "customer.spec.ts",
+              "line": 42,
+              "column": 7
+            },
+            {
+              "title": "notifications page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 22,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16089,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:49:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:49:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:06:44.346Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-notifications-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-notifications-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-49260a4d68680a4e5cab",
+              "file": "customer.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "customer profile page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 23,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16091,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:55:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Customer Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts:55:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:00.699Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-customer-profile-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/customer-Customer-Flow-customer-profile-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/customer.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a47e7b5d353475863a75-3396dd10c079c96f2980",
+              "file": "customer.spec.ts",
+              "line": 54,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "healthcheck.spec.ts",
+      "file": "healthcheck.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Health Check — API & Frontend smoke tests",
+          "file": "healthcheck.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "backend /health returns 200 ok",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 15,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:17.085Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-b530a8e17b88396f07f5",
+              "file": "healthcheck.spec.ts",
+              "line": 7,
+              "column": 7
+            },
+            {
+              "title": "frontend root page is reachable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 182,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:17.115Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-30c48c0c4cb99fef8dd5",
+              "file": "healthcheck.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "login page renders correctly",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 927,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:17.378Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-74e37927e5ae5a7aa8f8",
+              "file": "healthcheck.spec.ts",
+              "line": 19,
+              "column": 7
+            },
+            {
+              "title": "unauthenticated access to /customer redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 150,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:18.309Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-5f98bacea29d38b37358",
+              "file": "healthcheck.spec.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "unauthenticated access to /admin redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 145,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:18.463Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-4423d885106dcc61a14e",
+              "file": "healthcheck.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "unauthenticated access to /caterer redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 146,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:18.611Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-5a7efcc68775db7de281",
+              "file": "healthcheck.spec.ts",
+              "line": 35,
+              "column": 7
+            },
+            {
+              "title": "unauthenticated access to /rider redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 158,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:18.760Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-92461391b619615b66b0",
+              "file": "healthcheck.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "backend API auth guard returns 401 without token",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:18.922Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c0262314da543eb296c6-4a82c2c17043424f3c85",
+              "file": "healthcheck.spec.ts",
+              "line": 45,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "notifications.spec.ts",
+      "file": "notifications.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Notification Flow",
+          "file": "notifications.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "customer notifications page renders",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16057,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts:16:24",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                          "column": 24,
+                          "line": 16
+                        },
+                        "snippet": "  14 |     await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  15 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 16 |     await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                        ^\n  17 |     await page.goto('/customer/notifications');\n  18 |     await expect(page.getByText(/notification|inbox|alert/i).first()).toBeVisible({ timeout: 10000 });\n  19 |   });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                            "column": 24,
+                            "line": 16
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  14 |     await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  15 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 16 |     await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                        ^\n  17 |     await page.goto('/customer/notifications');\n  18 |     await expect(page.getByText(/notification|inbox|alert/i).first()).toBeVisible({ timeout: 10000 });\n  19 |   });\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts:16:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:18.932Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/notifications-Notification-137fd--notifications-page-renders-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/notifications-Notification-137fd--notifications-page-renders-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                        "column": 24,
+                        "line": 16
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "be7d0958780d1a4666e5-e9383d45e7ae6cce1185",
+              "file": "notifications.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "caterer notifications page renders",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 25,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16103,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts:29:24",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                          "column": 24,
+                          "line": 29
+                        },
+                        "snippet": "  27 |     await page.getByLabel(/password/i).fill(catPass);\n  28 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 29 |     await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                        ^\n  30 |     await page.goto('/caterer/notifications');\n  31 |     await expect(page.getByText(/notification|inbox/i).first()).toBeVisible({ timeout: 10000 });\n  32 |   });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                            "column": 24,
+                            "line": 29
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/caterer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  27 |     await page.getByLabel(/password/i).fill(catPass);\n  28 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 29 |     await expect(page).toHaveURL(/\\/caterer/, { timeout: 15000 });\n     |                        ^\n  30 |     await page.goto('/caterer/notifications');\n  31 |     await expect(page.getByText(/notification|inbox/i).first()).toBeVisible({ timeout: 10000 });\n  32 |   });\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts:29:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:35.179Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/notifications-Notification-750ad--notifications-page-renders-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/notifications-Notification-750ad--notifications-page-renders-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                        "column": 24,
+                        "line": 29
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "be7d0958780d1a4666e5-97cada6778529e0d4ffd",
+              "file": "notifications.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "admin broadcast notification page loads",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 26,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16081,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts:40:24",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                          "column": 24,
+                          "line": 40
+                        },
+                        "snippet": "  38 |     await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);\n  39 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 40 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  41 |     await page.goto('/admin/notifications');\n  42 |     await expect(page.getByText(/notification|broadcast|message/i).first()).toBeVisible({ timeout: 10000 });\n  43 |   });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                            "column": 24,
+                            "line": 40
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/admin/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n  38 |     await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);\n  39 |     await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 40 |     await expect(page).toHaveURL(/\\/admin/, { timeout: 15000 });\n     |                        ^\n  41 |     await page.goto('/admin/notifications');\n  42 |     await expect(page.getByText(/notification|broadcast|message/i).first()).toBeVisible({ timeout: 10000 });\n  43 |   });\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts:40:24"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:07:51.539Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/notifications-Notification-0dba3-ast-notification-page-loads-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/notifications-Notification-0dba3-ast-notification-page-loads-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/notifications.spec.ts",
+                        "column": 24,
+                        "line": 40
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "be7d0958780d1a4666e5-9f2c2c5a63a13106e298",
+              "file": "notifications.spec.ts",
+              "line": 34,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "payment.spec.ts",
+      "file": "payment.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Payment Flow",
+          "file": "payment.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "checkout page renders payment options when cart is populated",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 27,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 36890,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    25 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Payment Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:19:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:08:07.878Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/payment-Payment-Flow-check-6c753-ions-when-cart-is-populated-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/payment-Payment-Flow-check-6c753-ions-when-cart-is-populated-chromium/error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e7ba30b94d7e035fc14-aa8796a1adb437e0f819",
+              "file": "payment.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "COD payment option is visible on checkout",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 28,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16101,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:31:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Payment Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Payment Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:31:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:08:45.020Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/payment-Payment-Flow-COD-p-f4f2d-tion-is-visible-on-checkout-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/payment-Payment-Flow-COD-p-f4f2d-tion-is-visible-on-checkout-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e7ba30b94d7e035fc14-99eb246ad1f48ebd9245",
+              "file": "payment.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "payments history page is accessible to customer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 29,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16081,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:42:5",
+                        "location": {
+                          "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                          "column": 22,
+                          "line": 11
+                        },
+                        "snippet": "   9 |   await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Payment Flow', () => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                            "column": 22,
+                            "line": 11
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveURL\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/\\/customer/\u001b[39m\nReceived string:  \u001b[31m\"http://localhost:5173/login\"\u001b[39m\nTimeout: 15000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveURL\" with timeout 15000ms\u001b[22m\n\u001b[2m    34 × unexpected value \"http://localhost:5173/login\"\u001b[22m\n\n\n   9 |   await page.getByLabel(/password/i).fill(CUST_PASSWORD);\n  10 |   await page.getByRole('button', { name: /sign in|log in/i }).click();\n> 11 |   await expect(page).toHaveURL(/\\/customer/, { timeout: 15000 });\n     |                      ^\n  12 | }\n  13 |\n  14 | test.describe('Payment Flow', () => {\n    at loginAsCustomer (/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:11:22)\n    at /Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts:42:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:09:01.369Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/payment-Payment-Flow-payme-27737-e-is-accessible-to-customer-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/chaturyakrishna/Documents/GitHub/popu/test-results/payment-Payment-Flow-payme-27737-e-is-accessible-to-customer-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/payment.spec.ts",
+                        "column": 22,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3e7ba30b94d7e035fc14-c4a88a55170b845e46b7",
+              "file": "payment.spec.ts",
+              "line": 41,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "rider.spec.ts",
+      "file": "rider.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Rider Flow",
+          "file": "rider.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "rider dashboard loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "PLAYWRIGHT_RIDER_EMAIL not set — skipping rider tests",
+                      "location": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/rider.spec.ts",
+                        "line": 16,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:09:17.541Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "PLAYWRIGHT_RIDER_EMAIL not set — skipping rider tests",
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/rider.spec.ts",
+                            "line": 16,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6b2b8237db74ab8d1767-f9e4551cbb0f61afab15",
+              "file": "rider.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "rider order lookup page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "PLAYWRIGHT_RIDER_EMAIL not set — skipping rider tests",
+                      "location": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/rider.spec.ts",
+                        "line": 16,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:09:17.541Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "PLAYWRIGHT_RIDER_EMAIL not set — skipping rider tests",
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/rider.spec.ts",
+                            "line": 16,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6b2b8237db74ab8d1767-5c6467ac112a8f2e38ba",
+              "file": "rider.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "rider profile page loads",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "PLAYWRIGHT_RIDER_EMAIL not set — skipping rider tests",
+                      "location": {
+                        "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/rider.spec.ts",
+                        "line": 16,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-15T19:09:17.541Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "PLAYWRIGHT_RIDER_EMAIL not set — skipping rider tests",
+                          "location": {
+                            "file": "/Users/chaturyakrishna/Documents/GitHub/popu/tests/e2e/rider.spec.ts",
+                            "line": 16,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6b2b8237db74ab8d1767-bcb4d2ba546e5c3d0f37",
+              "file": "rider.spec.ts",
+              "line": 29,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-06-15T19:00:41.738Z",
+    "duration": 515810.104,
+    "expected": 11,
+    "skipped": 3,
+    "unexpected": 30,
+    "flaky": 0
+  }
+}

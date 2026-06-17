@@ -1,122 +1,179 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Container, Card, CardContent, TextField, Button, Box, Typography,
-  Alert, CircularProgress, Stack, FormControl, InputLabel, Select,
-  MenuItem, useMediaQuery, useTheme, Collapse, Divider, Chip,
-  InputAdornment,
+  Box, Card, CardContent, Typography, Button, TextField,
+  Alert, CircularProgress, Stack, InputAdornment, IconButton,
+  Divider,
 } from "@mui/material";
-import MyLocationRoundedIcon   from "@mui/icons-material/MyLocationRounded";
-import CheckCircleRoundedIcon  from "@mui/icons-material/CheckCircleRounded";
-import QrCodeRoundedIcon       from "@mui/icons-material/QrCodeRounded";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import authService from "../../services/authService";
-import Logo from "../../components/Logo";
+import VisibilityRoundedIcon    from "@mui/icons-material/VisibilityRounded";
+import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+import PersonRoundedIcon        from "@mui/icons-material/PersonRounded";
+import StorefrontRoundedIcon    from "@mui/icons-material/StorefrontRounded";
+import MyLocationRoundedIcon    from "@mui/icons-material/MyLocationRounded";
+import MapRoundedIcon           from "@mui/icons-material/MapRounded";
+import Logo                     from "../../components/Logo";
+import PlacesAutocompleteField  from "../../components/PlacesAutocompleteField";
+import MapLocationPicker        from "../../components/MapLocationPicker";
+import authService              from "../../services/authService";
+import { ensureMapsInit }       from "../../utils/mapsLoader";
+import { parseAddressComponents } from "../../utils/parseAddressComponents";
+import { brand }                from "../../theme";
 
-import { brand } from "../../theme";
-const BRAND_GREEN = brand.orange;
-const UPI_REGEX   = /^[\w.\-]+@[\w]+$/;
-const QR_MAX_BYTES = 3 * 1024 * 1024;
+function validatePassword(pw) {
+  if (!pw || pw.length < 8)  return "Password must be at least 8 characters";
+  if (!/[A-Z]/.test(pw))    return "Must contain at least one uppercase letter";
+  if (!/[a-z]/.test(pw))    return "Must contain at least one lowercase letter";
+  if (!/[0-9]/.test(pw))    return "Must contain at least one number";
+  return null;
+}
+
+const sectionHeaderSx = {
+  fontWeight: 700,
+  mb: 1.5,
+  color: "text.secondary",
+  textTransform: "uppercase",
+  fontSize: "0.68rem",
+  letterSpacing: 1,
+};
+
+const primaryBtnBaseSx = {
+  fontWeight: 700, borderRadius: 1.5, textTransform: "none",
+  background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
+  color: "#fff",
+  "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
+};
 
 export default function RegisterPage() {
+  // ── Role ────────────────────────────────────────────────────────────────────
+  const [role, setRole] = useState("CUSTOMER");
+
+  // ── Personal fields ──────────────────────────────────────────────────────────
   const [name, setName]               = useState("");
+  const [mobile, setMobile]           = useState("");
   const [email, setEmail]             = useState("");
-  const [phone, setPhone]             = useState("");
   const [password, setPassword]       = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole]               = useState("customer");
+  const [confirmPw, setConfirmPw]     = useState("");
+  const [showPw, setShowPw]           = useState(false);
+  const [showCpw, setShowCpw]         = useState(false);
 
-  // caterer-only fields
-  const [businessName, setBusinessName] = useState("");
-  const [address, setAddress]           = useState("");
-  const [latitude, setLatitude]         = useState(null);
-  const [longitude, setLongitude]       = useState(null);
-  const [geoStatus, setGeoStatus]       = useState("idle"); // idle | detecting | detected | denied
-  const [upiId, setUpiId]               = useState("");
-  const [upiName, setUpiName]           = useState("");
-  const [qrDataUrl, setQrDataUrl]       = useState("");
-  const qrInputRef = useRef(null);
+  // ── Location fields ──────────────────────────────────────────────────────────
+  const [loc, setLoc] = useState({ address: "", city: "", addrState: "", pincode: "", lat: null, lng: null });
+  const setLocField = (fields) => setLoc((f) => ({ ...f, ...fields }));
+  const [detecting, setDetecting]     = useState(false);
+  const [locInfo, setLocInfo]         = useState(null); // { type, message }
+  const [mapOpen, setMapOpen]         = useState(false);
 
+  // ── Form state ───────────────────────────────────────────────────────────────
   const [errors, setErrors]     = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading]   = useState(false);
 
-  const navigate  = useNavigate();
-  const theme     = useTheme();
-  const isMobile  = useMediaQuery(theme.breakpoints.down("sm"));
-  const isCaterer = role === "caterer";
+  const navigate = useNavigate();
 
-  const detectLocation = () => {
+  // ── Reverse geocode coordinates → address fields ─────────────────────────────
+  const geocodePosition = useCallback(async (latitude, longitude) => {
+    try {
+      const ok = await ensureMapsInit("geocoding");
+      if (!ok) throw new Error("Maps unavailable");
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+        if (status === "OK" && results?.[0]) {
+          const parsed = parseAddressComponents(results[0].address_components);
+          setLocField({
+            address:    parsed.address  || "",
+            city:       parsed.city     || "",
+            addrState:  parsed.state    || "",
+            pincode:    parsed.pincode  || "",
+            lat:        latitude,
+            lng:        longitude,
+          });
+          setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
+        } else {
+          setLocField({ lat: latitude, lng: longitude });
+          setLocInfo({ type: "info", message: "Location coordinates captured. Please fill in the address." });
+        }
+        setDetecting(false);
+      });
+    } catch {
+      setLocField({ lat: latitude, lng: longitude });
+      setLocInfo({ type: "info", message: "Could not auto-fill address. Please enter manually." });
+      setDetecting(false);
+    }
+  }, []);
+
+  // ── GPS detect (called on mount + button click) ──────────────────────────────
+  const handleDetectLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setGeoStatus("denied");
+      setLocInfo({ type: "warning", message: "Geolocation is not supported by your browser." });
       return;
     }
-    setGeoStatus("detecting");
+    setDetecting(true);
+    setLocInfo(null);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude);
-        setLongitude(pos.coords.longitude);
-        setGeoStatus("detected");
+      (pos) => geocodePosition(pos.coords.latitude, pos.coords.longitude),
+      (err) => {
+        setDetecting(false);
+        setLocInfo({
+          type: "warning",
+          message: err.code === 1
+            ? "Unable to detect your location. Please enter address manually."
+            : "Could not detect location. Please enter address manually.",
+        });
       },
-      () => setGeoStatus("denied"),
-      { timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
+  }, [geocodePosition]);
+
+  const handleMapConfirm = ({ address, city, state, pincode, lat, lng }) => {
+    setLocField({ address, city, addrState: state, pincode, lat, lng });
+    setErrors((e) => ({ ...e, address: "", city: "", state: "", pincode: "" }));
+    setLocInfo({ type: "success", message: "Location pinned on map — review and edit if needed." });
   };
 
-  const validateForm = () => {
+  // Auto-detect on mount
+  useEffect(() => { handleDetectLocation(); }, [handleDetectLocation]);
+
+  // ── Validation ───────────────────────────────────────────────────────────────
+  const validate = () => {
     const e = {};
-
-    if (!name.trim())              e.name = "Name is required";
-    else if (name.trim().length < 2) e.name = "Name must be at least 2 characters";
-
-    if (!email.trim())             e.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Invalid email format";
-
-    if (!phone.trim())             e.phone = "Mobile number is required";
-    else if (!/^[+]?[\d\s\-]{10,15}$/.test(phone.trim())) e.phone = "Enter a valid mobile number";
-
-    if (!password.trim())          e.password = "Password is required";
-    else if (password.length < 6)  e.password = "Password must be at least 6 characters";
-
-    if (!confirmPassword.trim())   e.confirmPassword = "Confirm password is required";
-    else if (password !== confirmPassword) e.confirmPassword = "Passwords do not match";
-
-    if (!role) e.role = "Please select a role";
-
-    if (isCaterer) {
-      if (!businessName.trim())    e.businessName = "Business name is required";
-      if (!address.trim())         e.address = "Address is required";
-      if (upiId.trim() && !UPI_REGEX.test(upiId.trim())) e.upiId = "Invalid UPI ID format (e.g. name@ybl)";
-    }
-
+    if (!name.trim())                         e.name     = "Name is required";
+    else if (name.trim().length < 2)          e.name     = "Name must be at least 2 characters";
+    if (!mobile)                              e.mobile   = "Mobile number is required";
+    else if (!/^\d{10}$/.test(mobile))        e.mobile   = "Enter a valid 10-digit mobile number";
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+                                              e.email    = "Enter a valid email address";
+    const pwErr = validatePassword(password);
+    if (pwErr)                                e.password = pwErr;
+    if (!confirmPw)                           e.confirm  = "Please confirm your password";
+    else if (password !== confirmPw)          e.confirm  = "Passwords do not match";
+    if (!loc.address.trim())                  e.address  = "Address is required";
+    if (!loc.city.trim())                     e.city     = "City is required";
+    if (!loc.addrState.trim())                e.state    = "State is required";
+    if (!loc.pincode.trim())                  e.pincode  = "Pincode is required";
+    else if (!/^\d{6}$/.test(loc.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode";
     return e;
   };
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
     setApiError("");
     setLoading(true);
-
     try {
       await authService.register({
-        name,
-        email,
-        phone,
+        name:         name.trim(),
+        mobileNumber: mobile,
+        email:        email.trim() || undefined,
         password,
         role,
-        latitude,
-        longitude,
-        ...(isCaterer && {
-          business_name: businessName,
-          address,
-          upi_id:            upiId.trim()   || undefined,
-          upi_name:          upiName.trim()  || undefined,
-          qr_code_image_url: qrDataUrl       || undefined,
-        }),
+        address:   loc.address.trim()    || undefined,
+        city:      loc.city.trim()       || undefined,
+        state:     loc.addrState.trim()  || undefined,
+        pincode:   loc.pincode.trim()    || undefined,
+        latitude:  loc.lat               ?? undefined,
+        longitude: loc.lng               ?? undefined,
       });
       navigate("/login", { state: { registered: true } });
     } catch (err) {
@@ -126,280 +183,223 @@ export default function RegisterPage() {
     }
   };
 
-  const handleQrFile = (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { setApiError("QR code must be an image file."); return; }
-    if (file.size > QR_MAX_BYTES) { setApiError("QR image must be under 3 MB."); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => setQrDataUrl(ev.target.result);
-    reader.readAsDataURL(file);
+  const clrErr = (key) => () => {
+    if (errors[key]) setErrors((e) => ({ ...e, [key]: "" }));
   };
 
-  const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: 1 } };
-
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          minHeight: "100vh", py: isMobile ? 2 : 4,
-        }}
-      >
-        <Card sx={{ width: "100%", boxShadow: 3, borderRadius: 2 }}>
-          <CardContent sx={{ p: isMobile ? 3 : 4 }}>
-            <Box sx={{ textAlign: "center", mb: 4 }}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
-                <Logo size={44} showTagline />
-              </Box>
-              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: isMobile ? "0.875rem" : "1rem" }}>
-                Create Your Account
-              </Typography>
-            </Box>
+    <Box sx={{ minHeight: "100vh", backgroundColor: brand.bg, display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}>
+      <Card sx={{ width: "100%", maxWidth: 480, boxShadow: 3, borderRadius: 2 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <Logo size={52} height={90} width={90} showTagline />
+          </Box>
 
-            {apiError && <Alert severity="error" sx={{ mb: 3 }}>{apiError}</Alert>}
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 0.5 }}>Create Account</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2.5 }}>
+            {role === "CATERER"
+              ? "Join Popu to sell your food to customers"
+              : "Join Popu to order food from local caterers"}
+          </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-              <Stack spacing={2.5}>
-                <TextField
-                  fullWidth label="Full Name" type="text"
-                  value={name} onChange={(e) => { setName(e.target.value); if (errors.name) setErrors({ ...errors, name: "" }); }}
-                  error={!!errors.name} helperText={errors.name}
-                  placeholder="John Doe" disabled={loading} autoComplete="name" sx={fieldSx}
-                />
+          {/* ── Role selector ─────────────────────────────────────────────── */}
+          <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+            {[
+              { value: "CUSTOMER", label: "Customer", icon: <PersonRoundedIcon /> },
+              { value: "CATERER",  label: "Caterer",  icon: <StorefrontRoundedIcon /> },
+            ].map(({ value, label, icon }) => (
+              <Button
+                key={value}
+                fullWidth
+                variant={role === value ? "contained" : "outlined"}
+                startIcon={icon}
+                onClick={() => setRole(value)}
+                sx={role === value ? primaryBtnBaseSx : {
+                  borderColor: brand.border, color: "text.secondary", fontWeight: 600,
+                  borderRadius: 1.5, textTransform: "none",
+                  "&:hover": { borderColor: brand.orange, color: brand.orange, backgroundColor: brand.greenLight },
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </Stack>
 
-                <TextField
-                  fullWidth label="Email Address" type="email"
-                  value={email} onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors({ ...errors, email: "" }); }}
-                  error={!!errors.email} helperText={errors.email}
-                  placeholder="example@email.com" disabled={loading} autoComplete="email" sx={fieldSx}
-                />
+          {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
 
-                <TextField
-                  fullWidth label="Mobile Number" type="tel"
-                  value={phone} onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors({ ...errors, phone: "" }); }}
-                  error={!!errors.phone} helperText={errors.phone}
-                  placeholder="e.g. 9876543210" disabled={loading} autoComplete="tel" sx={fieldSx}
-                />
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Stack spacing={2.5}>
 
-                <TextField
-                  fullWidth label="Password" type="password"
-                  value={password} onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors({ ...errors, password: "" }); }}
-                  error={!!errors.password} helperText={errors.password}
-                  placeholder="••••••••" disabled={loading} autoComplete="new-password" sx={fieldSx}
-                />
+              {/* ── Personal Info ──────────────────────────────────────────── */}
+              <Typography variant="subtitle2" sx={sectionHeaderSx}>Personal Info</Typography>
 
-                <TextField
-                  fullWidth label="Confirm Password" type="password"
-                  value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: "" }); }}
-                  error={!!errors.confirmPassword} helperText={errors.confirmPassword}
-                  placeholder="••••••••" disabled={loading} autoComplete="new-password" sx={fieldSx}
-                />
+              <TextField
+                fullWidth label="Full Name" value={name}
+                onChange={(e) => { setName(e.target.value); clrErr("name")(); }}
+                disabled={loading} autoComplete="name"
+                placeholder="e.g. Priya Sharma" autoFocus
+                error={!!errors.name} helperText={errors.name}
+              />
 
-                <FormControl fullWidth error={!!errors.role} disabled={loading}>
-                  <InputLabel id="role-label">Select Role</InputLabel>
-                  <Select
-                    labelId="role-label" value={role} label="Select Role"
-                    onChange={(e) => { setRole(e.target.value); if (errors.role) setErrors({ ...errors, role: "" }); }}
-                    sx={{ borderRadius: 1 }}
-                  >
-                    <MenuItem value="customer">🛒 Customer</MenuItem>
-                    <MenuItem value="caterer">👨‍🍳 Caterer</MenuItem>
-                  </Select>
-                  {errors.role && (
-                    <Typography variant="caption" sx={{ color: "#d32f2f", mt: 0.5 }}>{errors.role}</Typography>
-                  )}
-                </FormControl>
+              <TextField
+                fullWidth label="Mobile Number" value={mobile}
+                onChange={(e) => { setMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); clrErr("mobile")(); }}
+                disabled={loading} inputMode="numeric" autoComplete="tel-national"
+                placeholder="10-digit mobile number"
+                slotProps={{ input: { startAdornment: (
+                  <InputAdornment position="start">
+                    <Typography sx={{ color: "text.secondary", fontWeight: 600, fontSize: "0.9rem" }}>+91</Typography>
+                  </InputAdornment>
+                )}}}
+                error={!!errors.mobile} helperText={errors.mobile}
+              />
 
-                {/* GPS location capture — all roles */}
-                <Box
-                  sx={{
-                    p: 1.5, borderRadius: 1, border: `1px solid`,
-                    borderColor: geoStatus === "detected" ? brand.green : brand.border,
-                    backgroundColor: geoStatus === "detected" ? brand.greenLight : brand.bg,
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
-                  }}
-                >
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 600, display: "block" }}>
-                      {isCaterer ? "Business Location (GPS)" : "Your Delivery Location (GPS)"}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      {geoStatus === "idle"      && (isCaterer ? "Used to show delivery distance to customers" : "Used to calculate accurate delivery time for your orders")}
-                      {geoStatus === "detecting" && "Detecting your location…"}
-                      {geoStatus === "detected"  && `Detected — lat ${latitude?.toFixed(4)}, lng ${longitude?.toFixed(4)}`}
-                      {geoStatus === "denied"    && (isCaterer ? "Location access denied — customers won't see distance" : "Location access denied — delivery time estimates may be less accurate")}
-                    </Typography>
-                  </Box>
-                  {geoStatus === "detected" ? (
-                    <CheckCircleRoundedIcon sx={{ color: brand.green, flexShrink: 0 }} />
-                  ) : (
-                    <Button
-                      size="small" variant="outlined"
-                      startIcon={geoStatus === "detecting" ? <CircularProgress size={12} color="inherit" /> : <MyLocationRoundedIcon />}
-                      onClick={detectLocation}
-                      disabled={loading || geoStatus === "detecting"}
-                      sx={{ borderColor: BRAND_GREEN, color: BRAND_GREEN, fontWeight: 600, flexShrink: 0, fontSize: "0.75rem" }}
-                    >
-                      {geoStatus === "detecting" ? "Detecting…" : "Detect"}
-                    </Button>
-                  )}
-                </Box>
+              <TextField
+                fullWidth label="Email Address (Optional)" type="email" value={email}
+                onChange={(e) => { setEmail(e.target.value); clrErr("email")(); }}
+                disabled={loading} autoComplete="email" placeholder="example@email.com"
+                error={!!errors.email} helperText={errors.email || "Used to receive order confirmations"}
+              />
 
-                {/* Caterer-specific fields */}
-                <Collapse in={isCaterer} unmountOnExit>
-                  <Stack spacing={2.5}>
-                    <Divider>
-                      <Chip label="Caterer Details" size="small" sx={{ backgroundColor: brand.goldLight, color: BRAND_GREEN, fontWeight: 600 }} />
-                    </Divider>
+              <TextField
+                fullWidth label="Password" type={showPw ? "text" : "password"}
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); clrErr("password")(); }}
+                disabled={loading} autoComplete="new-password"
+                error={!!errors.password}
+                helperText={errors.password || "Min 8 chars, uppercase, lowercase, number"}
+                slotProps={{ input: { endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPw((v) => !v)} edge="end" size="small" tabIndex={-1}>
+                      {showPw ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                )}}}
+              />
 
-                    <TextField
-                      fullWidth label="Business Name" type="text"
-                      value={businessName}
-                      onChange={(e) => { setBusinessName(e.target.value); if (errors.businessName) setErrors({ ...errors, businessName: "" }); }}
-                      error={!!errors.businessName} helperText={errors.businessName}
-                      placeholder="e.g. Amma's Kitchen" disabled={loading} sx={fieldSx}
-                    />
+              <TextField
+                fullWidth label="Confirm Password" type={showCpw ? "text" : "password"}
+                value={confirmPw}
+                onChange={(e) => { setConfirmPw(e.target.value); clrErr("confirm")(); }}
+                disabled={loading} autoComplete="new-password"
+                error={!!errors.confirm} helperText={errors.confirm}
+                slotProps={{ input: { endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowCpw((v) => !v)} edge="end" size="small" tabIndex={-1}>
+                      {showCpw ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                )}}}
+              />
 
-                    <TextField
-                      fullWidth label="Full Address" multiline rows={2}
-                      value={address}
-                      onChange={(e) => { setAddress(e.target.value); if (errors.address) setErrors({ ...errors, address: "" }); }}
-                      error={!!errors.address} helperText={errors.address || "Street, area, city and pincode"}
-                      placeholder="e.g. 12 MG Road, Banjara Hills, Hyderabad 500034"
-                      disabled={loading} sx={fieldSx}
-                    />
+              {/* ── Location Details ───────────────────────────────────────── */}
+              <Divider sx={{ my: 0.5 }} />
+              <Typography variant="subtitle2" sx={sectionHeaderSx}>Location Details</Typography>
 
-                    <Divider>
-                      <Chip label="Payment Details (Optional)" size="small" sx={{ backgroundColor: brand.goldLight, color: BRAND_GREEN, fontWeight: 600, fontSize: "0.72rem" }} />
-                    </Divider>
+              {locInfo && (
+                <Alert severity={locInfo.type} sx={{ py: 0.5 }}>{locInfo.message}</Alert>
+              )}
 
-                    <TextField
-                      fullWidth label="UPI ID" size="small"
-                      placeholder="e.g. satvikfoods@ybl"
-                      value={upiId}
-                      onChange={(e) => { setUpiId(e.target.value); if (errors.upiId) setErrors({ ...errors, upiId: "" }); }}
-                      error={!!errors.upiId}
-                      helperText={errors.upiId || "Customers will use this to pay you (PhonePe, GPay, Paytm…)"}
-                      disabled={loading}
-                      sx={fieldSx}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <QrCodeRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                          </InputAdornment>
-                        ),
-                        endAdornment: upiId.trim() && UPI_REGEX.test(upiId.trim()) ? (
-                          <InputAdornment position="end">
-                            <CheckCircleRoundedIcon sx={{ color: "#2e7d32", fontSize: 18 }} />
-                          </InputAdornment>
-                        ) : null,
-                      }}
-                    />
-
-                    <TextField
-                      fullWidth label="UPI Display Name" size="small"
-                      placeholder="e.g. Satvik Foods"
-                      value={upiName}
-                      onChange={(e) => setUpiName(e.target.value)}
-                      helperText="Name shown to customer on their UPI payment screen"
-                      disabled={loading}
-                      sx={fieldSx}
-                    />
-
-                    {/* QR Code upload */}
-                    <Box>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.75 }}>
-                        Payment QR Code (optional)
-                      </Typography>
-                      <input ref={qrInputRef} type="file" accept="image/*" hidden onChange={handleQrFile} />
-                      {qrDataUrl ? (
-                        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                          <Box
-                            component="img" src={qrDataUrl} alt="QR preview"
-                            sx={{ width: 72, height: 72, objectFit: "contain", borderRadius: 1.5, border: `1px solid ${brand.border}`, p: 0.5 }}
-                          />
-                          <Stack spacing={0.75}>
-                            <Typography variant="caption" sx={{ color: "text.secondary" }}>QR code uploaded</Typography>
-                            <Button size="small" variant="outlined" startIcon={<QrCodeRoundedIcon />}
-                              onClick={() => qrInputRef.current?.click()} disabled={loading}
-                              sx={{ fontSize: "0.72rem", textTransform: "none" }}>
-                              Replace
-                            </Button>
-                            <Button size="small" variant="outlined" color="error" startIcon={<DeleteOutlineRoundedIcon />}
-                              onClick={() => setQrDataUrl("")} disabled={loading}
-                              sx={{ fontSize: "0.72rem", textTransform: "none" }}>
-                              Remove
-                            </Button>
-                          </Stack>
-                        </Box>
-                      ) : (
-                        <Box
-                          onClick={() => !loading && qrInputRef.current?.click()}
-                          sx={{
-                            border: `2px dashed ${brand.border}`, borderRadius: 1.5,
-                            p: 2, textAlign: "center", cursor: loading ? "default" : "pointer",
-                            "&:hover": loading ? {} : { borderColor: BRAND_GREEN, backgroundColor: brand.greenLight },
-                            transition: "all 0.15s",
-                          }}
-                        >
-                          <QrCodeRoundedIcon sx={{ fontSize: 30, color: brand.border, mb: 0.25 }} />
-                          <Typography variant="caption" sx={{ display: "block", fontWeight: 600, color: "text.secondary" }}>
-                            Upload QR Code
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: "text.disabled" }}>
-                            PNG / JPG · Max 3 MB
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Stack>
-                </Collapse>
-
-                <Box sx={{ p: 2, backgroundColor: brand.goldLight, borderRadius: 1, border: `1px solid ${brand.border}` }}>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    <strong>Customer:</strong> Browse and order food from caterers
-                    <br />
-                    <strong>Caterer:</strong> Add and manage food offerings
-                  </Typography>
-                </Box>
-
+              <Stack direction="row" spacing={1.5}>
                 <Button
-                  fullWidth variant="contained" size={isMobile ? "medium" : "large"}
-                  onClick={handleSubmit} disabled={loading}
+                  fullWidth variant="outlined"
+                  startIcon={detecting
+                    ? <CircularProgress size={15} sx={{ color: brand.orange }} />
+                    : <MyLocationRoundedIcon fontSize="small" />}
+                  onClick={handleDetectLocation}
+                  disabled={detecting || loading}
                   sx={{
-                    mt: 2,
-                    background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
-                    textTransform: "none",
-                    fontSize: isMobile ? "0.95rem" : "1rem",
-                    fontWeight: 600, py: isMobile ? 1.2 : 1.5, borderRadius: 1,
-                    "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
-                    "&:disabled": { background: "#ccc" },
+                    borderColor: brand.orange, color: brand.orange, fontWeight: 700,
+                    textTransform: "none", borderRadius: 1.5, fontSize: "0.82rem",
+                    "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
                   }}
                 >
-                  {loading ? (
-                    <><CircularProgress size={20} sx={{ mr: 1, color: "white" }} /> Creating Account…</>
-                  ) : "Register"}
+                  {detecting ? "Detecting…" : "Use GPS"}
                 </Button>
-
                 <Button
-                  fullWidth variant="outlined" size={isMobile ? "medium" : "large"}
-                  component={Link} to="/login" disabled={loading}
+                  fullWidth variant="outlined"
+                  startIcon={<MapRoundedIcon fontSize="small" />}
+                  onClick={() => setMapOpen(true)}
+                  disabled={detecting || loading}
                   sx={{
-                    textTransform: "none", fontSize: isMobile ? "0.95rem" : "1rem",
-                    fontWeight: 600, py: isMobile ? 1.2 : 1.5, borderRadius: 1,
-                    borderColor: BRAND_GREEN, color: BRAND_GREEN,
-                    "&:hover": { backgroundColor: brand.greenLight, borderColor: BRAND_GREEN },
+                    borderColor: brand.orange, color: brand.orange, fontWeight: 700,
+                    textTransform: "none", borderRadius: 1.5, fontSize: "0.82rem",
+                    "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
                   }}
                 >
-                  Back To Login
+                  Locate on Map
                 </Button>
               </Stack>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </Container>
+
+              <Divider sx={{ my: -0.5 }}>
+                <Typography variant="caption" color="text.secondary">or enter manually</Typography>
+              </Divider>
+
+              <PlacesAutocompleteField
+                value={loc.address}
+                onChange={(text) => { setLocField({ address: text }); clrErr("address")(); }}
+                onPlaceSelect={({ address, city, state, pincode, lat, lng }) => {
+                  setLocField({ address, city, addrState: state, pincode, lat, lng });
+                  setErrors((e) => ({ ...e, address: "", city: "", state: "", pincode: "" }));
+                }}
+                label="Address *"
+                error={!!errors.address}
+                helperText={errors.address || "Start typing for Google suggestions"}
+                disabled={loading}
+              />
+
+              <TextField
+                fullWidth label="City *" value={loc.city}
+                onChange={(e) => { setLocField({ city: e.target.value }); clrErr("city")(); }}
+                error={!!errors.city} helperText={errors.city}
+                disabled={loading}
+              />
+
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  fullWidth label="State *" value={loc.addrState}
+                  onChange={(e) => { setLocField({ addrState: e.target.value }); clrErr("state")(); }}
+                  error={!!errors.state} helperText={errors.state}
+                  disabled={loading}
+                />
+                <TextField
+                  fullWidth label="Pincode *" value={loc.pincode}
+                  inputMode="numeric"
+                  onChange={(e) => { setLocField({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) }); clrErr("pincode")(); }}
+                  error={!!errors.pincode} helperText={errors.pincode}
+                  disabled={loading}
+                />
+              </Stack>
+
+              {/* ── Submit ─────────────────────────────────────────────────── */}
+              <Button
+                fullWidth type="submit" variant="contained" size="large"
+                disabled={loading}
+                sx={{ py: 1.5, fontSize: "1rem", mt: 0.5, ...primaryBtnBaseSx }}
+              >
+                {loading ? <CircularProgress size={22} sx={{ color: "white" }} /> : "Create Account"}
+              </Button>
+
+              <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
+                Already have an account?{" "}
+                <Box component={Link} to="/login"
+                  sx={{ color: brand.orange, fontWeight: 700, textDecoration: "none" }}>
+                  Sign In
+                </Box>
+              </Typography>
+            </Stack>
+          </Box>
+        </CardContent>
+      </Card>
+
+      <MapLocationPicker
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        onConfirm={handleMapConfirm}
+        initialLat={loc.lat}
+        initialLng={loc.lng}
+      />
+    </Box>
   );
 }

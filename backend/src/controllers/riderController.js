@@ -27,9 +27,9 @@ async function deleteRider(req, res, next) {
 
 async function pushLocation(req, res, next) {
   try {
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude, order_id } = req.body;
     if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude required' });
-    await riderService.pushLocation(req.user.id, { latitude, longitude });
+    await riderService.pushLocation(req.user.id, { latitude, longitude, order_id: order_id || null });
     res.json({ ok: true });
   } catch (err) { next(err); }
 }
@@ -38,6 +38,15 @@ async function getLocation(req, res, next) {
   try {
     res.json(await riderService.getLatestLocation(req.params.rider_id));
   } catch (err) { next(err); }
+}
+
+async function getOrderRiderLocation(req, res, next) {
+  try {
+    res.json(await riderService.getLocationForOrder(req.params.id, req.user));
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
 }
 
 async function getAssignedDeliveries(req, res, next) {
@@ -57,6 +66,15 @@ async function lookupOrder(req, res, next) {
 async function startDelivery(req, res, next) {
   try {
     res.json(await riderService.startDelivery(req.params.id, req.user.id));
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function confirmCodPayment(req, res, next) {
+  try {
+    res.json(await riderService.confirmCodPayment(req.params.id, req.user.id));
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
@@ -85,7 +103,7 @@ async function assignRider(req, res, next) {
 
 module.exports = {
   createRider, listRiders, deleteRider,
-  pushLocation, getLocation,
+  pushLocation, getLocation, getOrderRiderLocation,
   getAssignedDeliveries, lookupOrder,
-  startDelivery, confirmDelivery, assignRider,
+  startDelivery, confirmCodPayment, confirmDelivery, assignRider,
 };

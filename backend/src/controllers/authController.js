@@ -1,57 +1,14 @@
+'use strict';
+
 const authService = require('../services/authService');
-
-async function register(req, res, next) {
-  try {
-    const {
-      name, email, password, role, phone, business_name, address, latitude, longitude,
-      upi_id, upi_name, qr_code_image_url,
-    } = req.body;
-
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ error: 'name, email, password, and role are required' });
-    }
-
-    const validRoles = ['CUSTOMER', 'CATERER'];
-    if (!validRoles.includes(role.toUpperCase())) {
-      return res.status(400).json({ error: 'role must be CUSTOMER or CATERER' });
-    }
-    if (role.toUpperCase() === 'RIDER') {
-      return res.status(400).json({ error: 'Rider accounts must be created by a caterer' });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'password must be at least 8 characters' });
-    }
-
-    if (role.toUpperCase() === 'CATERER') {
-      if (!business_name || !business_name.trim()) {
-        return res.status(400).json({ error: 'business_name is required for caterers' });
-      }
-      if (!address || !address.trim()) {
-        return res.status(400).json({ error: 'address is required for caterers' });
-      }
-    }
-
-    const user = await authService.register({
-      name, email, password, role, phone, business_name, address, latitude, longitude,
-      upi_id, upi_name, qr_code_image_url,
-    });
-    res.status(201).json({ user });
-  } catch (err) {
-    if (err.status) return res.status(err.status).json({ error: err.message });
-    next(err);
-  }
-}
 
 async function login(req, res, next) {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'email and password are required' });
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'username and password are required' });
     }
-
-    const result = await authService.login({ email, password });
+    const result = await authService.login({ username, password });
     res.json(result);
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
@@ -59,4 +16,52 @@ async function login(req, res, next) {
   }
 }
 
-module.exports = { register, login };
+async function register(req, res, next) {
+  try {
+    const {
+      name, mobileNumber, email, password, role,
+      address, city, state, pincode, latitude, longitude,
+    } = req.body;
+    if (!name?.trim() || !mobileNumber || !password) {
+      return res.status(400).json({ error: 'name, mobileNumber, and password are required' });
+    }
+    const result = await authService.register({
+      name, mobileNumber, email, password, role,
+      address, city, state, pincode, latitude, longitude,
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function forgotPassword(req, res, next) {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ error: 'username (email or mobile number) is required' });
+    }
+    const result = await authService.forgotPassword({ username });
+    res.json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+async function resetPassword(req, res, next) {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'token and newPassword are required' });
+    }
+    const result = await authService.resetPassword({ token, newPassword });
+    res.json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    next(err);
+  }
+}
+
+module.exports = { login, register, forgotPassword, resetPassword };

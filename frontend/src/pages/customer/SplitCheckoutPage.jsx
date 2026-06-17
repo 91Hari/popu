@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Button, CircularProgress,
   Alert, Stack, Paper, Divider, IconButton, Tooltip, Chip, Collapse,
+  ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import DinnerDiningRoundedIcon         from "@mui/icons-material/DinnerDiningRounded";
@@ -13,7 +14,8 @@ import UploadFileRoundedIcon           from "@mui/icons-material/UploadFileRound
 import CheckCircleRoundedIcon          from "@mui/icons-material/CheckCircleRounded";
 import DeleteOutlineRoundedIcon        from "@mui/icons-material/DeleteOutlineRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
-import OpenInNewRoundedIcon            from "@mui/icons-material/OpenInNewRounded";
+import LocalAtmRoundedIcon             from "@mui/icons-material/LocalAtmRounded";
+import CreditCardRoundedIcon           from "@mui/icons-material/CreditCardRounded";
 import HelpOutlineRoundedIcon          from "@mui/icons-material/HelpOutlineRounded";
 import ExpandMoreRoundedIcon           from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon           from "@mui/icons-material/ExpandLessRounded";
@@ -64,6 +66,7 @@ export default function SplitCheckoutPage() {
   const [copied,          setCopied]          = useState(null);
   const [proofFiles,      setProofFiles]      = useState({});
   const [qrModal,         setQrModal]         = useState({ open: false });
+  const [paymentMethod,   setPaymentMethod]   = useState("ONLINE");
   const fileInputRefs = useRef({});
 
   const catererGroups = useMemo(() => {
@@ -106,9 +109,10 @@ export default function SplitCheckoutPage() {
   }, [catererGroups, catererProfiles, loading]);
 
   const allProofsReady = useMemo(() => {
+    if (paymentMethod === "COD") return true;
     if (paymentEnabledIds.size === 0) return true;
     return [...paymentEnabledIds].every((id) => !!proofFiles[id]);
-  }, [paymentEnabledIds, proofFiles]);
+  }, [paymentEnabledIds, proofFiles, paymentMethod]);
 
   const handleCopyUpi = (catererId, upiId) => {
     navigator.clipboard.writeText(upiId).catch(() => {});
@@ -156,16 +160,19 @@ export default function SplitCheckoutPage() {
     setPlacing(true);
     setError("");
     try {
-      const payment_proofs = Object.entries(proofFiles).map(([caterer_id, data]) => ({
-        caterer_id,
-        payment_screenshot_url: data.url,
-      }));
+      const payment_proofs = paymentMethod === "ONLINE"
+        ? Object.entries(proofFiles).map(([caterer_id, data]) => ({
+            caterer_id,
+            payment_screenshot_url: data.url,
+          }))
+        : [];
       await api.request("/checkout/split-order", {
         method: "POST",
         body: JSON.stringify({
-          items:        items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
-          customer_lat: customerCoords?.lat ?? null,
-          customer_lng: customerCoords?.lng ?? null,
+          items:          items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
+          customer_lat:   customerCoords?.lat ?? null,
+          customer_lng:   customerCoords?.lng ?? null,
+          payment_method: paymentMethod,
           payment_proofs,
         }),
       });
@@ -206,6 +213,63 @@ export default function SplitCheckoutPage() {
             Go back and remove {unavailableItems.length === 1 ? "it" : "them"} before proceeding.
           </Alert>
         )}
+
+        {/* ── Payment Method Selection ── */}
+        <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5, mb: 0.5 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5 }}>Payment Method</Typography>
+          <ToggleButtonGroup
+            value={paymentMethod}
+            exclusive
+            onChange={(_, val) => { if (val) setPaymentMethod(val); }}
+            fullWidth
+            size="small"
+            sx={{ gap: 1.5 }}
+          >
+            <ToggleButton
+              value="ONLINE"
+              sx={{
+                flex: 1, borderRadius: "10px !important", border: `1.5px solid ${brand.border} !important`,
+                fontWeight: 700, textTransform: "none", py: 1.25, gap: 1,
+                "&.Mui-selected": {
+                  backgroundColor: brand.orangeLight,
+                  borderColor: `${brand.orange} !important`,
+                  color: brand.orange,
+                },
+              }}
+            >
+              <CreditCardRoundedIcon sx={{ fontSize: 18 }} />
+              Online Payment
+            </ToggleButton>
+            <ToggleButton
+              value="COD"
+              sx={{
+                flex: 1, borderRadius: "10px !important", border: `1.5px solid ${brand.border} !important`,
+                fontWeight: 700, textTransform: "none", py: 1.25, gap: 1,
+                "&.Mui-selected": {
+                  backgroundColor: "#E8F5E9",
+                  borderColor: `#2E7D32 !important`,
+                  color: "#2E7D32",
+                },
+              }}
+            >
+              <LocalAtmRoundedIcon sx={{ fontSize: 18 }} />
+              Cash on Delivery
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {paymentMethod === "COD" && (
+            <Alert severity="success" icon={<LocalAtmRoundedIcon fontSize="inherit" />}
+              sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
+              Pay the rider in cash when your order arrives. Your rider will show the caterer's QR for payment.
+            </Alert>
+          )}
+          {paymentMethod === "ONLINE" && (
+            <Alert severity="info" icon={<CreditCardRoundedIcon fontSize="inherit" />}
+              sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
+              Pay each caterer online using UPI or QR, then upload your payment screenshot below.
+            </Alert>
+          )}
+        </Paper>
 
         <Stack spacing={2.5}>
           {catererGroups.map((group) => {
@@ -264,7 +328,14 @@ export default function SplitCheckoutPage() {
                   <Divider sx={{ mb: 1.5 }} />
 
                   {/* ── Payment section ── */}
-                  {loading && !profile ? (
+                  {paymentMethod === "COD" ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 1.5, backgroundColor: "#E8F5E9", border: "1px solid #A5D6A7" }}>
+                      <LocalAtmRoundedIcon sx={{ fontSize: 18, color: "#2E7D32", flexShrink: 0 }} />
+                      <Typography variant="caption" sx={{ color: "#2E7D32", fontWeight: 700 }}>
+                        Cash on Delivery — pay the rider when your order arrives.
+                      </Typography>
+                    </Box>
+                  ) : loading && !profile ? (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
                       <CircularProgress size={14} />
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>Loading payment info…</Typography>
@@ -523,7 +594,11 @@ export default function SplitCheckoutPage() {
 
             <Divider sx={{ mb: 2 }} />
 
-            {!loading && paymentEnabledIds.size > 0 ? (
+            {paymentMethod === "COD" ? (
+              <Alert severity="success" icon={<LocalAtmRoundedIcon fontSize="inherit" />} sx={{ mb: 2, fontSize: "0.8rem" }}>
+                Cash on Delivery — no upfront payment needed. Pay the rider when your food arrives.
+              </Alert>
+            ) : !loading && paymentEnabledIds.size > 0 ? (
               <Alert severity={allProofsReady ? "success" : "warning"} sx={{ mb: 2, fontSize: "0.8rem" }}>
                 {allProofsReady
                   ? "Payment proof uploaded for all caterers. Tap Place Order to confirm."
@@ -538,24 +613,22 @@ export default function SplitCheckoutPage() {
             <Button
               fullWidth variant="contained" size="large"
               onClick={handlePlaceOrder}
-              disabled={placing || !items.length || unavailableItems.length > 0 || (!loading && !allProofsReady && paymentEnabledIds.size > 0)}
+              disabled={placing || !items.length || unavailableItems.length > 0 || (!loading && !allProofsReady && paymentEnabledIds.size > 0 && paymentMethod === "ONLINE")}
               startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
               sx={{ fontWeight: 700, py: 1.4 }}
             >
               {placing ? "Placing Order…" : "Place Order"}
             </Button>
 
-            {!loading && !allProofsReady && paymentEnabledIds.size > 0 && (
+            {paymentMethod === "ONLINE" && !loading && !allProofsReady && paymentEnabledIds.size > 0 && (
               <Typography variant="caption" sx={{ color: brand.orange, display: "block", mt: 1, textAlign: "center", fontWeight: 600 }}>
                 Upload payment proof for all caterers to continue
               </Typography>
             )}
 
-            {(loading || allProofsReady || paymentEnabledIds.size === 0) && (
-              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5, textAlign: "center" }}>
-                Order is sent to caterers after you tap Place Order.
-              </Typography>
-            )}
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1.5, textAlign: "center" }}>
+              Order is sent to caterers after you tap Place Order.
+            </Typography>
           </Paper>
         </Stack>
       </Container>

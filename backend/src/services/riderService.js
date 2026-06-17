@@ -65,11 +65,119 @@ async function deleteRider(rider_id, caterer_id) {
   return { ok: true };
 }
 
-async function pushLocation(rider_id, { latitude, longitude }) {
+async function pushLocation(rider_id, { latitude, longitude, order_id }) {
   await pool.query(
-    `INSERT INTO rider_locations (rider_id, latitude, longitude) VALUES ($1, $2, $3)`,
-    [rider_id, latitude, longitude]
+    `INSERT INTO rider_locations (rider_id, latitude, longitude, order_id) VALUES ($1, $2, $3, $4)`,
+    [rider_id, latitude, longitude, order_id || null]
   );
+
+  // Trigger "Rider Nearby" notification when within 500 m of customer (async, non-blocking)
+  setImmediate(async () => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT co.id, mo.customer_id, mo.customer_lat, mo.customer_lng
+         FROM caterer_orders co
+         JOIN master_orders mo ON mo.id = co.master_order_id
+         WHERE co.rider_id = $1
+           AND co.status = 'OUT_FOR_DELIVERY'
+           AND co.rider_nearby_notified = FALSE
+         LIMIT 1`,
+        [rider_id]
+      );
+      if (!rows[0] || !rows[0].customer_lat || !rows[0].customer_lng) return;
+
+      const order = rows[0];
+      const { haversineKm } = require('./locationService');
+      const distKm = haversineKm(
+        parseFloat(latitude),          parseFloat(longitude),
+        parseFloat(order.customer_lat), parseFloat(order.customer_lng)
+      );
+
+      if (distKm <= 0.5) {
+        await pool.query(
+          `UPDATE caterer_orders SET rider_nearby_notified = TRUE WHERE id = $1`,
+          [order.id]
+        );
+        await notifyUser(order.customer_id, {
+          notification_type: 'RIDER_NEARBY',
+          title:        'Rider Nearby!',
+          message:      'Your rider is less than 500 m away. Your food is almost there!',
+          reference_id: order.id,
+        });
+      }
+    } catch (err) {
+      console.error('[RiderService] Rider nearby notification failed:', err.message);
+    }
+  });
+}
+
+async function getLocationForOrder(caterer_order_id, user) {
+  const { rows } = await pool.query(
+    `SELECT co.rider_id, co.status,
+            mo.customer_id, mo.customer_lat, mo.customer_lng,
+            u.name           AS rider_name,
+            u.mobile_number  AS rider_mobile,
+            u.phone          AS rider_phone,
+            rp.vehicle_type, rp.vehicle_number,
+            uc.name          AS caterer_name
+     FROM caterer_orders co
+     JOIN master_orders mo  ON mo.id  = co.master_order_id
+     LEFT JOIN users u            ON u.id   = co.rider_id
+     LEFT JOIN rider_profiles rp  ON rp.user_id = co.rider_id
+     LEFT JOIN users uc           ON uc.id  = co.caterer_id
+     WHERE co.id = $1`,
+    [caterer_order_id]
+  );
+  const order = rows[0];
+  if (!order) { const e = new Error('Order not found'); e.status = 404; throw e; }
+
+  if (user.role === 'CUSTOMER' && order.customer_id !== user.id) {
+    const e = new Error('Forbidden'); e.status = 403; throw e;
+  }
+
+  if (!order.rider_id) {
+    return {
+      order_id:     caterer_order_id,
+      location:     null,
+      rider:        null,
+      caterer_name: order.caterer_name || null,
+      order_status: order.status,
+      customer_lat: null,
+      customer_lng: null,
+    };
+  }
+
+  // Prefer order-scoped location if the order_id column is populated, else fall back to rider_id
+  const { rows: locRows } = await pool.query(
+    `SELECT latitude, longitude, created_at
+     FROM rider_locations
+     WHERE rider_id = $1
+       AND (order_id = $2 OR order_id IS NULL)
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [order.rider_id, caterer_order_id]
+  );
+
+  return {
+    order_id:     caterer_order_id,
+    location: locRows[0]
+      ? {
+          latitude:   parseFloat(locRows[0].latitude),
+          longitude:  parseFloat(locRows[0].longitude),
+          updated_at: locRows[0].created_at,
+        }
+      : null,
+    rider: {
+      name:           order.rider_name,
+      mobile:         order.rider_mobile || order.rider_phone || null,
+      vehicle_type:   order.vehicle_type,
+      vehicle_number: order.vehicle_number,
+    },
+    caterer_name:  order.caterer_name || null,
+    order_status:  order.status,
+    customer_lat:  order.customer_lat ? parseFloat(order.customer_lat) : null,
+    customer_lng:  order.customer_lng ? parseFloat(order.customer_lng) : null,
+  };
 }
 
 async function getLatestLocation(rider_id) {
@@ -85,6 +193,7 @@ async function getLatestLocation(rider_id) {
 async function getAssignedDeliveries(rider_id) {
   const { rows } = await pool.query(
     `SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code,
+            co.payment_method, co.payment_status,
             mo.customer_id,
             u.name  AS customer_name,
             u.email AS customer_email,
@@ -118,10 +227,15 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
 
   const { rows } = await pool.query(
     `SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code, co.rider_id,
-            mo.customer_id,
+            co.payment_method, co.payment_status,
+            mo.customer_id, mo.customer_lat, mo.customer_lng,
             u.name  AS customer_name,
             u.email AS customer_email,
             u.phone AS customer_phone,
+            uc.upi_id         AS caterer_upi_id,
+            uc.phonepe_id     AS caterer_phonepe_id,
+            uc.payment_name   AS caterer_payment_name,
+            uc.qr_code_image_url AS caterer_qr_url,
             json_agg(
               json_build_object(
                 'food_name',   f.food_name,
@@ -132,12 +246,15 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
             ) AS items
      FROM caterer_orders co
      JOIN master_orders mo ON mo.id = co.master_order_id
-     JOIN users u ON u.id = mo.customer_id
+     JOIN users u  ON u.id  = mo.customer_id
+     JOIN users uc ON uc.id = co.caterer_id
      JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
      JOIN food_items f ON f.id = coi.food_item_id
      WHERE co.id = $1
        AND (co.caterer_id = $2 OR co.rider_id = $3)
-     GROUP BY co.id, mo.customer_id, u.name, u.email, u.phone`,
+     GROUP BY co.id, mo.customer_id, mo.customer_lat, mo.customer_lng,
+              u.name, u.email, u.phone,
+              uc.upi_id, uc.phonepe_id, uc.payment_name, uc.qr_code_image_url`,
     [caterer_order_id, caterer_id, rider_id]
   );
   if (!rows[0]) { const e = new Error('Order not found'); e.status = 404; throw e; }
@@ -178,6 +295,45 @@ async function startDelivery(caterer_order_id, rider_id) {
   return updated[0];
 }
 
+async function confirmCodPayment(caterer_order_id, rider_id) {
+  const { rows } = await pool.query(
+    `SELECT co.*, mo.customer_id
+     FROM caterer_orders co
+     JOIN master_orders mo ON mo.id = co.master_order_id
+     WHERE co.id = $1 AND co.rider_id = $2 AND co.payment_method = 'COD' AND co.status = 'OUT_FOR_DELIVERY'`,
+    [caterer_order_id, rider_id]
+  );
+  if (!rows[0]) { const e = new Error('Order not found, not COD, or not out for delivery'); e.status = 404; throw e; }
+  const order = rows[0];
+
+  if (order.payment_status === 'PAID') {
+    const e = new Error('Payment already confirmed'); e.status = 400; throw e;
+  }
+
+  const { rows: updated } = await pool.query(
+    `UPDATE caterer_orders
+     SET payment_status = 'PAID', payment_collected_at = NOW(), payment_collected_by_rider = $1
+     WHERE id = $2 RETURNING *`,
+    [rider_id, caterer_order_id]
+  );
+
+  setImmediate(async () => {
+    try {
+      const shortId = caterer_order_id.slice(0, 8).toUpperCase();
+      await notifyUser(order.customer_id, {
+        notification_type: 'COD_PAYMENT_RECEIVED',
+        title:        'Payment Received',
+        message:      `Cash payment for order #${shortId} has been confirmed by your rider.`,
+        reference_id: order.master_order_id,
+      });
+    } catch (err) {
+      console.error('[RiderService] confirmCodPayment notification failed:', err.message);
+    }
+  });
+
+  return updated[0];
+}
+
 async function confirmDelivery(caterer_order_id, rider_id, code) {
   const { rows } = await pool.query(
     `SELECT co.*, mo.customer_id
@@ -191,6 +347,12 @@ async function confirmDelivery(caterer_order_id, rider_id, code) {
 
   if (!order.delivery_confirmation_code || order.delivery_confirmation_code !== String(code)) {
     const e = new Error('Invalid confirmation code'); e.status = 400; throw e;
+  }
+
+  // COD orders must have payment confirmed before delivery
+  if (order.payment_method === 'COD' && order.payment_status !== 'PAID') {
+    const e = new Error('Please confirm cash payment collection before marking as delivered');
+    e.status = 400; throw e;
   }
 
   const { rows: updated } = await pool.query(
@@ -312,9 +474,11 @@ module.exports = {
   deleteRider,
   pushLocation,
   getLatestLocation,
+  getLocationForOrder,
   getAssignedDeliveries,
   lookupOrderForRider,
   startDelivery,
+  confirmCodPayment,
   confirmDelivery,
   assignRiderToOrder,
   getAllRiders,

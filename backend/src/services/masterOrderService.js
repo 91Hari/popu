@@ -33,7 +33,8 @@ const CATERER_ORDER_WITH_ITEMS = `
   ORDER BY co.created_at ASC
 `;
 
-async function createSplitOrder({ customer_id, items, customer_lat, customer_lng, payment_proofs = [] }) {
+async function createSplitOrder({ customer_id, items, customer_lat, customer_lng, payment_proofs = [], payment_method = 'ONLINE' }) {
+  const isCod = payment_method === 'COD';
   if (!items || items.length === 0) {
     const err = new Error('Order must contain at least one item');
     err.status = 400;
@@ -108,10 +109,12 @@ async function createSplitOrder({ customer_id, items, customer_lat, customer_lng
       const { rows: coRows } = await client.query(
         `INSERT INTO caterer_orders
            (master_order_id, caterer_id, subtotal,
-            commission_percentage, commission_amount, platform_fee, caterer_payout)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            commission_percentage, commission_amount, platform_fee, caterer_payout,
+            payment_method)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
         [masterOrder.id, caterer_id, subtotal,
-         pc.commission_percentage, pc.commission_amount, pc.platform_fee, pc.caterer_payout]
+         pc.commission_percentage, pc.commission_amount, pc.platform_fee, pc.caterer_payout,
+         isCod ? 'COD' : 'ONLINE']
       );
       const catererOrder = coRows[0];
 
@@ -123,21 +126,23 @@ async function createSplitOrder({ customer_id, items, customer_lat, customer_lng
         );
       }
 
-      // Submit payment proof if provided at checkout
-      const proof = (payment_proofs || []).find((p) => p.caterer_id === caterer_id);
-      if (proof && proof.payment_screenshot_url) {
-        await client.query(
-          `INSERT INTO payment_proofs
-             (master_order_id, caterer_order_id, customer_id, caterer_id, amount,
-              payment_screenshot_url, upi_reference, payment_status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING_REVIEW')`,
-          [masterOrder.id, catererOrder.id, customer_id, caterer_id,
-           subtotal, proof.payment_screenshot_url, proof.upi_reference || null]
-        );
-        await client.query(
-          `UPDATE caterer_orders SET payment_status = 'PROOF_SUBMITTED' WHERE id = $1`,
-          [catererOrder.id]
-        );
+      // Submit payment proof at checkout (online orders only — COD has no upfront proof)
+      if (!isCod) {
+        const proof = (payment_proofs || []).find((p) => p.caterer_id === caterer_id);
+        if (proof && proof.payment_screenshot_url) {
+          await client.query(
+            `INSERT INTO payment_proofs
+               (master_order_id, caterer_order_id, customer_id, caterer_id, amount,
+                payment_screenshot_url, upi_reference, payment_status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING_REVIEW')`,
+            [masterOrder.id, catererOrder.id, customer_id, caterer_id,
+             subtotal, proof.payment_screenshot_url, proof.upi_reference || null]
+          );
+          await client.query(
+            `UPDATE caterer_orders SET payment_status = 'PROOF_SUBMITTED' WHERE id = $1`,
+            [catererOrder.id]
+          );
+        }
       }
 
       createdCatererOrders.push({ caterer_id, caterer_order_id: catererOrder.id, lines });
@@ -151,10 +156,11 @@ async function createSplitOrder({ customer_id, items, customer_lat, customer_lng
       for (const { caterer_id, lines } of createdCatererOrders) {
         try {
           const firstFood = lines[0]?.food_name || 'a food item';
+          const codSuffix = isCod ? ' (Cash on Delivery)' : '';
           await notifyUser(caterer_id, {
             notification_type: NOTIFICATION_TYPES.NEW_ORDER,
             title:        'New Order Received',
-            message:      `Order #${shortId} placed for ${firstFood}.`,
+            message:      `Order #${shortId} placed for ${firstFood}${codSuffix}.`,
             reference_id: masterOrder.id,
           });
         } catch (err) {
@@ -197,6 +203,7 @@ async function getMasterOrders(user) {
              'rider_id',                  co.rider_id,
              'rider_name',                (SELECT u2.name FROM users u2 WHERE u2.id = co.rider_id),
              'delivery_confirmation_code',co.delivery_confirmation_code,
+             'payment_method',            co.payment_method,
              'created_at',                co.created_at,
              'items', (
                SELECT json_agg(

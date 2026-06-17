@@ -13,8 +13,11 @@ import DeleteRoundedIcon          from "@mui/icons-material/DeleteRounded";
 import MyLocationRoundedIcon      from "@mui/icons-material/MyLocationRounded";
 import CheckCircleRoundedIcon     from "@mui/icons-material/CheckCircleRounded";
 import ArrowBackRoundedIcon       from "@mui/icons-material/ArrowBackRounded";
-import AppLayout from "../../components/AppLayout";
-import api       from "../../services/api";
+import AppLayout               from "../../components/AppLayout";
+import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
+import api                     from "../../services/api";
+import { ensureMapsInit }      from "../../utils/mapsLoader";
+import { parseAddressComponents } from "../../utils/parseAddressComponents";
 import { brand } from "../../theme";
 
 const STATES = [
@@ -103,7 +106,7 @@ export default function AddressManagementPage() {
     setDialog({ open: true, mode: "edit", data: addr });
   };
 
-  const handleDetectLocation = async () => {
+  const handleDetectLocation = useCallback(() => {
     if (!navigator.geolocation) {
       showSnack("Geolocation is not supported by your browser.", "warning");
       return;
@@ -113,38 +116,44 @@ export default function AddressManagementPage() {
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            { headers: { "Accept-Language": "en" } }
-          );
-          const data = await res.json();
-          const addr = data.address || {};
-          setForm((f) => ({
-            ...f,
-            house_no:  addr.house_number || addr.building || f.house_no,
-            street:    addr.road || addr.neighbourhood || f.street,
-            landmark:  addr.suburb || f.landmark,
-            city:      addr.city || addr.town || addr.village || addr.district || f.city,
-            state:     addr.state || f.state,
-            pincode:   addr.postcode || f.pincode,
-            _lat:      latitude,
-            _lng:      longitude,
-          }));
-          showSnack("Location detected. Review and edit the auto-filled fields.");
+          const ok = await ensureMapsInit("geocoding");
+          if (!ok) throw new Error("Maps unavailable");
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+            if (status === "OK" && results?.[0]) {
+              const parsed = parseAddressComponents(results[0].address_components);
+              setForm((f) => ({
+                ...f,
+                street:  parsed.address || f.street,
+                city:    parsed.city    || f.city,
+                state:   parsed.state   || f.state,
+                pincode: parsed.pincode || f.pincode,
+                _lat:    latitude,
+                _lng:    longitude,
+              }));
+              showSnack("Location detected. Review and edit the auto-filled fields.");
+            } else {
+              setForm((f) => ({ ...f, _lat: latitude, _lng: longitude }));
+              showSnack("Coordinates captured. Please fill in the address.", "info");
+            }
+            setDetecting(false);
+          });
         } catch {
+          setForm((f) => ({ ...f, _lat: latitude, _lng: longitude }));
           showSnack("Could not reverse-geocode location. Please fill manually.", "warning");
-        } finally {
           setDetecting(false);
         }
       },
       (err) => {
         setDetecting(false);
-        const msg = err.code === 1 ? "Location permission denied." : "Could not detect location.";
-        showSnack(msg, "warning");
+        showSnack(
+          err.code === 1 ? "Location permission denied." : "Could not detect location.",
+          "warning"
+        );
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  };
+  }, []);
 
   const handleSave = async () => {
     if (!validate()) return;
@@ -345,9 +354,25 @@ export default function AddressManagementPage() {
                   error={!!errors.house_no} helperText={errors.house_no} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth size="small" label="Street *"
-                  value={form.street} onChange={set("street")}
-                  error={!!errors.street} helperText={errors.street} />
+                <PlacesAutocompleteField
+                  value={form.street}
+                  onChange={(text) => { setForm((f) => ({ ...f, street: text })); setErrors((e) => ({ ...e, street: "" })); }}
+                  onPlaceSelect={({ address, city, state, pincode, lat, lng }) => {
+                    setForm((f) => ({
+                      ...f,
+                      street:  address  || f.street,
+                      city:    city     || f.city,
+                      state:   state    || f.state,
+                      pincode: pincode  || f.pincode,
+                      _lat:    lat      ?? f._lat,
+                      _lng:    lng      ?? f._lng,
+                    }));
+                    setErrors((e) => ({ ...e, street: "", city: "", state: "", pincode: "" }));
+                  }}
+                  label="Street / Area *"
+                  error={!!errors.street}
+                  helperText={errors.street || "Type for Google suggestions"}
+                />
               </Grid>
               <Grid item xs={12}>
                 <TextField fullWidth size="small" label="Landmark (optional)"

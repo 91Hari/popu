@@ -5,9 +5,13 @@ const cartService        = require('../services/cartService');
 
 async function createSplitOrder(req, res, next) {
   try {
-    const { items, customer_lat, customer_lng, payment_proofs } = req.body;
+    const { items, customer_lat, customer_lng, payment_proofs, payment_method } = req.body;
     if (!items || !items.length) {
       return res.status(400).json({ error: 'items are required' });
+    }
+    const method = (payment_method || 'ONLINE').toUpperCase();
+    if (!['ONLINE', 'COD'].includes(method)) {
+      return res.status(400).json({ error: 'payment_method must be ONLINE or COD' });
     }
     const masterOrder = await masterOrderService.createSplitOrder({
       customer_id:    req.user.id,
@@ -15,6 +19,7 @@ async function createSplitOrder(req, res, next) {
       customer_lat,
       customer_lng,
       payment_proofs: payment_proofs || [],
+      payment_method: method,
     });
     await cartService.clearCart(req.user.id);
     res.status(201).json({ masterOrder });

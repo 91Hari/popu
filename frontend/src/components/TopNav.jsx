@@ -36,7 +36,7 @@ const CATERER_NAV = [
   { label: "Dashboard", path: "/caterer",           icon: <DashboardRoundedIcon /> },
   { label: "Add Food",  path: "/caterer/add-food",  icon: <AddCircleOutlineRoundedIcon /> },
   { label: "My Foods",  path: "/caterer/foods",     icon: <RestaurantMenuRoundedIcon /> },
-  { label: "Orders",    path: "/caterer/orders",    icon: <ListAltRoundedIcon /> },
+  { label: "Orders",    path: "/caterer/sub-orders", icon: <ListAltRoundedIcon /> },
 ];
 
 function matchActive(path, currentPath) {

@@ -1,16 +1,36 @@
 import api from "./api";
 
 export default {
-  async login({ email, password }) {
+  async login({ username, password }) {
     return api.request("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     });
   },
-  async register({ name, email, password, role, business_name, address, latitude, longitude }) {
+
+  async register({ name, mobileNumber, email, password, role, address, city, state, pincode, latitude, longitude }) {
     return api.request("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, role, business_name, address, latitude, longitude }),
+      body: JSON.stringify({ name, mobileNumber, email, password, role, address, city, state, pincode, latitude, longitude }),
     });
+  },
+
+  async forgotPassword({ username }) {
+    return api.request("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+  },
+
+  async resetPassword({ token, newPassword }) {
+    return api.request("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
+    });
+  },
+
+  logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   },
 };
