@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Box, Container, Typography, Card, CardContent, Stack,
   Chip, Button, CircularProgress, Alert, Divider,
@@ -55,6 +56,11 @@ function fmtDate(ts) {
 }
 
 export default function CatererSubOrdersPage() {
+  const [searchParams]            = useSearchParams();
+  // Dashboard notification links pass ?highlight=<master_order_id>
+  const highlightMasterId         = searchParams.get("highlight") || "";
+  const cardRefs                  = useRef({});
+
   const [orders, setOrders]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
@@ -82,10 +88,21 @@ export default function CatererSubOrdersPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Poll every 15 s so new orders surface quickly without needing a manual refresh.
   useEffect(() => {
-    const id = setInterval(load, 30_000);
+    const id = setInterval(load, 15_000);
     return () => clearInterval(id);
   }, [load]);
+
+  // Auto-scroll to a highlighted order when the page is loaded from a notification link.
+  useEffect(() => {
+    if (!highlightMasterId || loading) return;
+    const timer = setTimeout(() => {
+      const el = cardRefs.current[highlightMasterId];
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [highlightMasterId, loading]);
 
   const openAssignDialog = async (orderId) => {
     setAssignDialog({ open: true, orderId });
@@ -211,18 +228,27 @@ export default function CatererSubOrdersPage() {
         ) : (
           <Stack spacing={2}>
             {orders.map((order) => {
-              const statusKey  = order.status || "PLACED";
-              const cfg        = STATUS_CFG[statusKey] || { label: statusKey, color: "default", actions: [] };
-              const payCfg     = PAY_CFG[order.payment_status] || PAY_CFG.PENDING;
-              const items      = Array.isArray(order.items) ? order.items : [];
-              const isUpdating = !!updating[order.id];
-              const isCod      = order.payment_method === "COD";
+              const statusKey      = order.status || "PLACED";
+              const cfg            = STATUS_CFG[statusKey] || { label: statusKey, color: "default", actions: [] };
+              const payCfg         = PAY_CFG[order.payment_status] || PAY_CFG.PENDING;
+              const items          = Array.isArray(order.items) ? order.items : [];
+              const isUpdating     = !!updating[order.id];
+              const isCod          = order.payment_method === "COD";
+              const isHighlighted  = highlightMasterId && order.master_order_id === highlightMasterId;
 
               return (
-                <Card key={order.id} elevation={0} sx={{
-                  border: `2px solid ${statusKey === "PLACED" ? brand.gold : brand.border}`,
-                  transition: "border-color 0.2s",
-                }}>
+                <Card
+                  key={order.id}
+                  ref={(el) => { if (el) cardRefs.current[order.master_order_id] = el; }}
+                  elevation={0}
+                  sx={{
+                    border: isHighlighted
+                      ? `2px solid ${brand.orange}`
+                      : `2px solid ${statusKey === "PLACED" ? brand.gold : brand.border}`,
+                    backgroundColor: isHighlighted ? brand.orangeLight : undefined,
+                    transition: "border-color 0.2s, background-color 0.3s",
+                  }}
+                >
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.5 }}>
                       <Box>

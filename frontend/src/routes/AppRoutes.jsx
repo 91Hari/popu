@@ -44,7 +44,6 @@ const TrainingPage      = React.lazy(() => import("../pages/services/TrainingPag
 const CatererDashboard        = React.lazy(() => import("../pages/caterer/CatererDashboard"));
 const AddFoodPage              = React.lazy(() => import("../pages/caterer/AddFoodPage"));
 const FoodListPage             = React.lazy(() => import("../pages/caterer/FoodListPage"));
-const CatererOrdersPage          = React.lazy(() => import("../pages/caterer/CatererOrdersPage"));
 const AvailabilityPage           = React.lazy(() => import("../pages/caterer/AvailabilityPage"));
 const CatererNotificationsPage   = React.lazy(() => import("../pages/caterer/CatererNotificationsPage"));
 const CatererSubOrdersPage       = React.lazy(() => import("../pages/caterer/CatererSubOrdersPage"));
@@ -179,7 +178,7 @@ export default function AppRoutes() {
           <Route path="/caterer/add-food"           element={<C allowed={CATR} element={<AddFoodPage />} />} />
           <Route path="/caterer/edit-food/:id"      element={<C allowed={CATR} element={<EditFoodPage />} />} />
           <Route path="/caterer/foods"              element={<C allowed={CATR} element={<FoodListPage />} />} />
-          <Route path="/caterer/orders"             element={<C allowed={CATR} element={<CatererOrdersPage />} />} />
+          <Route path="/caterer/orders"             element={<Navigate to="/caterer/sub-orders" replace />} />
           <Route path="/caterer/availability"       element={<C allowed={CATR} element={<AvailabilityPage />} />} />
           <Route path="/caterer/notifications"      element={<C allowed={CATR} element={<CatererNotificationsPage />} />} />
           <Route path="/caterer/sub-orders"         element={<C allowed={CATR} element={<CatererSubOrdersPage />} />} />
