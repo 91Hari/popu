@@ -33,7 +33,12 @@ const CATERER_ORDER_WITH_ITEMS = `
   ORDER BY co.created_at ASC
 `;
 
-async function createSplitOrder({ customer_id, items, customer_lat, customer_lng, payment_proofs = [], payment_method = 'ONLINE' }) {
+async function createSplitOrder({
+  customer_id, items, customer_lat, customer_lng,
+  delivery_house_no, delivery_street, delivery_landmark,
+  delivery_city, delivery_state, delivery_pincode,
+  payment_proofs = [], payment_method = 'ONLINE',
+}) {
   const isCod = payment_method === 'COD';
   if (!items || items.length === 0) {
     const err = new Error('Order must contain at least one item');
@@ -89,9 +94,14 @@ async function createSplitOrder({ customer_id, items, customer_lat, customer_lng
     const storedLng = !isNaN(cLng) ? cLng : null;
 
     const { rows: moRows } = await client.query(
-      `INSERT INTO master_orders (customer_id, total_amount, customer_lat, customer_lng)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [customer_id, total_amount, storedLat, storedLng]
+      `INSERT INTO master_orders
+         (customer_id, total_amount, customer_lat, customer_lng,
+          delivery_house_no, delivery_street, delivery_landmark,
+          delivery_city, delivery_state, delivery_pincode)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [customer_id, total_amount, storedLat, storedLng,
+       delivery_house_no || null, delivery_street || null, delivery_landmark || null,
+       delivery_city     || null, delivery_state  || null, delivery_pincode  || null]
     );
     const masterOrder = moRows[0];
 

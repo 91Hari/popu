@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import ShoppingCartCheckoutRoundedIcon from "@mui/icons-material/ShoppingCartCheckoutRounded";
 import DinnerDiningRoundedIcon         from "@mui/icons-material/DinnerDiningRounded";
+import LocationOnRoundedIcon           from "@mui/icons-material/LocationOnRounded";
 import ContentCopyRoundedIcon          from "@mui/icons-material/ContentCopyRounded";
 import CheckRoundedIcon                from "@mui/icons-material/CheckRounded";
 import QrCodeRoundedIcon               from "@mui/icons-material/QrCodeRounded";
@@ -59,10 +60,11 @@ export default function SplitCheckoutPage() {
   const customerCoords = useCustomerGeo();
   const { items, total, clearCart } = useCart();
 
-  const [catererProfiles, setCatererProfiles] = useState({});
-  const [loading,         setLoading]         = useState(false);
-  const [placing,         setPlacing]         = useState(false);
-  const [error,           setError]           = useState("");
+  const [catererProfiles,  setCatererProfiles] = useState({});
+  const [defaultAddress,   setDefaultAddress]  = useState(null);
+  const [loading,          setLoading]         = useState(false);
+  const [placing,          setPlacing]         = useState(false);
+  const [error,            setError]           = useState("");
   const [copied,          setCopied]          = useState(null);
   const [proofFiles,      setProofFiles]      = useState({});
   const [qrModal,         setQrModal]         = useState({ open: false });
@@ -81,6 +83,17 @@ export default function SplitCheckoutPage() {
   }, [items]);
 
   const unavailableItems = useMemo(() => items.filter((i) => i.is_available === false), [items]);
+
+  useEffect(() => {
+    api.request("/profile/addresses")
+      .then((addrs) => {
+        const addr = Array.isArray(addrs)
+          ? (addrs.find((a) => a.is_default) || addrs[0] || null)
+          : null;
+        setDefaultAddress(addr);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const ids = [...new Set(items.map((i) => i.caterer_id))];
@@ -169,10 +182,16 @@ export default function SplitCheckoutPage() {
       await api.request("/checkout/split-order", {
         method: "POST",
         body: JSON.stringify({
-          items:          items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
-          customer_lat:   customerCoords?.lat ?? null,
-          customer_lng:   customerCoords?.lng ?? null,
-          payment_method: paymentMethod,
+          items:             items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
+          customer_lat:      customerCoords?.lat ?? defaultAddress?.latitude  ?? null,
+          customer_lng:      customerCoords?.lng ?? defaultAddress?.longitude ?? null,
+          delivery_house_no: defaultAddress?.house_no  ?? null,
+          delivery_street:   defaultAddress?.street    ?? null,
+          delivery_landmark: defaultAddress?.landmark  ?? null,
+          delivery_city:     defaultAddress?.city      ?? null,
+          delivery_state:    defaultAddress?.state     ?? null,
+          delivery_pincode:  defaultAddress?.pincode   ?? null,
+          payment_method:    paymentMethod,
           payment_proofs,
         }),
       });
@@ -205,6 +224,32 @@ export default function SplitCheckoutPage() {
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+
+        {/* ── Delivering To ── */}
+        {defaultAddress && (
+          <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2, mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+              <LocationOnRoundedIcon sx={{ color: brand.gold, fontSize: 20, mt: 0.2, flexShrink: 0 }} />
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.8 }}>
+                  Delivering to
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }}>
+                  {defaultAddress.full_name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.65, mt: 0.25 }}>
+                  {[
+                    defaultAddress.house_no,
+                    defaultAddress.street,
+                    defaultAddress.landmark,
+                    defaultAddress.city,
+                    [defaultAddress.state, defaultAddress.pincode].filter(Boolean).join(" — "),
+                  ].filter(Boolean).join(", ")}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        )}
 
         {unavailableItems.length > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>

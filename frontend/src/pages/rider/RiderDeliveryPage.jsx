@@ -9,6 +9,7 @@ import CheckCircleRoundedIcon  from "@mui/icons-material/CheckCircleRounded";
 import TwoWheelerRoundedIcon   from "@mui/icons-material/TwoWheelerRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import PersonRoundedIcon       from "@mui/icons-material/PersonRounded";
+import LocationOnRoundedIcon   from "@mui/icons-material/LocationOnRounded";
 import LocalAtmRoundedIcon     from "@mui/icons-material/LocalAtmRounded";
 import GpsFixedRoundedIcon     from "@mui/icons-material/GpsFixedRounded";
 import AppLayout from "../../components/AppLayout";
@@ -107,11 +108,28 @@ export default function RiderDeliveryPage() {
     const destLat  = order?.customer_lat;
     const destLng  = order?.customer_lng;
     const riderPos = riderPosRef.current;
-    if (destLat && destLng) {
-      const url = riderPos
-        ? `https://www.google.com/maps/dir/?api=1&origin=${riderPos.lat},${riderPos.lng}&destination=${destLat},${destLng}&travelmode=driving`
-        : `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
-      window.open(url, "_blank", "noopener,noreferrer");
+
+    // Build destination: prefer precise coordinates, fall back to address text
+    const hasCoords = destLat && destLng;
+    const addrText  = [
+      order?.delivery_house_no,
+      order?.delivery_street,
+      order?.delivery_city,
+      order?.delivery_state,
+      order?.delivery_pincode,
+    ].filter(Boolean).join(", ");
+
+    const dest = hasCoords
+      ? `${destLat},${destLng}`
+      : addrText ? encodeURIComponent(addrText) : null;
+
+    if (dest) {
+      const origin = riderPos ? `&origin=${riderPos.lat},${riderPos.lng}` : "";
+      window.open(
+        `https://www.google.com/maps/dir/?api=1${origin}&destination=${dest}&travelmode=driving`,
+        "_blank",
+        "noopener,noreferrer"
+      );
     }
 
     try {
@@ -249,6 +267,40 @@ export default function RiderDeliveryPage() {
                     )}
                   </Box>
                 </Box>
+
+                {/* ── Delivery Address ── */}
+                {(order.delivery_street || order.delivery_city || order.delivery_house_no) && (
+                  <Box
+                    sx={{
+                      display: "flex", alignItems: "flex-start", gap: 1,
+                      mb: 1.5, p: 1.25,
+                      backgroundColor: brand.greenLight,
+                      borderRadius: 1.5,
+                      border: `1px solid ${brand.border}`,
+                    }}
+                  >
+                    <LocationOnRoundedIcon sx={{ fontSize: 16, color: brand.orange, mt: 0.2, flexShrink: 0 }} />
+                    <Box>
+                      <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange, display: "block", mb: 0.25 }}>
+                        Delivery Address
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.primary", lineHeight: 1.7, display: "block" }}>
+                        {[
+                          order.delivery_house_no,
+                          order.delivery_street,
+                          order.delivery_landmark,
+                          order.delivery_city,
+                          [order.delivery_state, order.delivery_pincode].filter(Boolean).join(" — "),
+                        ].filter(Boolean).join(", ")}
+                      </Typography>
+                      {(order.delivery_lat || order.customer_lat) && (
+                        <Typography variant="caption" sx={{ color: brand.orange, fontWeight: 600, display: "block", mt: 0.5 }}>
+                          📍 Delivery location available — navigation opens on Start Delivery
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                )}
 
                 {Array.isArray(order.items) && order.items.length > 0 && (
                   <Stack spacing={0.5}>
