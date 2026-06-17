@@ -226,15 +226,31 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
   const caterer_id = riderRows[0]?.caterer_id;
 
   const { rows } = await pool.query(
-    `SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code, co.rider_id,
+    `WITH da AS (
+       SELECT DISTINCT ON (user_id)
+              user_id, house_no, street, landmark, city, state, pincode, latitude, longitude
+       FROM user_addresses
+       WHERE is_default = TRUE
+       ORDER BY user_id, created_at DESC
+     )
+     SELECT co.id, co.status, co.subtotal, co.delivery_confirmation_code, co.rider_id,
             co.payment_method, co.payment_status,
             mo.customer_id, mo.customer_lat, mo.customer_lng,
             u.name  AS customer_name,
             u.email AS customer_email,
             u.phone AS customer_phone,
-            uc.upi_id         AS caterer_upi_id,
-            uc.phonepe_id     AS caterer_phonepe_id,
-            uc.payment_name   AS caterer_payment_name,
+            -- Delivery address: order snapshot → default saved address → user profile (3-tier fallback)
+            COALESCE(mo.delivery_house_no, da.house_no)                   AS delivery_house_no,
+            COALESCE(mo.delivery_street,   da.street,    u.address)       AS delivery_street,
+            COALESCE(mo.delivery_landmark, da.landmark)                   AS delivery_landmark,
+            COALESCE(mo.delivery_city,     da.city,      u.city)          AS delivery_city,
+            COALESCE(mo.delivery_state,    da.state,     u.state)         AS delivery_state,
+            COALESCE(mo.delivery_pincode,  da.pincode,   u.pincode)       AS delivery_pincode,
+            COALESCE(da.latitude,          mo.customer_lat)               AS delivery_lat,
+            COALESCE(da.longitude,         mo.customer_lng)               AS delivery_lng,
+            uc.upi_id            AS caterer_upi_id,
+            uc.phonepe_id        AS caterer_phonepe_id,
+            uc.payment_name      AS caterer_payment_name,
             uc.qr_code_image_url AS caterer_qr_url,
             json_agg(
               json_build_object(
@@ -250,10 +266,15 @@ async function lookupOrderForRider(caterer_order_id, rider_id) {
      JOIN users uc ON uc.id = co.caterer_id
      JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
      JOIN food_items f ON f.id = coi.food_item_id
+     LEFT JOIN da ON da.user_id = mo.customer_id
      WHERE co.id = $1
        AND (co.caterer_id = $2 OR co.rider_id = $3)
      GROUP BY co.id, mo.customer_id, mo.customer_lat, mo.customer_lng,
-              u.name, u.email, u.phone,
+              mo.delivery_house_no, mo.delivery_street, mo.delivery_landmark,
+              mo.delivery_city, mo.delivery_state, mo.delivery_pincode,
+              u.name, u.email, u.phone, u.address, u.city, u.state, u.pincode,
+              da.house_no, da.street, da.landmark, da.city, da.state, da.pincode,
+              da.latitude, da.longitude,
               uc.upi_id, uc.phonepe_id, uc.payment_name, uc.qr_code_image_url`,
     [caterer_order_id, caterer_id, rider_id]
   );
