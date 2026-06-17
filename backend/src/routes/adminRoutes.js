@@ -1,10 +1,10 @@
-const express    = require('express');
-const router     = express.Router();
-const ctrl       = require('../controllers/adminController');
-const psCtrl     = require('../controllers/platformSettingsController');
-const payCtrl    = require('../controllers/paymentController');
-const refundCtrl = require('../controllers/refundController');
-const svcCtrl    = require('../controllers/serviceConfigController');
+const express      = require('express');
+const router       = express.Router();
+const ctrl         = require('../controllers/adminController');
+const psCtrl       = require('../controllers/platformSettingsController');
+const payCtrl      = require('../controllers/paymentController');
+const refundCtrl   = require('../controllers/refundController');
+const svcCtrl      = require('../controllers/serviceConfigController');
 const { authenticate, requireRole } = require('../middlewares/authMiddleware');
 
 router.use(authenticate, requireRole('ADMIN'));

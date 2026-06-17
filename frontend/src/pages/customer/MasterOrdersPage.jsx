@@ -405,7 +405,7 @@ export default function MasterOrdersPage() {
                                           "&:hover": { backgroundColor: "#0D47A1" },
                                         }}
                                       >
-                                        Track Order
+                                        Track Delivery
                                       </Button>
                                     </>
                                   )}
