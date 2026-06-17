@@ -101,7 +101,10 @@ async function login({ username, password }) {
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 
-async function register({ name, mobileNumber, email, password, role }) {
+async function register({
+  name, mobileNumber, email, password, role,
+  address, city, state, pincode, latitude, longitude,
+}) {
   if (!name?.trim()) throw makeError('Name is required', 400);
   if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber).trim())) {
     throw makeError('A valid 10-digit mobile number is required', 400);
@@ -133,15 +136,37 @@ async function register({ name, mobileNumber, email, password, role }) {
 
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
+  const cleanAddress = address?.trim() || null;
+  const cleanCity    = city?.trim()    || null;
+  const cleanState   = state?.trim()   || null;
+  const cleanPincode = pincode?.trim() || null;
+  const lat          = latitude  ? Number(latitude)  : null;
+  const lng          = longitude ? Number(longitude) : null;
+
   const { rows } = await pool.query(
-    `INSERT INTO users (name, email, mobile_number, password_hash, role)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, name, email, mobile_number, role`,
-    [name.trim(), cleanEmail, mobile, password_hash, userRole]
+    `INSERT INTO users
+       (name, email, mobile_number, password_hash, role, address, city, state, pincode, latitude, longitude)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     RETURNING id, name, email, mobile_number, role, address, city, state, pincode, latitude, longitude`,
+    [name.trim(), cleanEmail, mobile, password_hash, userRole,
+     cleanAddress, cleanCity, cleanState, cleanPincode, lat, lng]
   );
 
+  const newUser = rows[0];
+
+  // Create a default delivery address entry if location was captured during registration
+  if (cleanAddress && cleanCity && cleanState && cleanPincode) {
+    await pool.query(
+      `INSERT INTO user_addresses
+         (user_id, full_name, mobile, house_no, street, city, state, pincode, latitude, longitude, is_default)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,TRUE)`,
+      [newUser.id, name.trim(), mobile, cleanAddress, cleanAddress,
+       cleanCity, cleanState, cleanPincode, lat, lng]
+    );
+  }
+
   console.log(`[Auth] New ${userRole} registered — mobile: ${mobile}`);
-  return { success: true, user: rows[0] };
+  return { success: true, user: newUser };
 }
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────

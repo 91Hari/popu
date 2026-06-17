@@ -8,10 +8,10 @@ export default {
     });
   },
 
-  async register({ name, mobileNumber, email, password, role }) {
+  async register({ name, mobileNumber, email, password, role, address, city, state, pincode, latitude, longitude }) {
     return api.request("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, mobileNumber, email, password, role }),
+      body: JSON.stringify({ name, mobileNumber, email, password, role, address, city, state, pincode, latitude, longitude }),
     });
   },
 

@@ -18,11 +18,17 @@ async function login(req, res, next) {
 
 async function register(req, res, next) {
   try {
-    const { name, mobileNumber, email, password } = req.body;
+    const {
+      name, mobileNumber, email, password, role,
+      address, city, state, pincode, latitude, longitude,
+    } = req.body;
     if (!name?.trim() || !mobileNumber || !password) {
       return res.status(400).json({ error: 'name, mobileNumber, and password are required' });
     }
-    const result = await authService.register({ name, mobileNumber, email, password });
+    const result = await authService.register({
+      name, mobileNumber, email, password, role,
+      address, city, state, pincode, latitude, longitude,
+    });
     res.status(201).json(result);
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });

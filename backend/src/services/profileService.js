@@ -10,7 +10,8 @@ const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '7d';
 
 async function getProfile(userId) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, phone, mobile_number, date_of_birth, gender, role, created_at
+    `SELECT id, name, email, phone, mobile_number, date_of_birth, gender, role, created_at,
+            address, city, state, pincode, latitude, longitude
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -18,17 +19,31 @@ async function getProfile(userId) {
   return rows[0];
 }
 
-async function updateProfile(userId, { name, phone, date_of_birth, gender }) {
+async function updateProfile(userId, {
+  name, phone, date_of_birth, gender,
+  address, city, state, pincode, latitude, longitude,
+}) {
   const { rows } = await pool.query(
     `UPDATE users
      SET name          = COALESCE(NULLIF($1,''), name),
          phone         = COALESCE(NULLIF($2,''), phone),
          date_of_birth = $3,
          gender        = NULLIF($4,''),
+         address       = COALESCE(NULLIF($5,''), address),
+         city          = COALESCE(NULLIF($6,''), city),
+         state         = COALESCE(NULLIF($7,''), state),
+         pincode       = COALESCE(NULLIF($8,''), pincode),
+         latitude      = COALESCE($9,  latitude),
+         longitude     = COALESCE($10, longitude),
          updated_at    = NOW()
-     WHERE id = $5
-     RETURNING id, name, email, phone, mobile_number, date_of_birth, gender`,
-    [name || null, phone || null, date_of_birth || null, gender || null, userId]
+     WHERE id = $11
+     RETURNING id, name, email, phone, mobile_number, date_of_birth, gender,
+               address, city, state, pincode, latitude, longitude`,
+    [name   || null, phone  || null, date_of_birth || null, gender  || null,
+     address || null, city  || null, state         || null, pincode || null,
+     latitude  != null ? Number(latitude)  : null,
+     longitude != null ? Number(longitude) : null,
+     userId]
   );
   return rows[0];
 }
