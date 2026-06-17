@@ -71,6 +71,27 @@ const adminService = {
     if (status) p.set("status", status);
     return api.request(`/admin/refunds?${p}`);
   },
+  async getAccountRequests({ page = 1, limit = 20, status } = {}) {
+    const p = new URLSearchParams({ page, limit });
+    if (status) p.set("status", status);
+    return api.request(`/admin/account-requests?${p}`);
+  },
+  async getDeletedUsers({ page = 1, limit = 20 } = {}) {
+    const p = new URLSearchParams({ page, limit });
+    return api.request(`/admin/account-requests/deleted?${p}`);
+  },
+  async approveClosure(id) {
+    return api.request(`/admin/account-requests/${id}/approve`, { method: "POST" });
+  },
+  async rejectClosure(id, notes) {
+    return api.request(`/admin/account-requests/${id}/reject`, { method: "POST", body: JSON.stringify({ notes }) });
+  },
+  async restoreAccount(id) {
+    return api.request(`/admin/accounts/${id}/restore`, { method: "POST" });
+  },
+  async runAnonymization() {
+    return api.request("/admin/accounts/anonymize", { method: "POST" });
+  },
 };
 
 export default adminService;

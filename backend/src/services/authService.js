@@ -57,13 +57,17 @@ async function login({ username, password }) {
     : username.trim();
 
   const { rows } = await pool.query(
-    `SELECT id, name, email, mobile_number, password_hash, role, is_active
+    `SELECT id, name, email, mobile_number, password_hash, role, is_active, is_deleted
      FROM users WHERE ${column} = $1`,
     [value]
   );
 
   const user = rows[0];
   if (!user) throw makeError('Invalid credentials', 401);
+
+  if (user.is_deleted) {
+    throw makeError('This account has been deleted.', 403);
+  }
 
   if (!user.is_active) {
     throw makeError('Account is deactivated. Please contact support.', 403);

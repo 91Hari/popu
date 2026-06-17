@@ -5,6 +5,7 @@ const psCtrl       = require('../controllers/platformSettingsController');
 const payCtrl      = require('../controllers/paymentController');
 const refundCtrl   = require('../controllers/refundController');
 const svcCtrl      = require('../controllers/serviceConfigController');
+const acctCtrl     = require('../controllers/adminAccountController');
 const { authenticate, requireRole } = require('../middlewares/authMiddleware');
 
 router.use(authenticate, requireRole('ADMIN'));
@@ -30,5 +31,12 @@ router.get('/refunds',                   refundCtrl.adminListRefunds);
 
 router.get('/services',                  svcCtrl.getAllServices);
 router.put('/services/:serviceCode',     svcCtrl.updateService);
+
+router.get('/account-requests',              acctCtrl.getAccountRequests);
+router.get('/account-requests/deleted',      acctCtrl.getDeletedUsers);
+router.post('/account-requests/:id/approve', acctCtrl.approveClosure);
+router.post('/account-requests/:id/reject',  acctCtrl.rejectClosure);
+router.post('/accounts/:id/restore',         acctCtrl.restoreAccount);
+router.post('/accounts/anonymize',           acctCtrl.runAnonymization);
 
 module.exports = router;

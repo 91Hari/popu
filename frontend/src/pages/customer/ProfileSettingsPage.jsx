@@ -1,16 +1,19 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container, Box, Typography, Button, IconButton, Card,
   TextField, CircularProgress, Alert, Snackbar, MenuItem, Stack,
-  Divider, InputAdornment,
+  Divider, InputAdornment, Dialog, DialogTitle, DialogContent,
+  DialogContentText, DialogActions,
 } from "@mui/material";
 import SettingsRoundedIcon  from "@mui/icons-material/SettingsRounded";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import SaveRoundedIcon      from "@mui/icons-material/SaveRounded";
-import PhoneRoundedIcon     from "@mui/icons-material/PhoneRounded";
-import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
-import MapRoundedIcon        from "@mui/icons-material/MapRounded";
+import SaveRoundedIcon           from "@mui/icons-material/SaveRounded";
+import PhoneRoundedIcon          from "@mui/icons-material/PhoneRounded";
+import MyLocationRoundedIcon     from "@mui/icons-material/MyLocationRounded";
+import MapRoundedIcon            from "@mui/icons-material/MapRounded";
+import DeleteForeverRoundedIcon  from "@mui/icons-material/DeleteForeverRounded";
+import WarningAmberRoundedIcon   from "@mui/icons-material/WarningAmberRounded";
 import AppLayout              from "../../components/AppLayout";
 import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
 import MapLocationPicker      from "../../components/MapLocationPicker";
@@ -97,6 +100,48 @@ export default function ProfileSettingsPage() {
   const [mobileError,   setMobileError]   = useState("");
   const [savingMobile,  setSavingMobile]  = useState(false);
   const [mobileEditing, setMobileEditing] = useState(false);
+
+  // ── danger zone ──────────────────────────────────────────────────────────────
+  const userRole = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("user"))?.role?.toUpperCase() || ""; } catch { return ""; }
+  }, []);
+  const [deleteDlg, setDeleteDlg]           = useState(false);
+  const [deleteConfirm, setDeleteConfirm]   = useState("");
+  const [deleting, setDeleting]             = useState(false);
+  const [closureReason, setClosureReason]   = useState("");
+  const [submittingClosure, setSubmittingClosure] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "DELETE") return;
+    setDeleting(true);
+    try {
+      await api.request("/account/request-delete", { method: "POST" });
+      showSnack("Account deleted. You will be signed out.");
+      setTimeout(() => {
+        localStorage.clear();
+        navigate("/login");
+      }, 1500);
+    } catch (err) {
+      showSnack(err?.message || "Failed to delete account.", "error");
+      setDeleting(false);
+    }
+  };
+
+  const handleClosureSubmit = async () => {
+    setSubmittingClosure(true);
+    try {
+      const res = await api.request("/account/request-closure", {
+        method: "POST",
+        body: JSON.stringify({ reason: closureReason.trim() || undefined }),
+      });
+      showSnack(res.message || "Closure request submitted.");
+      setClosureReason("");
+    } catch (err) {
+      showSnack(err?.message || "Failed to submit closure request.", "error");
+    } finally {
+      setSubmittingClosure(false);
+    }
+  };
 
   // ── snackbar ─────────────────────────────────────────────────────────────────
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
@@ -483,7 +528,7 @@ export default function ProfileSettingsPage() {
                     <TextField
                       fullWidth size="small" label="Phone (alternate)"
                       value={form.phone} onChange={set("phone")}
-                      inputProps={{ maxLength: 15 }}
+                      slotProps={{ htmlInput: { maxLength: 15 } }}
                       helperText="Optional alternate contact number"
                     />
                   </Stack>
@@ -527,6 +572,69 @@ export default function ProfileSettingsPage() {
                 </Button>
               </Stack>
             </Card>
+
+            {/* ── Danger Zone ───────────────────────────────────────────────── */}
+            {(userRole === "CUSTOMER" || userRole === "RIDER" || userRole === "CATERER") && (
+              <Card
+                elevation={0}
+                sx={{ border: "1.5px solid #FFCDD2", borderRadius: 3, p: 3, backgroundColor: "#FFF8F8" }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                  <WarningAmberRoundedIcon sx={{ color: "#C62828", fontSize: 20 }} />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#C62828", textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: 1 }}>
+                    Danger Zone
+                  </Typography>
+                </Box>
+
+                {(userRole === "CUSTOMER" || userRole === "RIDER") && (
+                  <>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2, lineHeight: 1.6 }}>
+                      Permanently delete your account. Your data will be retained for 30 days for legal compliance,
+                      then anonymized. This cannot be undone once the retention period expires.
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<DeleteForeverRoundedIcon />}
+                      onClick={() => { setDeleteDlg(true); setDeleteConfirm(""); }}
+                      sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
+                    >
+                      Delete My Account
+                    </Button>
+                  </>
+                )}
+
+                {userRole === "CATERER" && (
+                  <>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2, lineHeight: 1.6 }}>
+                      Request to close your caterer account. An admin will review your request. All active
+                      orders must be completed or cancelled before closure can be approved.
+                    </Typography>
+                    <Stack spacing={1.5}>
+                      <TextField
+                        fullWidth multiline rows={3}
+                        size="small"
+                        label="Reason for closure (optional)"
+                        value={closureReason}
+                        onChange={(e) => setClosureReason(e.target.value)}
+                        disabled={submittingClosure}
+                        sx={{ backgroundColor: "#fff" }}
+                      />
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={submittingClosure ? <CircularProgress size={14} color="inherit" /> : <DeleteForeverRoundedIcon />}
+                        onClick={handleClosureSubmit}
+                        disabled={submittingClosure}
+                        sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5, alignSelf: "flex-start" }}
+                      >
+                        {submittingClosure ? "Submitting…" : "Request Account Closure"}
+                      </Button>
+                    </Stack>
+                  </>
+                )}
+              </Card>
+            )}
           </Stack>
         )}
       </Container>
@@ -538,6 +646,48 @@ export default function ProfileSettingsPage() {
         initialLat={loc.lat}
         initialLng={loc.lng}
       />
+
+      {/* Delete account confirmation dialog (Customer / Rider) */}
+      <Dialog open={deleteDlg} onClose={() => !deleting && setDeleteDlg(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, color: "#C62828" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <DeleteForeverRoundedIcon /> Delete Account
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2.5, lineHeight: 1.7 }}>
+            This will <strong>permanently delete your account</strong>. Your data is retained for 30 days
+            then anonymized — orders and payments are kept for compliance. You cannot undo this.
+          </DialogContentText>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 0.75 }}>
+            Type <strong>DELETE</strong> to confirm:
+          </Typography>
+          <TextField
+            fullWidth size="small"
+            placeholder="DELETE"
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+            disabled={deleting}
+            error={deleteConfirm.length > 0 && deleteConfirm !== "DELETE"}
+            sx={{ fontFamily: "monospace", letterSpacing: "0.1em" }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setDeleteDlg(false)} disabled={deleting} sx={{ textTransform: "none" }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={deleting ? <CircularProgress size={14} color="inherit" /> : <DeleteForeverRoundedIcon />}
+            onClick={handleDeleteAccount}
+            disabled={deleteConfirm !== "DELETE" || deleting}
+            sx={{ fontWeight: 700, textTransform: "none" }}
+          >
+            {deleting ? "Deleting…" : "Yes, Delete My Account"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snack.open}

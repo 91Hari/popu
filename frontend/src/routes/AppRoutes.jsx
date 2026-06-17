@@ -84,7 +84,8 @@ const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/Admin
 const PlatformSettingsPage       = React.lazy(() => import("../pages/admin/PlatformSettingsPage"));
 const AdminPaymentsPage          = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
 const AdminRefundsPage           = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
-const ServiceManagementPage      = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
+const ServiceManagementPage          = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
+const AdminAccountManagementPage     = React.lazy(() => import("../pages/admin/AdminAccountManagementPage"));
 const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
 // Tiffin Box module
@@ -224,6 +225,7 @@ export default function AppRoutes() {
           <Route path="/admin/services"            element={<C allowed={ADMIN} element={<ServiceManagementPage />} />} />
           {/* Tiffin Box — admin */}
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
+          <Route path="/admin/account-management" element={<C allowed={ADMIN} element={<AdminAccountManagementPage />} />} />
 
           <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />
