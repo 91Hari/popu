@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader } from "@googlemaps/js-api-loader";
+import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import {
   Box, Card, CardContent, Typography, Chip, IconButton,
   CircularProgress, Alert, Divider, Stack, Button,
@@ -16,14 +16,12 @@ import GpsOffRoundedIcon         from "@mui/icons-material/GpsOffRounded";
 import MapRoundedIcon            from "@mui/icons-material/MapRounded";
 import riderService from "../../services/riderService";
 
-// ── Singleton loader — prevents double-loading if component remounts ──────────
+// ── v2 functional API — setOptions replaces the removed Loader class ─────────
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
-const mapsLoader = new Loader({
-  apiKey: API_KEY,
-  version: "weekly",
-  libraries: ["maps", "routes", "geometry", "marker"],
-});
+if (API_KEY) {
+  setOptions({ apiKey: API_KEY, version: "weekly" });
+}
 
 // ── SVG marker builder ────────────────────────────────────────────────────────
 function buildMarkerSvg(bg, iconPath, size = 44) {
@@ -220,13 +218,16 @@ export default function RiderTrackingPage() {
           return;
         }
 
-        // Load the SDK (returns the google namespace)
-        const google = await mapsLoader.load();
+        // importLibrary loads each library and populates window.google.maps
+        const { Map } = await importLibrary("maps");
         if (destroyed) return;
-        googleRef.current = google;
-
-        const { Map } = await google.maps.importLibrary("maps");
+        await Promise.all([
+          importLibrary("marker"),
+          importLibrary("routes"),
+          importLibrary("geometry"),
+        ]);
         if (destroyed) return;
+        googleRef.current = window.google;
 
         mapObj.current = new Map(mapDivRef.current, {
           zoom:              14,
