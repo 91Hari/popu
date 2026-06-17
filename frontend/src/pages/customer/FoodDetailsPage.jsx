@@ -24,7 +24,7 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import DirectionsBikeRoundedIcon from "@mui/icons-material/DirectionsBikeRounded";
 import foodService from "../../services/foodService";
-import orderService from "../../services/orderService";
+import { useCart } from "../../contexts/CartContext";
 import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 import { useCustomerGeo } from "../../utils/geoUtils";
@@ -33,6 +33,7 @@ export default function FoodDetailsPage() {
   const { id }         = useParams();
   const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
+  const { addToCart }         = useCart();
   const [food, setFood]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
@@ -77,15 +78,11 @@ export default function FoodDetailsPage() {
     setPlacing(true);
     setError("");
     try {
-      await orderService.createOrder({
-        items: [{ food_item_id: food.id, quantity: qty }],
-        customer_lat: customerCoords?.lat,
-        customer_lng: customerCoords?.lng,
-      });
-      navigate("/customer/orders");
+      await addToCart(food.foodId || food.id, qty);
+      navigate("/checkout/split");
     } catch (err) {
-      console.error("Place order failed:", err);
-      setError(err?.message || "Failed to place order. Please try again.");
+      console.error("Add to cart failed:", err);
+      setError(err?.message || "Failed to add to cart. Please try again.");
     } finally {
       setPlacing(false);
     }

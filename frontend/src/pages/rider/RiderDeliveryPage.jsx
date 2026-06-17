@@ -32,6 +32,7 @@ export default function RiderDeliveryPage() {
   const [gpsActive, setGpsActive]       = useState(false);
   const watchIdRef                      = useRef(null);
   const lastPushRef                     = useRef(0);
+  const riderPosRef                     = useRef(null);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -46,6 +47,17 @@ export default function RiderDeliveryPage() {
   }, [id]);
 
   useEffect(() => { loadOrder(); }, [loadOrder]);
+
+  // Pre-load rider GPS so it's ready synchronously when Start Delivery is tapped
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => { riderPosRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+      (err) => console.warn("[Rider GPS pre-load]", err.message),
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 10_000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   // GPS tracking — active only while status = OUT_FOR_DELIVERY
   useEffect(() => {
@@ -92,14 +104,14 @@ export default function RiderDeliveryPage() {
 
     // Open navigation synchronously inside the click event so mobile browsers
     // (iOS Safari, Android Chrome) don't treat it as a blocked popup.
-    const destLat = order?.customer_lat;
-    const destLng = order?.customer_lng;
+    const destLat  = order?.customer_lat;
+    const destLng  = order?.customer_lng;
+    const riderPos = riderPosRef.current;
     if (destLat && destLng) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`,
-        "_blank",
-        "noopener,noreferrer"
-      );
+      const url = riderPos
+        ? `https://www.google.com/maps/dir/?api=1&origin=${riderPos.lat},${riderPos.lng}&destination=${destLat},${destLng}&travelmode=driving`
+        : `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
+      window.open(url, "_blank", "noopener,noreferrer");
     }
 
     try {
