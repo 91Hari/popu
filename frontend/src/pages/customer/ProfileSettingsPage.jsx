@@ -10,8 +10,10 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SaveRoundedIcon      from "@mui/icons-material/SaveRounded";
 import PhoneRoundedIcon     from "@mui/icons-material/PhoneRounded";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
+import MapRoundedIcon        from "@mui/icons-material/MapRounded";
 import AppLayout              from "../../components/AppLayout";
 import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
+import MapLocationPicker      from "../../components/MapLocationPicker";
 import api                    from "../../services/api";
 import { ensureMapsInit }     from "../../utils/mapsLoader";
 import { parseAddressComponents } from "../../utils/parseAddressComponents";
@@ -35,6 +37,7 @@ export default function ProfileSettingsPage() {
   const [locErrors, setLocErrors] = useState({});
   const [detecting, setDetecting] = useState(false);
   const [savingLoc, setSavingLoc] = useState(false);
+  const [mapOpen, setMapOpen]     = useState(false);
 
   const setLocField = (fields) => setLoc((f) => ({ ...f, ...fields }));
 
@@ -179,6 +182,12 @@ export default function ProfileSettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleMapConfirm = ({ address, city, state, pincode, lat, lng }) => {
+    setLocField({ address, city, addrState: state, pincode, lat, lng });
+    setLocErrors({});
+    showSnack("Location pinned on map — review and save.");
   };
 
   // ── location save ────────────────────────────────────────────────────────────
@@ -367,21 +376,36 @@ export default function ProfileSettingsPage() {
               </Typography>
 
               <Stack spacing={2}>
-                <Button
-                  variant="outlined" fullWidth
-                  startIcon={detecting
-                    ? <CircularProgress size={16} sx={{ color: brand.orange }} />
-                    : <MyLocationRoundedIcon />}
-                  onClick={handleDetectLocation}
-                  disabled={detecting || savingLoc}
-                  sx={{
-                    borderColor: brand.orange, color: brand.orange, fontWeight: 700,
-                    textTransform: "none", borderRadius: 1.5,
-                    "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
-                  }}
-                >
-                  {detecting ? "Detecting location…" : "Use Current Location"}
-                </Button>
+                <Stack direction="row" spacing={1.5}>
+                  <Button
+                    fullWidth variant="outlined"
+                    startIcon={detecting
+                      ? <CircularProgress size={15} sx={{ color: brand.orange }} />
+                      : <MyLocationRoundedIcon fontSize="small" />}
+                    onClick={handleDetectLocation}
+                    disabled={detecting || savingLoc}
+                    sx={{
+                      borderColor: brand.orange, color: brand.orange, fontWeight: 700,
+                      textTransform: "none", borderRadius: 1.5, fontSize: "0.82rem",
+                      "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
+                    }}
+                  >
+                    {detecting ? "Detecting…" : "Use GPS"}
+                  </Button>
+                  <Button
+                    fullWidth variant="outlined"
+                    startIcon={<MapRoundedIcon fontSize="small" />}
+                    onClick={() => setMapOpen(true)}
+                    disabled={detecting || savingLoc}
+                    sx={{
+                      borderColor: brand.orange, color: brand.orange, fontWeight: 700,
+                      textTransform: "none", borderRadius: 1.5, fontSize: "0.82rem",
+                      "&:hover": { borderColor: brand.orange, backgroundColor: brand.greenLight },
+                    }}
+                  >
+                    Locate on Map
+                  </Button>
+                </Stack>
 
                 <Divider sx={{ my: -0.5 }}>
                   <Typography variant="caption" color="text.secondary">or enter manually</Typography>
@@ -506,6 +530,14 @@ export default function ProfileSettingsPage() {
           </Stack>
         )}
       </Container>
+
+      <MapLocationPicker
+        open={mapOpen}
+        onClose={() => setMapOpen(false)}
+        onConfirm={handleMapConfirm}
+        initialLat={loc.lat}
+        initialLng={loc.lng}
+      />
 
       <Snackbar
         open={snack.open}
