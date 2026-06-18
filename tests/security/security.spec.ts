@@ -175,7 +175,7 @@ test.describe('Security — XSS Probes', () => {
 test.describe('Security — Sensitive Data Exposure', () => {
   test('TC-SEC-040: Login response does not contain password field', async ({ request }) => {
     const res = await request.post(`${API_BASE}${API_ENDPOINTS.login}`, {
-      data: { email: USERS.customer.email, password: USERS.customer.password },
+      data: { username: USERS.customer.email, password: USERS.customer.password },
     });
     if (res.status() !== 200 && res.status() !== 201) { test.skip(); return; }
     const body = await res.json() as Record<string, unknown>;

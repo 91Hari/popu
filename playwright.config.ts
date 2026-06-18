@@ -78,6 +78,7 @@ export default defineConfig({
         '**/maps/**/*.spec.ts',
         '**/lunchbox/**/*.spec.ts',
         '**/catering/**/*.spec.ts',
+        '**/negative/negative-customer.spec.ts',
       ],
     },
 
@@ -86,7 +87,10 @@ export default defineConfig({
       name: 'caterer',
       use: { ...devices['Desktop Chrome'], storageState: AUTH('caterer') },
       dependencies: ['setup'],
-      testMatch: ['**/caterer/**/*.spec.ts'],
+      testMatch: [
+        '**/caterer/**/*.spec.ts',
+        '**/negative/negative-caterer.spec.ts',
+      ],
     },
 
     // ── Rider role ─────────────────────────────────────────────────────────────
@@ -94,7 +98,10 @@ export default defineConfig({
       name: 'rider',
       use: { ...devices['Desktop Chrome'], storageState: AUTH('rider') },
       dependencies: ['setup'],
-      testMatch: ['**/rider/**/*.spec.ts'],
+      testMatch: [
+        '**/rider/**/*.spec.ts',
+        '**/negative/negative-rider.spec.ts',
+      ],
     },
 
     // ── Admin role ─────────────────────────────────────────────────────────────
@@ -102,7 +109,10 @@ export default defineConfig({
       name: 'admin',
       use: { ...devices['Desktop Chrome'], storageState: AUTH('admin') },
       dependencies: ['setup'],
-      testMatch: ['**/admin/**/*.spec.ts'],
+      testMatch: [
+        '**/admin/**/*.spec.ts',
+        '**/negative/negative-admin.spec.ts',
+      ],
     },
 
     // ── API / Security / Performance ───────────────────────────────────────────
@@ -113,6 +123,7 @@ export default defineConfig({
         '**/api/**/*.spec.ts',
         '**/security/**/*.spec.ts',
         '**/performance/**/*.spec.ts',
+        '**/negative/negative-api.spec.ts',
       ],
     },
   ],

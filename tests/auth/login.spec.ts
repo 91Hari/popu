@@ -8,13 +8,29 @@ import { ENV } from '../utils/env';
 import { INVALID_CREDENTIALS, ROUTES } from '../utils/test-data';
 import { fillLoginForm } from '../utils/helpers';
 
+/** Skip an auth test if Vercel SSO intercepted the current page.
+ *  Uses networkidle so the SSO process (which involves network requests)
+ *  has time to complete before we check the final URL.
+ */
+async function skipIfVercelSSO(page: import('@playwright/test').Page) {
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 10_000 });
+  } catch { /* ongoing network activity — fall through */ }
+  if (page.url().includes('vercel.com')) {
+    test.skip(true, 'Vercel Deployment Protection active — disable SSO or use production URL.');
+  }
+}
+
 test.describe('Authentication — Login', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate first so localStorage is accessible (about:blank denies it)
     await page.goto(ROUTES.login, { waitUntil: 'domcontentloaded' });
-    await page.context().clearCookies();
-    await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
-    await page.waitForLoadState('networkidle');
+    await skipIfVercelSSO(page);
+    // skipIfVercelSSO already waited for networkidle; only call evaluate when
+    // the page is still on our origin (not vercel.com)
+    try {
+      await page.context().clearCookies();
+      await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
+    } catch { /* navigation happened during eval — SSO fired late; next test will skip */ }
   });
 
   test('TC-AUTH-001: Login page loads and shows form elements', async ({ page }) => {
@@ -124,8 +140,11 @@ test.describe('Authentication — Logout', () => {
 test.describe('Authentication — Unauthorized Access', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(ROUTES.login, { waitUntil: 'domcontentloaded' });
-    await page.context().clearCookies();
-    await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
+    await skipIfVercelSSO(page);
+    try {
+      await page.context().clearCookies();
+      await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
+    } catch { /* navigation mid-eval — SSO fired late */ }
   });
 
   test('TC-AUTH-020: Unauthenticated /customer redirects to /login', async ({ page }) => {
@@ -176,12 +195,8 @@ test.describe('Authentication — Unauthorized Access', () => {
 test.describe('Authentication — Register', () => {
   test('TC-AUTH-030: Register page loads with required fields', async ({ page }) => {
     await page.goto(ROUTES.register, { waitUntil: 'domcontentloaded' });
-    await page.context().clearCookies();
-    await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
-    await page.goto(ROUTES.register);
-    await page.waitForLoadState('networkidle');
+    await skipIfVercelSSO(page);
 
-    // Must have name, email/phone, password fields
     const inputs = page.locator('input');
     const count  = await inputs.count();
     expect(count).toBeGreaterThanOrEqual(2);
@@ -191,9 +206,7 @@ test.describe('Authentication — Register', () => {
 test.describe('Authentication — Forgot Password', () => {
   test('TC-AUTH-040: Forgot password page is accessible', async ({ page }) => {
     await page.goto(ROUTES.forgotPw, { waitUntil: 'domcontentloaded' });
-    await page.context().clearCookies();
-    await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
-    await page.waitForLoadState('networkidle');
+    await skipIfVercelSSO(page);
 
     // Forgot-password form uses autoComplete="username" (same pattern as login)
     const usernameInput = page.locator('input[autocomplete="username"], input[type="email"], input[name="email"]').first();

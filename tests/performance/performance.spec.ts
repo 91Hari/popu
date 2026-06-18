@@ -32,6 +32,11 @@ function record(name: string, ms: number) {
 test.describe('Performance — Page Load Times', () => {
   test('TC-PERF-001: Landing page loads under 3s', async ({ page }) => {
     const ms = await measurePageLoad(page, BASE + ROUTES.landing);
+    // If Vercel SSO redirected us, we can't measure app performance — skip.
+    if (page.url().includes('vercel.com')) {
+      test.skip(true, 'Vercel Deployment Protection active — skipping performance measurement.');
+      return;
+    }
     const ok = record('Landing Page', ms);
     expect(ok, `Landing page took ${ms}ms (threshold: ${THRESHOLD_MS}ms)`).toBeTruthy();
   });
