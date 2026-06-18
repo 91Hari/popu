@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Typography, Button, Grid,
+  Box, Container, Typography, Button, Grid, Tooltip,
   Card, CardContent, CardMedia, CardActions,
   IconButton, Stack, Chip, Switch, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
@@ -130,7 +130,10 @@ export default function FoodListPage() {
               <Grid item xs={12} sm={6} md={4} key={r.id}>
                 <Card elevation={0} sx={{
                   border: `1px solid ${brand.border}`, borderRadius: 2.5,
-                  height: "100%", display: "flex", flexDirection: "column",
+                  width: "100%", minWidth: 0,
+                  height: 380, minHeight: 380, maxHeight: 380,
+                  display: "flex", flexDirection: "column",
+                  overflow: "hidden",
                   opacity: r.available ? 1 : 0.75,
                 }}>
                   {/* Image */}
@@ -150,10 +153,16 @@ export default function FoodListPage() {
                     </Box>
                   )}
 
-                  <CardContent sx={{ flex: 1, pb: 0.5 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.25, lineHeight: 1.3 }}>
-                      {r.name}
-                    </Typography>
+                  <CardContent sx={{ flex: 1, pb: 0.5, minWidth: 0 }}>
+                    <Tooltip title={r.name} placement="top" enterDelay={600}
+                      disableHoverListener={r.name.length < 20}>
+                      <Typography variant="subtitle1" sx={{
+                        fontWeight: 800, mb: 0.25, lineHeight: 1.3,
+                        overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+                      }}>
+                        {r.name}
+                      </Typography>
+                    </Tooltip>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
                       <Box sx={{
                         width: 9, height: 9,

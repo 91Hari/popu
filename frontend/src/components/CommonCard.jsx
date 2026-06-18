@@ -23,6 +23,8 @@ export default function CommonCard({
     <Card
       onClick={!disabled && onClick ? onClick : undefined}
       sx={{
+        width: "100%",
+        minWidth: 0,
         height: CARD_TOTAL_HEIGHT,
         minHeight: CARD_TOTAL_HEIGHT,
         maxHeight: CARD_TOTAL_HEIGHT,
@@ -83,6 +85,8 @@ export default function CommonCard({
               overflow: "hidden",
               whiteSpace: "nowrap",
               textOverflow: "ellipsis",
+              minWidth: 0,
+              maxWidth: "100%",
               lineHeight: 1.25,
               mb: 0.4,
             }}
