@@ -24,6 +24,7 @@ export default function FoodCard({ food = {}, onClick }) {
   const imgSrc       = food.imageUrl || food.image_url;
   const category     = food.category;
   const foodCategory = food.foodCategory || food.food_category;
+  const servesCount  = food.servesCount  || food.serves_count || null;
   const eta          = food.estimatedDeliveryTime;
   const etaRange     = food.etaRange;
   const avgRating   = food.avgRating != null ? Number(food.avgRating) : null;
@@ -73,6 +74,11 @@ export default function FoodCard({ food = {}, onClick }) {
             {foodCategory === "VEG" ? "Veg" : "Non-Veg"}
           </Typography>
         </Box>
+      )}
+      {servesCount != null && (
+        <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontSize: "0.62rem", mb: 0.25 }}>
+          Serves {servesCount} {servesCount === 1 ? "Person" : "Persons"}
+        </Typography>
       )}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>

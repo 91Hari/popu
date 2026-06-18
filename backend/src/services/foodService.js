@@ -55,15 +55,17 @@ async function createFood({
   image_url, is_available = true, category,
   food_category = 'VEG',
   preparation_time_minutes = 20,
+  serves_count = 1,
 }) {
   const validCategory = ['VEG', 'NON_VEG'].includes(food_category) ? food_category : 'VEG';
+  const validServes   = Math.min(100, Math.max(1, parseInt(serves_count, 10) || 1));
   const { rows } = await pool.query(
     `INSERT INTO food_items
-       (caterer_id, food_name, description, price, image_url, is_available, category, food_category, preparation_time_minutes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (caterer_id, food_name, description, price, image_url, is_available, category, food_category, preparation_time_minutes, serves_count)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
     [caterer_id, food_name, description || null, price,
-     image_url || null, is_available, category || null, validCategory, preparation_time_minutes]
+     image_url || null, is_available, category || null, validCategory, preparation_time_minutes, validServes]
   );
   const food = rows[0];
 
@@ -105,7 +107,7 @@ async function updateFood(id, caterer_id, fields) {
   }
   const before = existing[0];
 
-  const allowed = ['food_name', 'description', 'price', 'image_url', 'is_available', 'category', 'food_category', 'preparation_time_minutes'];
+  const allowed = ['food_name', 'description', 'price', 'image_url', 'is_available', 'category', 'food_category', 'preparation_time_minutes', 'serves_count'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -303,6 +305,7 @@ const CUSTOMER_FOOD_SELECT = `
     f.image_url                   AS "imageUrl",
     f.category,
     f.food_category               AS "foodCategory",
+    f.serves_count                AS "servesCount",
     f.preparation_time_minutes    AS "preparationTime",
     u.id                          AS "catererId",
     u.name                        AS "catererName",

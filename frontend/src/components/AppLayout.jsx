@@ -345,7 +345,7 @@ export default function AppLayout({ children }) {
           )}
 
           <Box sx={{ minHeight: "100vh" }}>{children}</Box>
-          <Footer />
+          {path === "/customer" && <Footer />}
         </Box>
       </Box>
 

@@ -6,7 +6,7 @@ async function createFood(req, res, next) {
   try {
     const {
       food_name, description, price, image_url,
-      is_available, category, food_category, preparation_time_minutes,
+      is_available, category, food_category, preparation_time_minutes, serves_count,
     } = req.body;
 
     if (!food_name || price === undefined) {
@@ -31,6 +31,7 @@ async function createFood(req, res, next) {
       category,
       food_category: food_category || 'VEG',
       preparation_time_minutes: prepTime,
+      serves_count: serves_count != null ? serves_count : 1,
     });
     res.status(201).json({ food });
   } catch (err) {

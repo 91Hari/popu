@@ -38,6 +38,7 @@ export default function FoodListPage() {
           price:         Number(f.price ?? 0),
           available:     !!f.is_available,
           food_category: f.food_category || "VEG",
+          serves_count:  f.serves_count != null ? Number(f.serves_count) : 1,
           imageUrl:      f.imageUrl || f.image_url || null,
           avg_rating:    f.avg_rating != null ? Number(f.avg_rating) : null,
           review_count:  f.review_count != null ? Number(f.review_count) : 0,
@@ -168,6 +169,9 @@ export default function FoodListPage() {
                         {r.food_category === "VEG" ? "Veg" : "Non-Veg"}
                       </Typography>
                     </Box>
+                    <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontSize: "0.62rem", mb: 0.25 }}>
+                      Serves {r.serves_count} {r.serves_count === 1 ? "Person" : "Persons"}
+                    </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange, mb: 0.5 }}>
                       ₹{r.price}
                     </Typography>

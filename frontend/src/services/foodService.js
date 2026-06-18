@@ -15,7 +15,7 @@ export default {
     return data.food ?? data;
   },
 
-  async createFood({ name, description, price, available, food_category = "VEG", preparation_time_minutes = 20, image_url }) {
+  async createFood({ name, description, price, available, food_category = "VEG", serves_count = 1, preparation_time_minutes = 20, image_url }) {
     const data = await api.request("/foods", {
       method: "POST",
       body: JSON.stringify({
@@ -24,6 +24,7 @@ export default {
         price,
         is_available:             available,
         food_category:            food_category || "VEG",
+        serves_count:             Number(serves_count) || 1,
         preparation_time_minutes: Number(preparation_time_minutes),
         image_url:                image_url || null,
       }),

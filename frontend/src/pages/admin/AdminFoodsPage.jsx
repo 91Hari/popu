@@ -70,6 +70,7 @@ export default function AdminFoodsPage() {
                   <TableCell sx={{ fontWeight: 700, color: "#fff" }}>Food Name</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: "#fff" }}>Caterer</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: "#fff" }}>Category</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: "#fff" }}>Serves</TableCell>
                   <TableCell align="right"  sx={{ fontWeight: 700, color: "#fff" }}>Price</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700, color: "#fff" }}>Rating</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700, color: "#fff" }}>Status</TableCell>
@@ -95,6 +96,9 @@ export default function AdminFoodsPage() {
                       ) : (
                         <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
                       )}
+                    </TableCell>
+                    <TableCell align="center" sx={{ color: "text.secondary", fontSize: "0.82rem" }}>
+                      {f.serves_count != null ? `${f.serves_count} ${f.serves_count === 1 ? "Person" : "Persons"}` : "—"}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: brand.orange }}>₹{f.price}</TableCell>
                     <TableCell align="center">

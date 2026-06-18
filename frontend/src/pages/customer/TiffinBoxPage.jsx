@@ -393,6 +393,11 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
                       </Typography>
                     </Box>
                   )}
+                  {food.serves_count != null && (
+                    <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.6rem", display: "block" }}>
+                      Serves {food.serves_count} {food.serves_count === 1 ? "Person" : "Persons"}
+                    </Typography>
+                  )}
                   {food.description && (
                     <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.3, mt: 0.25 }}
                       noWrap>

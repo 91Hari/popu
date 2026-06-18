@@ -194,6 +194,16 @@ export default function FoodDetailsPage() {
               </Typography>
             </Box>
 
+            {food.serves_count != null && (
+              <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, mt: 1,
+                px: 1.5, py: 0.5, borderRadius: 2,
+                backgroundColor: brand.orangeLight, border: `1px solid ${brand.border}` }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: brand.orange }}>
+                  🍽 Serves {food.serves_count} {food.serves_count === 1 ? "Person" : "Persons"}
+                </Typography>
+              </Box>
+            )}
+
             {/* ETA section */}
             {food.estimatedDeliveryTime != null && (
               <Box

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Typography, CircularProgress, Chip,
+  Box, Container, Typography, CircularProgress, Chip, Button,
 } from "@mui/material";
+import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
+import MapLocationPicker from "../../components/MapLocationPicker";
 import RestaurantRoundedIcon   from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon  from "@mui/icons-material/LunchDiningRounded";
 import PeopleAltRoundedIcon    from "@mui/icons-material/PeopleAltRounded";
@@ -32,10 +34,17 @@ const CATEGORIES = [
 ];
 
 export default function CustomerDashboard() {
-  const [foods, setFoods]           = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [enabledMap, setEnabledMap] = useState({});
-  const [modalOpen, setModalOpen]   = useState(false);
+  const [foods, setFoods]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [enabledMap, setEnabledMap]   = useState({});
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [locationLabel, setLocationLabel] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      return u.address || u.city || null;
+    } catch { return null; }
+  });
 
   const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
@@ -59,6 +68,21 @@ export default function CustomerDashboard() {
         setEnabledMap({ CATERING: true, FOOD: true, LUNCH_BOX: true });
       });
   }, []);
+
+  const handleLocationConfirm = ({ address, city, lat, lng }) => {
+    setLocationOpen(false);
+    const label = address || city || null;
+    setLocationLabel(label);
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      u.latitude  = lat;
+      u.longitude = lng;
+      if (address) u.address = address;
+      if (city)    u.city    = city;
+      localStorage.setItem("user", JSON.stringify(u));
+    } catch { /* ignore */ }
+    fetchFoods({ lat, lng });
+  };
 
   const handleCategoryClick = (cat) => {
     const enabled = enabledMap[cat.serviceCode] ?? false;
@@ -125,13 +149,42 @@ export default function CustomerDashboard() {
       <Container maxWidth="lg" sx={{ pt: 2.5, pb: 4 }}>
 
         {/* Greeting */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box sx={{ mb: 2 }}>
           <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
             Hi, {firstName}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.25 }}>
             What would you like today?
           </Typography>
+        </Box>
+
+        {/* Location bar */}
+        <Box
+          sx={{
+            display: "flex", alignItems: "center", gap: 1, mb: 2.5,
+            backgroundColor: brand.white, border: `1px solid ${brand.border}`,
+            borderRadius: 3, px: 1.75, py: 1,
+          }}
+        >
+          <LocationOnRoundedIcon sx={{ color: brand.orange, fontSize: 18, flexShrink: 0 }} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1, mb: 0.1 }}>
+              Current Location
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+              {locationLabel || "Set your location"}
+            </Typography>
+          </Box>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setLocationOpen(true)}
+            sx={{ fontWeight: 700, fontSize: "0.72rem", px: 1.5, py: 0.4, flexShrink: 0,
+              borderColor: brand.orange, color: brand.orange,
+              "&:hover": { backgroundColor: brand.orangeLight } }}
+          >
+            Change
+          </Button>
         </Box>
 
         {/* Search */}
@@ -269,6 +322,14 @@ export default function CustomerDashboard() {
       </Container>
 
       <ComingSoonModal open={modalOpen} onClose={() => setModalOpen(false)} />
+
+      <MapLocationPicker
+        open={locationOpen}
+        onClose={() => setLocationOpen(false)}
+        onConfirm={handleLocationConfirm}
+        initialLat={customerCoords?.lat ?? null}
+        initialLng={customerCoords?.lng ?? null}
+      />
     </AppLayout>
   );
 }

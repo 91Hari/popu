@@ -27,6 +27,7 @@ export default function EditFoodPage() {
   const [prepTime,      setPrepTime]     = useState("20");
   const [available,     setAvailable]    = useState(true);
   const [foodCategory,  setFoodCategory] = useState("VEG");
+  const [servesCount,   setServesCount]  = useState(1);
   const [imagePreview,  setImagePreview] = useState(null); // null = no image
   const [fetching,      setFetching]     = useState(true);
   const [loading,       setLoading]      = useState(false);
@@ -42,6 +43,7 @@ export default function EditFoodPage() {
         setPrepTime(String(food.preparation_time_minutes ?? 20));
         setAvailable(!!food.is_available);
         setFoodCategory(food.food_category || "VEG");
+        setServesCount(food.serves_count != null ? Number(food.serves_count) : 1);
         setImagePreview(food.imageUrl || null);
       })
       .catch(() => setError("Failed to load food item."))
@@ -91,6 +93,7 @@ export default function EditFoodPage() {
         price:                    Number(price),
         is_available:             !!available,
         food_category:            foodCategory,
+        serves_count:             servesCount,
         preparation_time_minutes: parseInt(prepTime, 10),
         image_url:                imagePreview ?? null,
       });
@@ -171,6 +174,18 @@ export default function EditFoodPage() {
                     </ToggleButton>
                   </ToggleButtonGroup>
                 </Box>
+
+                <TextField
+                  label="Serves (Number of Persons)"
+                  value={servesCount}
+                  onChange={(e) => {
+                    const v = Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 1));
+                    setServesCount(v);
+                  }}
+                  fullWidth inputMode="numeric" autoComplete="off" type="number"
+                  helperText="How many persons this item serves (1–100)"
+                  slotProps={{ htmlInput: { min: 1, max: 100 } }}
+                />
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <TextField
