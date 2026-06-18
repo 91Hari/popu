@@ -1,0 +1,26 @@
+{
+  "name": "popu-e2e",
+  "version": "1.0.0",
+  "description": "PO.PU E2E Test Suite — runs against the deployed Vercel + Render stack",
+  "private": true,
+  "scripts": {
+    "test":             "npx playwright test",
+    "test:auth":        "npx playwright test --project=auth",
+    "test:customer":    "npx playwright test --project=customer",
+    "test:caterer":     "npx playwright test --project=caterer",
+    "test:rider":       "npx playwright test --project=rider",
+    "test:admin":       "npx playwright test --project=admin",
+    "test:api":         "npx playwright test --project=api",
+    "test:security":    "npx playwright test tests/security/ --project=api",
+    "test:performance": "npx playwright test tests/performance/ --project=api",
+    "test:headed":      "npx playwright test --headed",
+    "test:debug":       "npx playwright test --debug",
+    "report":           "npx playwright show-report playwright-report/html",
+    "install:browsers": "npx playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^25.9.3",
+    "typescript": "^5.4.0"
+  }
+}

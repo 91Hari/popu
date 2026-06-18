@@ -1,1 +1,0 @@
-import{n as e}from"./index-BhOGUrK5.js";const t={async getServices(){return e.request("/customer/services")},async adminGetServices(){return e.request("/admin/services")},async adminUpdateService(r,s){return e.request(`/admin/services/${r}`,{method:"PUT",body:JSON.stringify({isEnabled:s})})}};export{t as s};

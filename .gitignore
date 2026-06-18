@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Playwright auth tokens (contain JWTs — never commit)
+tests/utils/.auth/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Environment variables (contain credentials — never commit)
+.env
+.env.test
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
