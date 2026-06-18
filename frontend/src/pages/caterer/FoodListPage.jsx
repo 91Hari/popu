@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Button, Grid, Tooltip,
-  Card, CardContent, CardMedia, CardActions,
+  Card, CardContent, CardActions,
   IconButton, Stack, Chip, Switch, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Snackbar, Alert,
@@ -136,22 +136,24 @@ export default function FoodListPage() {
                   overflow: "hidden",
                   opacity: r.available ? 1 : 0.75,
                 }}>
-                  {/* Image */}
-                  {r.imageUrl ? (
-                    <CardMedia
-                      component="img"
-                      image={r.imageUrl}
-                      alt={r.name}
-                      sx={{ height: 160, objectFit: "cover" }}
-                    />
-                  ) : (
-                    <Box sx={{
-                      height: 160, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
-                    }}>
-                      <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.5 }} />
-                    </Box>
-                  )}
+                  {/* Image — fixed 160px container so photo vs placeholder never shifts content below */}
+                  <Box sx={{ height: 160, minHeight: 160, maxHeight: 160, flexShrink: 0, overflow: "hidden" }}>
+                    {r.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={r.imageUrl}
+                        alt={r.name}
+                        sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : (
+                      <Box sx={{
+                        height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                        background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
+                      }}>
+                        <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.5 }} />
+                      </Box>
+                    )}
+                  </Box>
 
                   <CardContent sx={{ flex: 1, pb: 0.5, minWidth: 0 }}>
                     <Tooltip title={r.name} placement="top" enterDelay={600}
