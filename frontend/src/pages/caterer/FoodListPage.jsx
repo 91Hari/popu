@@ -191,7 +191,9 @@ export default function FoodListPage() {
                     {/* Availability toggle */}
                     <Stack direction="row" spacing={0.75} alignItems="center">
                       {toggling[r.id] ? (
-                        <CircularProgress size={16} sx={{ color: brand.orange }} />
+                        <Box sx={{ width: 34, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <CircularProgress size={16} sx={{ color: brand.orange }} />
+                        </Box>
                       ) : (
                         <Switch
                           size="small"
@@ -208,6 +210,8 @@ export default function FoodListPage() {
                         size="small"
                         sx={{
                           fontWeight: 700, fontSize: "0.62rem",
+                          minWidth: 72,
+                          justifyContent: "center",
                           backgroundColor: r.available ? brand.greenLight : "#FFEBEE",
                           color: r.available ? brand.green : "#C62828",
                         }}
