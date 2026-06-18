@@ -155,12 +155,12 @@ export default function FoodListPage() {
 
                   <CardContent sx={{ flex: 1, pb: 0.5, minWidth: 0 }}>
                     <Tooltip title={r.name} placement="top" enterDelay={600}
-                      disableHoverListener={r.name.length < 20}>
+                      disableHoverListener={r.name.length <= 20}>
                       <Typography variant="subtitle1" sx={{
                         fontWeight: 800, mb: 0.25, lineHeight: 1.3,
                         overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
                       }}>
-                        {r.name}
+                        {r.name.length > 20 ? `${r.name.slice(0, 20)}…` : r.name}
                       </Typography>
                     </Tooltip>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
