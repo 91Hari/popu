@@ -126,5 +126,25 @@ export default defineConfig({
         '**/negative/negative-api.spec.ts',
       ],
     },
+
+    // ── Release suite — uses storageState per describe block (needs setup to run first) ──
+    {
+      name: 'release',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
+      testMatch: [
+        '**/release/smoke.spec.ts',
+        '**/release/api-health.spec.ts',
+        '**/release/security.spec.ts',
+        '**/release/performance.spec.ts',
+        '**/release/offline.spec.ts',
+        '**/release/permissions.spec.ts',
+        '**/release/notifications.spec.ts',
+        '**/release/location.spec.ts',
+        '**/release/regression.spec.ts',
+        '**/release/accessibility.spec.ts',
+        '**/release/production-readiness.spec.ts',
+      ],
+    },
   ],
 });
