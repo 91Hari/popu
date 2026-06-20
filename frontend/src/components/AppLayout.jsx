@@ -6,6 +6,8 @@ import {
   Divider, Badge, Snackbar, Alert, useTheme, useMediaQuery,
 } from "@mui/material";
 import MenuRoundedIcon              from "@mui/icons-material/MenuRounded";
+import ArrowBackRoundedIcon        from "@mui/icons-material/ArrowBackRounded";
+
 import HomeRoundedIcon              from "@mui/icons-material/HomeRounded";
 import ReceiptLongRoundedIcon       from "@mui/icons-material/ReceiptLongRounded";
 import PersonRoundedIcon            from "@mui/icons-material/PersonRounded";
@@ -39,6 +41,7 @@ import { useNotifications } from "../contexts/NotificationContext";
 import LogoutConfirmationDialog from "./LogoutConfirmationDialog";
 import OrderAlertToast from "./OrderAlertToast";
 import Footer from "./Footer";
+import BottomNav from "./BottomNav";
 
 export const DRAWER_WIDTH = 240;
 
@@ -47,8 +50,8 @@ const CUSTOMER_NAV = [
   { label: "Services",      path: "/services",                    icon: <RoomServiceRoundedIcon />,            exact: true  },
   { label: "Food Marketplace", path: "/services/food-marketplace",icon: <LunchDiningRoundedIcon />,            exact: false },
   { label: "My Cart",       path: "/cart",                        icon: <ShoppingCartRoundedIcon />,           cartBadge: true  },
-  { label: "My Orders",     path: "/customer/master-orders",       icon: <ReceiptLongRoundedIcon /> },
-  { label: "My Bookings",   path: "/customer/catering-bookings",   icon: <EventRoundedIcon /> },
+  { label: "My Food Orders",       path: "/customer/master-orders",     icon: <ReceiptLongRoundedIcon /> },
+  { label: "My Catering Bookings", path: "/customer/catering-bookings", icon: <EventRoundedIcon /> },
   { label: "Notifications", path: "/customer/notifications",      icon: <NotificationsNoneRoundedIcon />,      notifBadge: true },
   { label: "Profile",       path: "/customer/profile",            icon: <PersonRoundedIcon /> },
 ];
@@ -229,6 +232,9 @@ export default function AppLayout({ children }) {
   else if (path.startsWith("/rider")   || role === "rider")   navItems = RIDER_NAV;
   else navItems = CUSTOMER_NAV;
 
+  // Show back arrow on sub-pages; hamburger on root nav pages
+  const isRootPage = navItems.some((item) => path === item.path);
+
   const handleLogoutRequest = () => setLogoutOpen(true);
 
   const handleLogoutConfirm = () => {
@@ -302,9 +308,15 @@ export default function AppLayout({ children }) {
                 }}
               >
                 <Toolbar sx={{ justifyContent: "space-between", minHeight: 56 }}>
-                  <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
-                    <MenuRoundedIcon />
-                  </IconButton>
+                  {isRootPage ? (
+                    <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: brand.text }}>
+                      <MenuRoundedIcon />
+                    </IconButton>
+                  ) : (
+                    <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: brand.text }}>
+                      <ArrowBackRoundedIcon />
+                    </IconButton>
+                  )}
                   <Logo size={28} showWordmark src="/popuLogoHomePage.png" />
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     {navItems === CUSTOMER_NAV && (
@@ -344,8 +356,11 @@ export default function AppLayout({ children }) {
             </>
           )}
 
-          <Box sx={{ minHeight: "100vh" }}>{children}</Box>
+          <Box sx={{ minHeight: "100vh", pb: isMobile && navItems === CUSTOMER_NAV ? "62px" : 0 }}>
+            {children}
+          </Box>
           {path === "/customer" && <Footer />}
+          {isMobile && navItems === CUSTOMER_NAV && <BottomNav />}
         </Box>
       </Box>
 

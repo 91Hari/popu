@@ -15,10 +15,17 @@ export default {
     });
   },
 
-  async forgotPassword({ username }) {
+  async forgotPassword({ identifier }) {
     return api.request("/auth/forgot-password", {
       method: "POST",
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ identifier }),
+    });
+  },
+
+  async verifyOtp({ identifier, otp }) {
+    return api.request("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ identifier, otp }),
     });
   },
 
@@ -26,6 +33,13 @@ export default {
     return api.request("/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ token, newPassword }),
+    });
+  },
+
+  async changePassword({ currentPassword, newPassword }) {
+    return api.request("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
     });
   },
 

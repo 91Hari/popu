@@ -7,7 +7,6 @@ import {
   ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
-import ArrowBackRoundedIcon         from "@mui/icons-material/ArrowBackRounded";
 import SaveRoundedIcon              from "@mui/icons-material/SaveRounded";
 import TimerRoundedIcon             from "@mui/icons-material/TimerRounded";
 import DeleteOutlineRoundedIcon     from "@mui/icons-material/DeleteOutlineRounded";
@@ -119,10 +118,6 @@ export default function EditFoodPage() {
   return (
     <AppLayout>
       <Container maxWidth="sm" sx={{ py: isMobile ? 2 : 4 }}>
-        <Button startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate(-1)} sx={{ mb: 2, color: brand.muted }}>
-          Back
-        </Button>
-
         <Card elevation={0} sx={{ border: `1px solid ${brand.border}` }}>
           <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
             <Typography variant="h5" sx={{ fontWeight: 800, color: brand.orange, mb: 0.5 }}>

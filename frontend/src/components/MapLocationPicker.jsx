@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Button, Typography, CircularProgress, IconButton,
-  Autocomplete as MuiAutocomplete, TextField,
-  useMediaQuery, useTheme,
+  TextField, InputAdornment, List, ListItem, ListItemButton,
+  ListItemText, useMediaQuery, useTheme, Paper,
 } from "@mui/material";
 import CloseRoundedIcon      from "@mui/icons-material/CloseRounded";
 import MyLocationRoundedIcon from "@mui/icons-material/MyLocationRounded";
@@ -11,70 +11,83 @@ import MapRoundedIcon        from "@mui/icons-material/MapRounded";
 import SearchRoundedIcon     from "@mui/icons-material/SearchRounded";
 import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import CheckRoundedIcon      from "@mui/icons-material/CheckRounded";
-import { ensureMapsInit }        from "../utils/mapsLoader";
-import { parseAddressComponents } from "../utils/parseAddressComponents";
-import { brand }                  from "../theme";
+import { brand }             from "../theme";
+import { Geolocation }       from "@capacitor/geolocation";
+
+// Nominatim reverse-geocode (no API key, no referrer restriction)
+async function reverseGeocode(lat, lng) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+// Nominatim forward search
+async function nominatimSearch(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=6&countrycodes=in`;
+  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+function parseNominatim(data) {
+  const a = data?.address || {};
+  const road = a.road || a.pedestrian || a.footway || a.street || a.suburb || "";
+  const area = a.suburb || a.neighbourhood || a.quarter || a.village || "";
+  const address = [road, area].filter(Boolean).join(", ");
+  const city    = a.city || a.town || a.village || a.county || "";
+  const state   = a.state || "";
+  const pincode = a.postcode || "";
+  return { address, city, state, pincode };
+}
 
 /**
- * Full-screen map dialog for picking a location.
+ * Full-screen location picker using Leaflet + OpenStreetMap.
  *
  * Props:
- *   open         — boolean
- *   onClose      — () => void
- *   onConfirm    — ({ address, city, state, pincode, lat, lng }) => void
- *   initialLat   — number | null
- *   initialLng   — number | null
+ *   open, onClose, onConfirm, initialLat, initialLng
  */
 export default function MapLocationPicker({ open, onClose, onConfirm, initialLat, initialLng }) {
   const theme    = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const mapDivRef   = useRef(null);
-  const mapObjRef   = useRef(null);
-  const geocoderRef = useRef(null);
-  const idleRef     = useRef(null);
-  const reqRef      = useRef(0); // stale-request guard for geocoding
+  const mapDivRef  = useRef(null);
+  const mapRef     = useRef(null);
+  const markerRef  = useRef(null);
+  const debounce   = useRef(null);
 
-  const [status, setStatus]       = useState("idle"); // idle | loading | ready | error
+  const [status,   setStatus]   = useState("idle"); // idle|loading|ready|error
+  const [preview,  setPreview]  = useState(null);   // {address,city,state,pincode,lat,lng}
   const [geocoding, setGeocoding] = useState(false);
-  const [preview, setPreview]     = useState(null);   // { address, city, state, pincode, lat, lng }
+  const [search,   setSearch]   = useState("");
+  const [results,  setResults]  = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
 
-  // Search
-  const [searchVal, setSearchVal]   = useState("");
-  const [options, setOptions]       = useState([]);
-  const [searching, setSearching]   = useState(false);
-  const svcRef   = useRef(null); // AutocompleteService
-  const plcRef   = useRef(null); // PlacesService
-  const attrDiv  = useRef(null); // hidden attribution div
-  const debounce = useRef(null);
-
-  // Reverse-geocode the current map center
-  const geocodeCenter = useCallback(() => {
-    if (!mapObjRef.current || !geocoderRef.current) return;
-    const center = mapObjRef.current.getCenter();
-    const lat    = center.lat();
-    const lng    = center.lng();
-    const req    = ++reqRef.current;
+  const doReverseGeocode = useCallback(async (lat, lng) => {
     setGeocoding(true);
-    geocoderRef.current.geocode({ location: { lat, lng } }, (results, geocStatus) => {
-      if (req !== reqRef.current) return; // superseded
-      setGeocoding(false);
-      if (geocStatus === "OK" && results?.[0]) {
-        const parsed = parseAddressComponents(results[0].address_components);
+    try {
+      const data = await reverseGeocode(lat, lng);
+      if (data) {
+        const parsed = parseNominatim(data);
         setPreview({ ...parsed, lat, lng });
       } else {
         setPreview({ address: "", city: "", state: "", pincode: "", lat, lng });
       }
-    });
+    } catch {
+      setPreview({ address: "", city: "", state: "", pincode: "", lat, lng });
+    } finally {
+      setGeocoding(false);
+    }
   }, []);
 
-  // Init / cleanup on open toggle
+  // Load Leaflet lazily and init map
   useEffect(() => {
     if (!open) {
       setStatus("idle");
       setPreview(null);
-      setSearchVal("");
-      setOptions([]);
+      setSearch("");
+      setResults([]);
       return;
     }
 
@@ -83,37 +96,75 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
 
     (async () => {
       try {
-        const ok = await ensureMapsInit("maps", "places", "geocoding");
-        if (!ok || cancelled) { setStatus("error"); return; }
-        if (!mapDivRef.current || cancelled) { setStatus("error"); return; }
+        const L = (await import("leaflet")).default;
 
-        const defaultCenter = {
-          lat: typeof initialLat === "number" ? initialLat : 17.385,
-          lng: typeof initialLng === "number" ? initialLng : 78.4867,
-        };
-
-        const map = new window.google.maps.Map(mapDivRef.current, {
-          center:            defaultCenter,
-          zoom:              typeof initialLat === "number" ? 15 : 12,
-          mapTypeControl:    false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          zoomControl:       true,
-          clickableIcons:    false,
-          gestureHandling:   "greedy",
+        // Fix Leaflet default icon paths broken by bundlers
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         });
 
-        mapObjRef.current   = map;
-        geocoderRef.current = new window.google.maps.Geocoder();
+        if (cancelled || !mapDivRef.current) { setStatus("error"); return; }
 
-        const { AutocompleteService, PlacesService } = window.google.maps.places;
-        svcRef.current  = new AutocompleteService();
-        attrDiv.current = attrDiv.current || document.createElement("div");
-        plcRef.current  = new PlacesService(attrDiv.current);
+        const defaultLat = typeof initialLat === "number" ? initialLat : 17.385;
+        const defaultLng = typeof initialLng === "number" ? initialLng : 78.4867;
 
-        idleRef.current = map.addListener("idle", geocodeCenter);
-        setStatus("ready");
-        geocodeCenter();
+        // Destroy previous instance if any
+        if (mapRef.current) {
+          mapRef.current.remove();
+          mapRef.current = null;
+          markerRef.current = null;
+        }
+
+        const map = L.map(mapDivRef.current, {
+          center:           [defaultLat, defaultLng],
+          zoom:             typeof initialLat === "number" ? 15 : 12,
+          zoomControl:      true,
+          attributionControl: true,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+          maxZoom: 19,
+        }).addTo(map);
+
+        // Custom pin icon (orange)
+        const pinIcon = L.divIcon({
+          html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 34" width="32" height="46">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 22 12 22S24 21 24 12C24 5.37 18.63 0 12 0z" fill="${brand.orange}" stroke="white" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="5" fill="white"/>
+          </svg>`,
+          className: "",
+          iconSize:   [32, 46],
+          iconAnchor: [16, 46],
+        });
+
+        const marker = L.marker([defaultLat, defaultLng], { icon: pinIcon, draggable: true }).addTo(map);
+        mapRef.current    = map;
+        markerRef.current = marker;
+
+        if (!cancelled) setStatus("ready");
+
+        // Reverse geocode on initial load
+        doReverseGeocode(defaultLat, defaultLng);
+
+        // Update on map drag (center-pin style) or marker drag
+        map.on("moveend", () => {
+          if (cancelled) return;
+          const c = map.getCenter();
+          marker.setLatLng(c);
+          doReverseGeocode(c.lat, c.lng);
+        });
+
+        marker.on("dragend", () => {
+          if (cancelled) return;
+          const ll = marker.getLatLng();
+          map.setView(ll, map.getZoom(), { animate: false });
+          doReverseGeocode(ll.lat, ll.lng);
+        });
+
       } catch (err) {
         console.error("[MapLocationPicker]", err);
         if (!cancelled) setStatus("error");
@@ -122,68 +173,62 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
 
     return () => {
       cancelled = true;
-      if (idleRef.current) {
-        window.google?.maps?.event?.removeListener(idleRef.current);
-        idleRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current  = null;
+        markerRef.current = null;
       }
-      mapObjRef.current = null;
     };
-  }, [open, initialLat, initialLng, geocodeCenter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
-  // GPS "My Location" button
-  const handleMyLocation = useCallback(() => {
-    if (!navigator.geolocation || !mapObjRef.current) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const ll = new window.google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-        mapObjRef.current.panTo(ll);
-        mapObjRef.current.setZoom(16);
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }, []);
-
-  // Place search
-  const fetchPredictions = useCallback(async (text) => {
-    if (!svcRef.current || text.length < 3) { setOptions([]); return; }
-    setSearching(true);
+  // GPS: use Capacitor native geolocation
+  const handleMyLocation = useCallback(async () => {
+    setGpsLoading(true);
     try {
-      const res = await svcRef.current.getPlacePredictions({
-        input: text,
-        componentRestrictions: { country: "in" },
-      });
-      setOptions(res?.predictions || []);
-    } catch {
-      setOptions([]);
+      const perm = await Geolocation.requestPermissions();
+      if (perm.location !== "granted") { setGpsLoading(false); return; }
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const { latitude: lat, longitude: lng } = pos.coords;
+      if (mapRef.current && markerRef.current) {
+        mapRef.current.setView([lat, lng], 16);
+        markerRef.current.setLatLng([lat, lng]);
+      }
+      await doReverseGeocode(lat, lng);
+    } catch (err) {
+      console.warn("[GPS]", err);
     } finally {
-      setSearching(false);
+      setGpsLoading(false);
     }
+  }, [doReverseGeocode]);
+
+  // Address search via Nominatim
+  const handleSearch = useCallback((e) => {
+    const val = e.target.value;
+    setSearch(val);
+    clearTimeout(debounce.current);
+    if (val.length < 3) { setResults([]); return; }
+    debounce.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await nominatimSearch(val);
+        setResults(data);
+      } catch { setResults([]); }
+      finally { setSearching(false); }
+    }, 400);
   }, []);
 
-  const handleSearchChange = (_, val, reason) => {
-    setSearchVal(val);
-    if (reason === "input") {
-      clearTimeout(debounce.current);
-      debounce.current = setTimeout(() => fetchPredictions(val), 350);
-    } else if (reason === "clear") {
-      setOptions([]);
+  const handleSelectResult = useCallback((item) => {
+    const lat = parseFloat(item.lat);
+    const lng  = parseFloat(item.lon);
+    if (mapRef.current && markerRef.current) {
+      mapRef.current.setView([lat, lng], 16);
+      markerRef.current.setLatLng([lat, lng]);
     }
-  };
-
-  const handleSearchSelect = (_, option) => {
-    if (!option || typeof option === "string" || !plcRef.current) return;
-    setSearchVal(option.description || "");
-    setOptions([]);
-    plcRef.current.getDetails(
-      { placeId: option.place_id, fields: ["geometry"] },
-      (place, status) => {
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place?.geometry) return;
-        mapObjRef.current?.panTo(place.geometry.location);
-        mapObjRef.current?.setZoom(16);
-      }
-    );
-  };
+    setSearch(item.display_name || "");
+    setResults([]);
+    doReverseGeocode(lat, lng);
+  }, [doReverseGeocode]);
 
   const handleConfirm = () => {
     if (!preview) return;
@@ -200,7 +245,6 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
       fullWidth
       PaperProps={{ sx: { borderRadius: isMobile ? 0 : 3, overflow: "hidden" } }}
     >
-      {/* ── Title ─────────────────────────────────────────────────────────────── */}
       <DialogTitle
         sx={{
           p: 2, display: "flex", alignItems: "center", gap: 1,
@@ -216,7 +260,6 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
         </IconButton>
       </DialogTitle>
 
-      {/* ── Map area ──────────────────────────────────────────────────────────── */}
       <DialogContent
         sx={{
           p: 0,
@@ -230,105 +273,62 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
         {/* Map canvas */}
         <Box ref={mapDivRef} sx={{ flex: 1, width: "100%" }} />
 
-        {/* ── Floating search bar ── */}
+        {/* Floating search bar */}
         {status === "ready" && (
-          <Box
-            sx={{
-              position: "absolute", top: 10, left: 10, right: 10, zIndex: 10,
-              backgroundColor: "white",
-              borderRadius: 2,
-              boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
-            }}
-          >
-            <MuiAutocomplete
-              freeSolo
-              options={options}
-              inputValue={searchVal}
-              filterOptions={(x) => x}
-              getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.description || "")}
-              getOptionKey={(opt) => (typeof opt === "string" ? opt : opt.place_id)}
-              loading={searching}
-              onInputChange={handleSearchChange}
-              onChange={handleSearchSelect}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Search for a location…"
-                  size="small"
-                  slotProps={{
-                    input: {
-                      ...params.InputProps,
-                      startAdornment: (
-                        <SearchRoundedIcon sx={{ fontSize: 18, color: "text.secondary", mr: 0.5 }} />
-                      ),
-                      endAdornment: (
-                        <>
-                          {searching && <CircularProgress size={14} />}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
-                    },
-                  }}
-                  sx={{ "& fieldset": { border: "none" } }}
-                />
-              )}
-              renderOption={(props, opt) => (
-                <Box component="li" {...props} key={opt.place_id}>
-                  <LocationOnRoundedIcon sx={{ mr: 1, fontSize: 17, color: "text.secondary", flexShrink: 0, mt: 0.2 }} />
-                  <Box sx={{ overflow: "hidden" }}>
-                    <Typography variant="body2" fontWeight={600} noWrap>
-                      {opt.structured_formatting?.main_text || opt.description}
-                    </Typography>
-                    {opt.structured_formatting?.secondary_text && (
-                      <Typography variant="caption" color="text.secondary" noWrap>
-                        {opt.structured_formatting.secondary_text}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              )}
+          <Box sx={{ position: "absolute", top: 10, left: 10, right: 10, zIndex: 1000 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search for a location…"
+              value={search}
+              onChange={handleSearch}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: searching ? (
+                  <InputAdornment position="end">
+                    <CircularProgress size={14} />
+                  </InputAdornment>
+                ) : null,
+                sx: {
+                  backgroundColor: "white",
+                  borderRadius: 2,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+                  "& fieldset": { border: "none" },
+                },
+              }}
             />
+            {results.length > 0 && (
+              <Paper elevation={4} sx={{ mt: 0.5, maxHeight: 200, overflow: "auto", borderRadius: 2 }}>
+                <List dense disablePadding>
+                  {results.map((r) => (
+                    <ListItem disablePadding key={r.place_id}>
+                      <ListItemButton onClick={() => handleSelectResult(r)} sx={{ py: 0.75 }}>
+                        <LocationOnRoundedIcon sx={{ mr: 1, fontSize: 16, color: "text.secondary", flexShrink: 0 }} />
+                        <ListItemText
+                          primary={r.display_name?.split(",")[0]}
+                          secondary={r.display_name?.split(",").slice(1, 3).join(",")}
+                          primaryTypographyProps={{ variant: "body2", fontWeight: 600, noWrap: true }}
+                          secondaryTypographyProps={{ variant: "caption", noWrap: true }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
           </Box>
         )}
 
-        {/* ── Fixed center pin (Uber-style) ── */}
+        {/* GPS button */}
         {status === "ready" && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%", left: "50%",
-              transform: "translate(-50%, -100%)",
-              pointerEvents: "none",
-              zIndex: 5,
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 2, left: "50%",
-                transform: "translateX(-50%)",
-                width: 10, height: 3,
-                backgroundColor: "rgba(0,0,0,0.25)",
-                borderRadius: "50%",
-                filter: "blur(2px)",
-              }}
-            />
-            <LocationOnRoundedIcon
-              sx={{
-                fontSize: 50,
-                color: brand.gold,
-                display: "block",
-                filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))",
-              }}
-            />
-          </Box>
-        )}
-
-        {/* ── GPS button ── */}
-        {status === "ready" && (
-          <Box sx={{ position: "absolute", bottom: 86, right: 12, zIndex: 10 }}>
+          <Box sx={{ position: "absolute", bottom: 86, right: 12, zIndex: 1000 }}>
             <IconButton
               onClick={handleMyLocation}
+              disabled={gpsLoading}
               size="small"
               sx={{
                 backgroundColor: "white",
@@ -336,12 +336,15 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
                 "&:hover": { backgroundColor: "#f0f0f0" },
               }}
             >
-              <MyLocationRoundedIcon sx={{ color: brand.orange, fontSize: 20 }} />
+              {gpsLoading
+                ? <CircularProgress size={18} sx={{ color: brand.orange }} />
+                : <MyLocationRoundedIcon sx={{ color: brand.orange, fontSize: 20 }} />
+              }
             </IconButton>
           </Box>
         )}
 
-        {/* ── Loading overlay ── */}
+        {/* Loading overlay */}
         {status === "loading" && (
           <Box
             sx={{
@@ -357,7 +360,7 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
           </Box>
         )}
 
-        {/* ── Error overlay ── */}
+        {/* Error overlay */}
         {status === "error" && (
           <Box
             sx={{
@@ -368,14 +371,23 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
             }}
           >
             <MapRoundedIcon sx={{ fontSize: 52, color: "text.disabled" }} />
-            <Typography variant="body1" fontWeight={700}>Unable to load map</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Check your connection and try again.
+            <Typography variant="body1" fontWeight={700}>Map unavailable</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 260 }}>
+              Could not load the map. Close this dialog and use the{" "}
+              <strong>manual address fields</strong> below.
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={onClose}
+              sx={{ mt: 1, borderColor: brand.orange, color: brand.orange, textTransform: "none", fontWeight: 600 }}
+            >
+              Close &amp; enter manually
+            </Button>
           </Box>
         )}
 
-        {/* ── Address preview strip ── */}
+        {/* Address preview strip */}
         {status === "ready" && (
           <Box
             sx={{
@@ -389,6 +401,7 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
               display: "flex",
               alignItems: "center",
               gap: 1.5,
+              zIndex: 1000,
             }}
           >
             <LocationOnRoundedIcon sx={{ color: brand.gold, flexShrink: 0, fontSize: 22 }} />
@@ -415,15 +428,11 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
         )}
       </DialogContent>
 
-      {/* ── Actions ───────────────────────────────────────────────────────────── */}
       <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 1.5, gap: 1 }}>
         <Button
           variant="outlined"
           onClick={onClose}
-          sx={{
-            fontWeight: 600, textTransform: "none",
-            borderColor: brand.border, color: "text.secondary",
-          }}
+          sx={{ fontWeight: 600, textTransform: "none", borderColor: brand.border, color: "text.secondary" }}
         >
           Cancel
         </Button>

@@ -1,0 +1,97 @@
+{
+  "expo": {
+    "name": "PO.PU",
+    "slug": "popu",
+    "version": "1.0.3",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B5E20"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.popu.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "PO.PU needs your location to find nearby caterers and track your delivery.",
+        "NSLocationAlwaysUsageDescription": "PO.PU uses location in background to track your delivery in real-time.",
+        "NSCameraUsageDescription": "PO.PU needs camera access to upload food and profile images.",
+        "NSPhotoLibraryUsageDescription": "PO.PU needs photo library access to select images."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#1B5E20"
+      },
+      "package": "com.popu.app",
+      "versionCode": 4,
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAWZeG4kA12ZEwWyLrLsI750QItyyNGi90"
+        }
+      }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24,
+            "useLegacyPackaging": false
+          }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "PO.PU needs your location to find nearby caterers and track deliveries.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/logo.png",
+          "color": "#1B5E20",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PO.PU needs access to your photos to upload images.",
+          "cameraPermission": "PO.PU needs camera access to take photos."
+        }
+      ]
+    ],
+    "scheme": "popu",
+    "extra": {
+      "eas": {
+        "projectId": "f2a6007e-a99b-4aa2-8106-97e276f3da91"
+      }
+    },
+    "owner": "hari_popu_expo"
+  }
+}

@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -14,10 +14,11 @@ import ErrorBoundary from "../components/ErrorBoundary";
 const LandingPage = React.lazy(() => import("../pages/LandingPage"));
 
 // Auth
-const LoginPage           = React.lazy(() => import("../pages/auth/LoginPage"));
-const RegisterPage        = React.lazy(() => import("../pages/auth/RegisterPage"));
-const ForgotPasswordPage  = React.lazy(() => import("../pages/auth/ForgotPasswordPage"));
-const ResetPasswordPage   = React.lazy(() => import("../pages/auth/ResetPasswordPage"));
+const LoginPage              = React.lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage           = React.lazy(() => import("../pages/auth/RegisterPage"));
+const ForgotPasswordPage     = React.lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const OTPVerificationPage    = React.lazy(() => import("../pages/auth/OTPVerificationPage"));
+const ResetPasswordPage      = React.lazy(() => import("../pages/auth/ResetPasswordPage"));
 
 // Customer
 const CustomerDashboard  = React.lazy(() => import("../pages/customer/CustomerDashboard"));
@@ -137,14 +138,15 @@ const Loader = () => (
 
 export default function AppRoutes() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ScrollToTop />
       <Suspense fallback={<Loader />}>
         <Routes>
-          <Route path="/login"            element={<LoginPage />} />
-          <Route path="/register"         element={<RegisterPage />} />
-          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
-          <Route path="/reset-password"   element={<ResetPasswordPage />} />
+          <Route path="/login"              element={<LoginPage />} />
+          <Route path="/register"          element={<RegisterPage />} />
+          <Route path="/forgot-password"   element={<ForgotPasswordPage />} />
+          <Route path="/otp-verification"  element={<OTPVerificationPage />} />
+          <Route path="/reset-password"    element={<ResetPasswordPage />} />
 
           {/* Customer */}
           <Route path="/customer"               element={<ErrorBoundary><C allowed={CUST} element={<CustomerDashboard />} /></ErrorBoundary>} />
@@ -227,10 +229,16 @@ export default function AppRoutes() {
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
           <Route path="/admin/account-management" element={<C allowed={ADMIN} element={<AdminAccountManagementPage />} />} />
 
-          <Route path="/" element={<LandingPage />} />
-          <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />
+          {/* Root: auto-route based on auth state */}
+          <Route path="/" element={
+            isAuthenticated()
+              ? (() => { const r = getUserRole(); return <Navigate to={r === 'caterer' ? '/caterer' : r === 'admin' ? '/admin' : r === 'rider' ? '/rider' : '/customer'} replace />; })()
+              : <Navigate to="/login" replace />
+          } />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

@@ -10,8 +10,6 @@ import {
   ListItemIcon,
   ListItemText,
   Card,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -22,12 +20,11 @@ import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
-import BackButton from "../../components/BackButton";
 import LogoutConfirmationDialog from "../../components/LogoutConfirmationDialog";
 
 const MENU = [
-  { label: "My Bookings",     to: "/customer/catering-bookings",      icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: "My Orders",       to: "/customer/master-orders",          icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: "My Catering Bookings", to: "/customer/catering-bookings",      icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: "My Food Orders",       to: "/customer/master-orders",          icon: <ReceiptLongRoundedIcon fontSize="small" /> },
   { label: "My Addresses",    to: "/customer/profile/addresses",      icon: <LocationOnRoundedIcon fontSize="small" /> },
   { label: "Payment Methods", to: "/customer/profile/payment-methods",icon: <PaymentRoundedIcon fontSize="small" /> },
   { label: "Wallet & Offers", to: "/customer/offers",                 icon: <LocalOfferRoundedIcon fontSize="small" /> },
@@ -46,21 +43,19 @@ export default function ProfilePage() {
   })();
 
   const [logoutOpen, setLogoutOpen] = useState(false);
-  const [toastOpen,  setToastOpen]  = useState(false);
 
   const handleLogoutConfirm = () => {
     setLogoutOpen(false);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setToastOpen(true);
-    setTimeout(() => navigate("/login"), 1500);
+    navigate("/login");
   };
 
   return (
     <AppLayout>
 
       <Container maxWidth="sm" sx={{ pt: 3, pb: 4 }}>
-        <BackButton sx={{ mb: 1 }} />
+
         {/* Avatar card */}
         <Card sx={{ textAlign: "center", p: 3, mb: 2 }}>
           <Avatar
@@ -77,10 +72,10 @@ export default function ProfilePage() {
             {(user.name || "P")[0].toUpperCase()}
           </Avatar>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            {user.name || "Priya Sharma"}
+            {user.name || ""}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {user.email || "priya@email.com"}
+            {user.email || ""}
           </Typography>
           {user.phone && (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -129,16 +124,6 @@ export default function ProfilePage() {
         onConfirm={handleLogoutConfirm}
       />
 
-      <Snackbar
-        open={toastOpen}
-        autoHideDuration={2500}
-        onClose={() => setToastOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert severity="success" variant="filled" sx={{ fontWeight: 600 }}>
-          Thank you for visiting PO.PU. See you again soon!
-        </Alert>
-      </Snackbar>
     </AppLayout>
   );
 }

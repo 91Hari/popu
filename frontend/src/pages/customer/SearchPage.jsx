@@ -39,9 +39,23 @@ export default function FoodSearchPage() {
     setSearched(true);
     setLoading(true);
     try {
-      const data = searchQuery.trim()
-        ? await foodService.searchFoods(searchQuery.trim())
-        : await foodService.getCustomerFoods();
+      const q = searchQuery.trim();
+      let data;
+      if (q) {
+        const [byFood, byCaterer] = await Promise.all([
+          foodService.searchFoodsFull({ foodName: q }),
+          foodService.searchFoodsFull({ catererName: q }),
+        ]);
+        const seen = new Set();
+        data = [...(byFood || []), ...(byCaterer || [])].filter((f) => {
+          const id = f.foodId || f.id;
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+      } else {
+        data = await foodService.getCustomerFoods();
+      }
       setFoods(data || []);
     } catch (err) {
       console.error(err);
@@ -110,6 +124,7 @@ export default function FoodSearchPage() {
                   onClick={() => navigate(`/customer/food/${food.foodId}`)}
                   sx={{
                     display: "flex", alignItems: "center", gap: 1.5, p: 1.5,
+                    height: 88,
                     cursor: "pointer", transition: "transform 0.15s",
                     "&:hover": { borderColor: brand.orange, transform: "translateY(-2px)" },
                   }}

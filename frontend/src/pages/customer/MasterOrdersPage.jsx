@@ -159,7 +159,7 @@ export default function MasterOrdersPage() {
       <Container maxWidth="md" sx={{ pt: 3, pb: 5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <Inventory2RoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>My Bookings</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>My Food Orders</Typography>
         </Box>
 
         {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}

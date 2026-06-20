@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import VisibilityRoundedIcon    from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+
 import Logo from "../../components/Logo";
 import authService from "../../services/authService";
 import { brand } from "../../theme";
@@ -112,7 +113,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
                   disabled={loading || !token}
                   autoComplete="new-password"
-                  helperText="Min 8 chars, uppercase, lowercase, number"
+                  helperText="Min 8 chars, uppercase, lowercase, number, special char"
                   slotProps={{ input: eyeAdornment(showNew, () => setShowNew((v) => !v)) }}
                 />
 

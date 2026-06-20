@@ -6,7 +6,6 @@ import {
   DialogContentText, DialogActions, TextField,
 } from "@mui/material";
 import ManageAccountsRoundedIcon from "@mui/icons-material/ManageAccountsRounded";
-import ArrowBackRoundedIcon       from "@mui/icons-material/ArrowBackRounded";
 import CheckCircleRoundedIcon     from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon          from "@mui/icons-material/CancelRounded";
 import RestoreRoundedIcon         from "@mui/icons-material/RestoreRounded";
@@ -139,9 +138,6 @@ export default function AdminAccountManagementPage() {
       <Container maxWidth="lg" sx={{ pt: 3, pb: 6 }}>
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate("/admin")} sx={{ color: brand.orange }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <ManageAccountsRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Account Management</Typography>
         </Box>

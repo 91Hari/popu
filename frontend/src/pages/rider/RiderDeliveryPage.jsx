@@ -13,7 +13,6 @@ import LocationOnRoundedIcon   from "@mui/icons-material/LocationOnRounded";
 import LocalAtmRoundedIcon     from "@mui/icons-material/LocalAtmRounded";
 import GpsFixedRoundedIcon     from "@mui/icons-material/GpsFixedRounded";
 import AppLayout from "../../components/AppLayout";
-import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
 import riderService from "../../services/riderService";
 
@@ -49,15 +48,43 @@ export default function RiderDeliveryPage() {
 
   useEffect(() => { loadOrder(); }, [loadOrder]);
 
-  // Pre-load rider GPS so it's ready synchronously when Start Delivery is tapped
+  // Pre-load rider GPS using Capacitor on Android, browser API as fallback
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => { riderPosRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
-      (err) => console.warn("[Rider GPS pre-load]", err.message),
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 10_000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
+    let capWatchId = null;
+    let browserWatchId = null;
+
+    async function startPreload() {
+      try {
+        const { Geolocation } = await import("@capacitor/geolocation");
+        await Geolocation.requestPermissions();
+        capWatchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: true },
+          (pos, err) => {
+            if (err) return;
+            riderPosRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          }
+        );
+      } catch {
+        if (!navigator.geolocation) return;
+        browserWatchId = navigator.geolocation.watchPosition(
+          (pos) => { riderPosRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+          (err) => console.warn("[Rider GPS pre-load]", err.message),
+          { enableHighAccuracy: true, timeout: 15_000, maximumAge: 10_000 }
+        );
+      }
+    }
+
+    startPreload();
+    return () => {
+      if (capWatchId !== null) {
+        import("@capacitor/geolocation").then(({ Geolocation }) =>
+          Geolocation.clearWatch({ id: capWatchId })
+        ).catch(() => {});
+      }
+      if (browserWatchId !== null) {
+        navigator.geolocation?.clearWatch(browserWatchId);
+      }
+    };
   }, []);
 
   // GPS tracking — active only while status = OUT_FOR_DELIVERY
@@ -71,32 +98,46 @@ export default function RiderDeliveryPage() {
       return;
     }
 
-    if (!navigator.geolocation) return;
-
-    const handlePosition = (pos) => {
+    const handlePosition = (lat, lng) => {
       const now = Date.now();
-      if (now - lastPushRef.current < 10_000) return; // 10-second throttle
+      if (now - lastPushRef.current < 10_000) return;
       lastPushRef.current = now;
-      riderService.pushLocation({
-        latitude:  pos.coords.latitude,
-        longitude: pos.coords.longitude,
-        order_id:  id,
-      }).catch(() => {});
+      riderService.pushLocation({ latitude: lat, longitude: lng, order_id: id }).catch(() => {});
     };
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      handlePosition,
-      (err) => console.warn("[GPS]", err.message),
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 5_000 }
-    );
-    setGpsActive(true);
+    let capWatchId = null;
+    async function startCapWatch() {
+      try {
+        const { Geolocation } = await import("@capacitor/geolocation");
+        capWatchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: true },
+          (pos, err) => { if (!err) handlePosition(pos.coords.latitude, pos.coords.longitude); }
+        );
+        watchIdRef.current = capWatchId;
+        setGpsActive(true);
+      } catch {
+        if (!navigator.geolocation) return;
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (pos) => handlePosition(pos.coords.latitude, pos.coords.longitude),
+          (err) => console.warn("[GPS]", err.message),
+          { enableHighAccuracy: true, timeout: 15_000, maximumAge: 5_000 }
+        );
+        setGpsActive(true);
+      }
+    }
+
+    startCapWatch();
 
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-        setGpsActive(false);
+      if (capWatchId !== null) {
+        import("@capacitor/geolocation").then(({ Geolocation }) =>
+          Geolocation.clearWatch({ id: capWatchId })
+        ).catch(() => {});
+      } else if (watchIdRef.current !== null) {
+        navigator.geolocation?.clearWatch(watchIdRef.current);
       }
+      watchIdRef.current = null;
+      setGpsActive(false);
     };
   }, [order?.status]);
 
@@ -197,7 +238,7 @@ export default function RiderDeliveryPage() {
   return (
     <AppLayout>
       <Container maxWidth="sm" sx={{ pt: 3, pb: 5 }}>
-        <BackButton sx={{ mb: 2 }} />
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <TwoWheelerRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Delivery</Typography>

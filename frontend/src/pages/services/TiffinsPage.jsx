@@ -6,7 +6,6 @@ import {
   Stack, ToggleButton, ToggleButtonGroup,
 } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
 import SortRoundedIcon from "@mui/icons-material/SortRounded";
 import { brand } from "../../theme";
@@ -14,25 +13,21 @@ import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
 import EmptyState from "../../components/EmptyState";
 import foodService from "../../services/foodService";
-import { useCustomerGeo } from "../../utils/geoUtils";
 
 const SORT_OPTIONS = [
   { value: "default",    label: "Default" },
   { value: "price_asc",  label: "Price ↑" },
   { value: "price_desc", label: "Price ↓" },
-  { value: "eta_asc",    label: "ETA ↑" },
 ];
 
 function sortFoods(foods, sort) {
   if (sort === "price_asc")  return [...foods].sort((a, b) => Number(a.price) - Number(b.price));
   if (sort === "price_desc") return [...foods].sort((a, b) => Number(b.price) - Number(a.price));
-  if (sort === "eta_asc")    return [...foods].sort((a, b) => (a.estimatedDeliveryTime ?? 999) - (b.estimatedDeliveryTime ?? 999));
   return foods;
 }
 
 export default function TiffinsPage() {
-  const navigate       = useNavigate();
-  const customerCoords = useCustomerGeo();
+  const navigate = useNavigate();
 
   const [foods, setFoods]           = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -43,21 +38,18 @@ export default function TiffinsPage() {
   const [sort, setSort]             = useState("default");
   const [catererNames, setCaterers] = useState([]);
 
-  const load = useCallback(async (foodName, catererName, foodCategory, coords) => {
+  const load = useCallback(async (foodName, catererName, foodCategory) => {
     setLoading(true);
     setError("");
     try {
       let data;
-      const geo = coords || customerCoords;
       if (foodName || catererName) {
         data = await foodService.searchFoodsFull({
           foodName, catererName, available: true,
           food_category: foodCategory || undefined,
-          customerLat: geo?.lat, customerLng: geo?.lng,
         });
       } else {
         data = await foodService.getCustomerFoods({
-          customerLat: geo?.lat, customerLng: geo?.lng,
           food_category: foodCategory || undefined,
         });
       }
@@ -69,13 +61,14 @@ export default function TiffinsPage() {
     } finally {
       setLoading(false);
     }
-  }, [customerCoords]);
+  }, []);
 
-  useEffect(() => { load("", "", categoryFilter); }, [load]);  // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load("", "", categoryFilter); }, [load, categoryFilter]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    load(inputVal.trim(), catererFilter, categoryFilter);
+    const q = inputVal.trim();
+    load(q, catererFilter, categoryFilter);
   };
 
   const handleCatererChange = (e) => {
@@ -98,15 +91,11 @@ export default function TiffinsPage() {
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         {/* Header */}
         <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate("/services")} sx={{ color: brand.muted }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <LunchDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Food Marketplace</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {displayed.length} item{displayed.length !== 1 ? "s" : ""} available
-              {customerCoords && " · showing ETA"}
             </Typography>
           </Box>
         </Stack>

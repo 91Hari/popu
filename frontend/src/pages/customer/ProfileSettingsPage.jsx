@@ -6,14 +6,17 @@ import {
   Divider, InputAdornment, Dialog, DialogTitle, DialogContent,
   DialogContentText, DialogActions,
 } from "@mui/material";
-import SettingsRoundedIcon  from "@mui/icons-material/SettingsRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import SettingsRoundedIcon       from "@mui/icons-material/SettingsRounded";
 import SaveRoundedIcon           from "@mui/icons-material/SaveRounded";
 import PhoneRoundedIcon          from "@mui/icons-material/PhoneRounded";
 import MyLocationRoundedIcon     from "@mui/icons-material/MyLocationRounded";
 import MapRoundedIcon            from "@mui/icons-material/MapRounded";
 import DeleteForeverRoundedIcon  from "@mui/icons-material/DeleteForeverRounded";
 import WarningAmberRoundedIcon   from "@mui/icons-material/WarningAmberRounded";
+import LockRoundedIcon           from "@mui/icons-material/LockRounded";
+import VisibilityRoundedIcon     from "@mui/icons-material/VisibilityRounded";
+import VisibilityOffRoundedIcon  from "@mui/icons-material/VisibilityOffRounded";
+import authService               from "../../services/authService";
 import AppLayout              from "../../components/AppLayout";
 import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
 import MapLocationPicker      from "../../components/MapLocationPicker";
@@ -100,6 +103,58 @@ export default function ProfileSettingsPage() {
   const [mobileError,   setMobileError]   = useState("");
   const [savingMobile,  setSavingMobile]  = useState(false);
   const [mobileEditing, setMobileEditing] = useState(false);
+
+  // ── change password ──────────────────────────────────────────────────────────
+  const [pwForm, setPwForm]       = useState({ current: "", newPw: "", confirm: "" });
+  const [pwErrors, setPwErrors]   = useState({});
+  const [savingPw, setSavingPw]   = useState(false);
+  const [showPw, setShowPw]       = useState({ current: false, newPw: false, confirm: false });
+
+  const togglePw = (field) => setShowPw((s) => ({ ...s, [field]: !s[field] }));
+  const eyeIcon  = (field) => ({
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton onClick={() => togglePw(field)} edge="end" size="small" tabIndex={-1}>
+          {showPw[field]
+            ? <VisibilityOffRoundedIcon fontSize="small" />
+            : <VisibilityRoundedIcon fontSize="small" />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  });
+
+  const handleChangePassword = async () => {
+    const errs = {};
+    if (!pwForm.current)   errs.current  = "Enter your current password";
+    if (!pwForm.newPw)     errs.newPw    = "Enter a new password";
+    if (pwForm.newPw && pwForm.newPw.length < 8)
+      errs.newPw = "Password must be at least 8 characters";
+    if (pwForm.newPw !== pwForm.confirm) errs.confirm = "Passwords do not match";
+    setPwErrors(errs);
+    if (Object.keys(errs).length) return;
+
+    setSavingPw(true);
+    try {
+      await authService.changePassword({ currentPassword: pwForm.current, newPassword: pwForm.newPw });
+      showSnack("Password changed. Please sign in again.");
+      setPwForm({ current: "", newPw: "", confirm: "" });
+      setTimeout(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+      }, 1500);
+    } catch (err) {
+      if (err?.status === 401 || err?.message?.toLowerCase().includes("session")) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
+      showSnack(err?.message || "Failed to change password.", "error");
+    } finally {
+      setSavingPw(false);
+    }
+  };
 
   // ── danger zone ──────────────────────────────────────────────────────────────
   const userRole = useMemo(() => {
@@ -327,9 +382,6 @@ export default function ProfileSettingsPage() {
       <Container maxWidth="sm" sx={{ pt: 3, pb: 6 }}>
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: brand.orange }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <SettingsRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Settings</Typography>
         </Box>
@@ -411,6 +463,68 @@ export default function ProfileSettingsPage() {
                   </Button>
                 </Stack>
               )}
+            </Card>
+
+            {/* ── Security / Change Password ────────────────────────────────── */}
+            <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                <LockRoundedIcon sx={{ color: brand.orange, fontSize: 18 }} />
+                <Typography variant="subtitle2" sx={sectionLabel}>Security</Typography>
+              </Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+                After changing your password you will be signed out and need to log in again.
+              </Typography>
+
+              <Stack spacing={2}>
+                <TextField
+                  fullWidth size="small" label="Current Password"
+                  type={showPw.current ? "text" : "password"}
+                  value={pwForm.current}
+                  onChange={(e) => { setPwForm((f) => ({ ...f, current: e.target.value })); setPwErrors((er) => ({ ...er, current: "" })); }}
+                  error={!!pwErrors.current} helperText={pwErrors.current}
+                  disabled={savingPw}
+                  autoComplete="current-password"
+                  slotProps={{ input: eyeIcon("current") }}
+                />
+                <TextField
+                  fullWidth size="small" label="New Password"
+                  type={showPw.newPw ? "text" : "password"}
+                  value={pwForm.newPw}
+                  onChange={(e) => { setPwForm((f) => ({ ...f, newPw: e.target.value })); setPwErrors((er) => ({ ...er, newPw: "" })); }}
+                  error={!!pwErrors.newPw}
+                  helperText={pwErrors.newPw || "Min 8 chars, uppercase, lowercase, number, special char"}
+                  disabled={savingPw}
+                  autoComplete="new-password"
+                  slotProps={{ input: eyeIcon("newPw") }}
+                />
+                <TextField
+                  fullWidth size="small" label="Confirm New Password"
+                  type={showPw.confirm ? "text" : "password"}
+                  value={pwForm.confirm}
+                  onChange={(e) => { setPwForm((f) => ({ ...f, confirm: e.target.value })); setPwErrors((er) => ({ ...er, confirm: "" })); }}
+                  error={!!pwErrors.confirm} helperText={pwErrors.confirm}
+                  disabled={savingPw}
+                  autoComplete="new-password"
+                  slotProps={{ input: eyeIcon("confirm") }}
+                />
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleChangePassword}
+                  disabled={savingPw}
+                  startIcon={savingPw ? <CircularProgress size={14} color="inherit" /> : <LockRoundedIcon />}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: "none",
+                    alignSelf: "flex-start",
+                    background: `linear-gradient(135deg, ${brand.orange} 0%, ${brand.orangeMid} 100%)`,
+                    "&:hover": { background: `linear-gradient(135deg, ${brand.orangeMid} 0%, ${brand.orangeMid} 100%)` },
+                    "&.Mui-disabled": { background: "#E0E0E0" },
+                  }}
+                >
+                  {savingPw ? "Saving…" : "Change Password"}
+                </Button>
+              </Stack>
             </Card>
 
             {/* ── Location / Address ────────────────────────────────────────── */}

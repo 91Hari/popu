@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import PersonPinRoundedIcon from "@mui/icons-material/PersonPinRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
@@ -122,14 +121,6 @@ export default function FoodDetailsPage() {
     <AppLayout>
 
       <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4 }}>
-        <Button
-          startIcon={<ArrowBackRoundedIcon />}
-          onClick={() => navigate(-1)}
-          sx={{ mb: 2, color: brand.muted }}
-        >
-          Back
-        </Button>
-
         <Card
           sx={{
             display: "flex",

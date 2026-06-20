@@ -16,7 +16,6 @@ import OpenInNewRoundedIcon           from "@mui/icons-material/OpenInNewRounded
 import notificationService from "../../services/notificationService";
 import { useNotifications } from "../../contexts/NotificationContext";
 import AppLayout from "../../components/AppLayout";
-import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
 
 // Notification types that have a corresponding order reference_id
@@ -129,7 +128,7 @@ export default function NotificationsPage() {
   return (
     <AppLayout>
       <Container maxWidth="md" sx={{ pt: 3, pb: 4 }}>
-        <BackButton sx={{ mb: 1 }} />
+
 
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>

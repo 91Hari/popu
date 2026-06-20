@@ -7,16 +7,14 @@ import {
 } from "@mui/material";
 import VisibilityRoundedIcon    from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+
 import PersonRoundedIcon        from "@mui/icons-material/PersonRounded";
 import StorefrontRoundedIcon    from "@mui/icons-material/StorefrontRounded";
 import MyLocationRoundedIcon    from "@mui/icons-material/MyLocationRounded";
 import MapRoundedIcon           from "@mui/icons-material/MapRounded";
 import Logo                     from "../../components/Logo";
-import PlacesAutocompleteField  from "../../components/PlacesAutocompleteField";
 import MapLocationPicker        from "../../components/MapLocationPicker";
 import authService              from "../../services/authService";
-import { ensureMapsInit }       from "../../utils/mapsLoader";
-import { parseAddressComponents } from "../../utils/parseAddressComponents";
 import { brand }                from "../../theme";
 
 function validatePassword(pw) {
@@ -70,58 +68,61 @@ export default function RegisterPage() {
 
   const navigate = useNavigate();
 
-  // ── Reverse geocode coordinates → address fields ─────────────────────────────
+  // ── Nominatim reverse geocode ────────────────────────────────────────────────
   const geocodePosition = useCallback(async (latitude, longitude) => {
     try {
-      const ok = await ensureMapsInit("geocoding");
-      if (!ok) throw new Error("Maps unavailable");
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-        if (status === "OK" && results?.[0]) {
-          const parsed = parseAddressComponents(results[0].address_components);
-          setLocField({
-            address:    parsed.address  || "",
-            city:       parsed.city     || "",
-            addrState:  parsed.state    || "",
-            pincode:    parsed.pincode  || "",
-            lat:        latitude,
-            lng:        longitude,
-          });
-          setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
-        } else {
-          setLocField({ lat: latitude, lng: longitude });
-          setLocInfo({ type: "info", message: "Location coordinates captured. Please fill in the address." });
-        }
-        setDetecting(false);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      if (!res.ok) throw new Error("Nominatim failed");
+      const data = await res.json();
+      const a = data?.address || {};
+      const road = a.road || a.pedestrian || a.footway || a.suburb || "";
+      const area = a.suburb || a.neighbourhood || a.village || "";
+      const address = [road, area].filter(Boolean).join(", ") || data.display_name?.split(",")[0] || "";
+      setLocField({
+        address,
+        city:      a.city || a.town || a.village || a.county || "",
+        addrState: a.state || "",
+        pincode:   a.postcode || "",
+        lat:       latitude,
+        lng:       longitude,
       });
+      setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
     } catch {
       setLocField({ lat: latitude, lng: longitude });
       setLocInfo({ type: "info", message: "Could not auto-fill address. Please enter manually." });
+    } finally {
       setDetecting(false);
     }
   }, []);
 
-  // ── GPS detect (called on mount + button click) ──────────────────────────────
-  const handleDetectLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocInfo({ type: "warning", message: "Geolocation is not supported by your browser." });
-      return;
-    }
+  // ── GPS detect using Capacitor (with browser fallback) ───────────────────────
+  const handleDetectLocation = useCallback(async () => {
     setDetecting(true);
     setLocInfo(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => geocodePosition(pos.coords.latitude, pos.coords.longitude),
-      (err) => {
+    try {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      const perms = await Geolocation.checkPermissions();
+      if (perms.location === "denied") await Geolocation.requestPermissions();
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      await geocodePosition(pos.coords.latitude, pos.coords.longitude);
+    } catch {
+      if (!navigator.geolocation) {
         setDetecting(false);
-        setLocInfo({
-          type: "warning",
-          message: err.code === 1
-            ? "Unable to detect your location. Please enter address manually."
-            : "Could not detect location. Please enter address manually.",
-        });
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+        setLocInfo({ type: "warning", message: "Geolocation not supported. Please enter address manually." });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => geocodePosition(pos.coords.latitude, pos.coords.longitude),
+        () => {
+          setDetecting(false);
+          setLocInfo({ type: "warning", message: "Could not detect location. Please enter address manually." });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
   }, [geocodePosition]);
 
   const handleMapConfirm = ({ address, city, state, pincode, lat, lng }) => {
@@ -336,17 +337,14 @@ export default function RegisterPage() {
                 <Typography variant="caption" color="text.secondary">or enter manually</Typography>
               </Divider>
 
-              <PlacesAutocompleteField
-                value={loc.address}
-                onChange={(text) => { setLocField({ address: text }); clrErr("address")(); }}
-                onPlaceSelect={({ address, city, state, pincode, lat, lng }) => {
-                  setLocField({ address, city, addrState: state, pincode, lat, lng });
-                  setErrors((e) => ({ ...e, address: "", city: "", state: "", pincode: "" }));
-                }}
-                label="Address *"
+              <TextField
+                fullWidth label="Address *" value={loc.address}
+                onChange={(e) => { setLocField({ address: e.target.value }); clrErr("address")(); }}
                 error={!!errors.address}
-                helperText={errors.address || "Start typing for Google suggestions"}
+                helperText={errors.address || "Street, area, landmark"}
                 disabled={loading}
+                multiline
+                rows={2}
               />
 
               <TextField

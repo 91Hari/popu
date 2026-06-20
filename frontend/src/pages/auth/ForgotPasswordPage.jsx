@@ -1,28 +1,35 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Box, Card, CardContent, Typography, Button, TextField,
   Alert, CircularProgress, Stack,
 } from "@mui/material";
+
 import Logo from "../../components/Logo";
 import authService from "../../services/authService";
 import { brand } from "../../theme";
 
 export default function ForgotPasswordPage() {
-  const [username, setUsername] = useState("");
-  const [error, setError]       = useState("");
-  const [success, setSuccess]   = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState("");
+  const [error, setError]           = useState("");
+  const [emailSent, setEmailSent]   = useState(false);
+  const [loading, setLoading]       = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim()) { setError("Enter your email or mobile number"); return; }
+    const val = identifier.trim();
+    if (!val) { setError("Enter your email or mobile number"); return; }
 
     setError("");
     setLoading(true);
     try {
-      await authService.forgotPassword({ username: username.trim() });
-      setSuccess(true);
+      const res = await authService.forgotPassword({ identifier: val });
+      if (res.method === "mobile") {
+        navigate(`/otp-verification?mobile=${encodeURIComponent(val)}`);
+      } else {
+        setEmailSent(true);
+      }
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -62,14 +69,14 @@ export default function ForgotPasswordPage() {
             Forgot Password
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-            Enter your email or mobile number and we'll send a reset link
+            Enter your registered email or mobile number
           </Typography>
 
-          {success ? (
+          {emailSent ? (
             <Stack spacing={2}>
               <Alert severity="success">
-                If an account exists, a reset link has been sent. Check the server
-                console for the link during development.
+                A password reset link has been sent to your email. Check your inbox (and spam folder).
+                The link expires in 15 minutes.
               </Alert>
               <Button
                 fullWidth
@@ -97,8 +104,8 @@ export default function ForgotPasswordPage() {
                 <TextField
                   fullWidth
                   label="Email or Mobile Number"
-                  value={username}
-                  onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                  value={identifier}
+                  onChange={(e) => { setIdentifier(e.target.value); setError(""); }}
                   disabled={loading}
                   autoComplete="username"
                   placeholder="email@example.com or 10-digit mobile"
@@ -115,7 +122,7 @@ export default function ForgotPasswordPage() {
                 >
                   {loading
                     ? <CircularProgress size={22} sx={{ color: "white" }} />
-                    : "Send Reset Link"}
+                    : "Continue"}
                 </Button>
 
                 <Typography

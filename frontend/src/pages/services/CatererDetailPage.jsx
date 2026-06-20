@@ -4,7 +4,6 @@ import {
   Box, Container, Typography, Grid, CircularProgress,
   Alert, Chip, Stack, Paper, Button, Divider,
 } from "@mui/material";
-import BackButton from "../../components/BackButton";
 import EventRoundedIcon       from "@mui/icons-material/EventRounded";
 import LocationOnRoundedIcon  from "@mui/icons-material/LocationOnRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
@@ -89,7 +88,7 @@ export default function CatererDetailPage() {
     <AppLayout>
 
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
-        <BackButton sx={{ mb: 2 }} />
+
 
         {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
 

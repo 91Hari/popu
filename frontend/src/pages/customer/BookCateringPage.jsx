@@ -10,7 +10,6 @@ import PeopleAltRoundedIcon      from "@mui/icons-material/PeopleAltRounded";
 import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
 import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
 import AppLayout from "../../components/AppLayout";
-import BackButton from "../../components/BackButton";
 import { brand } from "../../theme";
 import cateringService from "../../services/cateringService";
 
@@ -110,7 +109,7 @@ export default function BookCateringPage() {
   return (
     <AppLayout>
       <Container maxWidth="sm" sx={{ pt: 3, pb: 5 }}>
-        <BackButton sx={{ mb: 2 }} />
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
           <EventRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Book Catering</Typography>

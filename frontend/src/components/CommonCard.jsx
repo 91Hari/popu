@@ -83,12 +83,14 @@ export default function CommonCard({
             sx={{
               fontWeight: 700,
               overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
               minWidth: 0,
               maxWidth: "100%",
               lineHeight: 1.25,
               mb: 0.4,
+              minHeight: "2.5em",
             }}
           >
             {title}

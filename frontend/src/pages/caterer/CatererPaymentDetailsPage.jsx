@@ -5,7 +5,6 @@ import {
   Stack, TextField, Button, CircularProgress, Alert,
   Snackbar, Divider, InputAdornment,
 } from "@mui/material";
-import ArrowBackRoundedIcon     from "@mui/icons-material/ArrowBackRounded";
 import PhonelinkRoundedIcon     from "@mui/icons-material/PhonelinkRounded";
 import QrCodeRoundedIcon        from "@mui/icons-material/QrCodeRounded";
 import SaveRoundedIcon          from "@mui/icons-material/SaveRounded";
@@ -138,9 +137,6 @@ export default function CatererPaymentDetailsPage() {
     <AppLayout>
       <Container maxWidth="sm" sx={{ pt: 3, pb: 6 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: brand.orange }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <PhonelinkRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Payment Details</Typography>
         </Box>
