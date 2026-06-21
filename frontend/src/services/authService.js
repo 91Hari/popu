@@ -15,17 +15,10 @@ export default {
     });
   },
 
-  async forgotPassword({ identifier }) {
+  async forgotPassword({ email }) {
     return api.request("/auth/forgot-password", {
       method: "POST",
-      body: JSON.stringify({ identifier }),
-    });
-  },
-
-  async verifyOtp({ identifier, otp }) {
-    return api.request("/auth/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ identifier, otp }),
+      body: JSON.stringify({ email }),
     });
   },
 

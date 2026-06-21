@@ -1,1 +1,0 @@
-import{r as m,m as P,d as i}from"./Stack-HlQZQixs.js";import{D as S}from"./index-lBmq_J5m.js";function g(o){const{elementType:s,externalSlotProps:t,ownerState:e,skipResolvingSlotProps:p=!1,...n}=o,r=p?{}:m(t,e),{props:l,internalRef:a}=P({...n,externalSlotProps:r}),f=S(a,r?.ref,o.additionalProps?.ref);return i(s,{...l,ref:f},e)}export{g as u};
