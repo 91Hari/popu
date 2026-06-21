@@ -317,7 +317,7 @@ export default function AppLayout({ children }) {
                       <ArrowBackRoundedIcon />
                     </IconButton>
                   )}
-                  <Logo size={28} showWordmark src="/popuLogoHomePage.png" />
+                  <Logo size={36} showWordmark src="/popuLogoHomePage.png" />
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     {navItems === CUSTOMER_NAV && (
                       <>
