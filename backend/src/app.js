@@ -27,6 +27,10 @@ const tiffinRoutes               = require('./routes/tiffinRoutes');
 
 const app = express();
 
+// Trust the first proxy (required on Render, Railway, Heroku, etc.)
+// Allows express-rate-limit to read real client IP from X-Forwarded-For
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({
   origin:  process.env.CORS_ORIGIN || '*',
