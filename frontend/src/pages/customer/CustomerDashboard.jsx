@@ -72,6 +72,23 @@ export default function CustomerDashboard() {
       });
   }, []);
 
+  const fetchFoods = useCallback(async (coords) => {
+    try {
+      setLoading(true);
+      const geo  = coords || customerCoords;
+      const data = await foodService.getCustomerFoods({
+        customerLat: geo?.lat,
+        customerLng: geo?.lng,
+        limit: 5,
+      });
+      setFoods(data || []);
+    } catch {
+      setFoods([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [customerCoords]);
+
   const handleLocationConfirm = ({ address, city, lat, lng }) => {
     setLocationOpen(false);
     const label = address || city || null;
@@ -183,23 +200,6 @@ export default function CustomerDashboard() {
     if (enabled) navigate(cat.to);
     else setModalOpen(true);
   };
-
-  const fetchFoods = useCallback(async (coords) => {
-    try {
-      setLoading(true);
-      const geo  = coords || customerCoords;
-      const data = await foodService.getCustomerFoods({
-        customerLat: geo?.lat,
-        customerLng: geo?.lng,
-        limit: 5,
-      });
-      setFoods(data || []);
-    } catch {
-      setFoods([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [customerCoords]);
 
   useEffect(() => { fetchFoods(); }, [fetchFoods]);
 
