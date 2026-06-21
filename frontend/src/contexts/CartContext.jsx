@@ -39,6 +39,18 @@ export function CartProvider({ children }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  useEffect(() => {
+    let cleanup = () => {};
+    import('@capacitor/app').then(({ App }) => {
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) refresh();
+      }).then((listener) => {
+        cleanup = () => listener.remove();
+      });
+    }).catch(() => {});
+    return () => cleanup();
+  }, [refresh]);
+
   const addToCart = async (foodItemId, quantity = 1) => {
     dispatch({ type: "LOADING" });
     await cartApi.addItem(foodItemId, quantity);

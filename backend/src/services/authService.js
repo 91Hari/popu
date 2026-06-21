@@ -101,6 +101,12 @@ async function register({
   if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber).trim()))
     throw makeError('A valid 10-digit mobile number is required', 400);
 
+  // Email is mandatory — required for password recovery and account identity
+  if (!email || !email.trim())
+    throw makeError('Email address is required', 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+    throw makeError('Please enter a valid email address', 400);
+
   validatePasswordStrength(password);
 
   const ALLOWED_ROLES = ['CUSTOMER', 'CATERER'];
@@ -108,20 +114,19 @@ async function register({
     ? String(role).toUpperCase()
     : 'CUSTOMER';
 
-  const mobile = String(mobileNumber).trim();
+  const mobile     = String(mobileNumber).trim();
+  const cleanEmail = email.trim().toLowerCase();
 
   const { rows: mobileRows } = await pool.query(
     'SELECT id FROM users WHERE mobile_number = $1', [mobile]
   );
   if (mobileRows.length) throw makeError('Mobile number is already registered', 409);
 
-  const cleanEmail = email?.trim().toLowerCase() || null;
-  if (cleanEmail) {
-    const { rows: emailRows } = await pool.query(
-      'SELECT id FROM users WHERE email = $1', [cleanEmail]
-    );
-    if (emailRows.length) throw makeError('Email address is already registered', 409);
-  }
+  const { rows: emailRows } = await pool.query(
+    'SELECT id FROM users WHERE email = $1', [cleanEmail]
+  );
+  if (emailRows.length)
+    throw makeError('An account already exists with this email address', 409);
 
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -137,7 +142,7 @@ async function register({
        (name, email, mobile_number, password_hash, role, address, city, state, pincode, latitude, longitude)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING id, name, email, mobile_number, role, address, city, state, pincode, latitude, longitude`,
-    [name.trim(), cleanEmail, mobile, password_hash, userRole,
+    [name.trim(), cleanEmail, mobile, password_hash, userRole,        // cleanEmail is always set
      cleanAddress, cleanCity, cleanState, cleanPincode, lat, lng]
   );
 

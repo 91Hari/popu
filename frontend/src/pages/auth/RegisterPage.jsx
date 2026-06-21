@@ -141,8 +141,9 @@ export default function RegisterPage() {
     else if (name.trim().length < 2)          e.name     = "Name must be at least 2 characters";
     if (!mobile)                              e.mobile   = "Mobile number is required";
     else if (!/^\d{10}$/.test(mobile))        e.mobile   = "Enter a valid 10-digit mobile number";
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-                                              e.email    = "Enter a valid email address";
+    if (!email.trim())                         e.email    = "Email address is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+                                              e.email    = "Please enter a valid email address";
     const pwErr = validatePassword(password);
     if (pwErr)                                e.password = pwErr;
     if (!confirmPw)                           e.confirm  = "Please confirm your password";
@@ -166,7 +167,7 @@ export default function RegisterPage() {
       await authService.register({
         name:         name.trim(),
         mobileNumber: mobile,
-        email:        email.trim() || undefined,
+        email:        email.trim(),
         password,
         role,
         address:   loc.address.trim()    || undefined,
@@ -257,10 +258,11 @@ export default function RegisterPage() {
               />
 
               <TextField
-                fullWidth label="Email Address (Optional)" type="email" value={email}
+                fullWidth label="Email Address *" type="email" value={email}
                 onChange={(e) => { setEmail(e.target.value); clrErr("email")(); }}
-                disabled={loading} autoComplete="email" placeholder="example@email.com"
-                error={!!errors.email} helperText={errors.email || "Used to receive order confirmations"}
+                disabled={loading} autoComplete="email" placeholder="name@example.com"
+                required
+                error={!!errors.email} helperText={errors.email || "Required for account recovery and order updates"}
               />
 
               <TextField
