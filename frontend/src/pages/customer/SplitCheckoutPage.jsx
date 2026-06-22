@@ -29,7 +29,6 @@ import api                     from "../../services/api";
 import masterOrderService      from "../../services/masterOrderService";
 import DirectionsWalkRoundedIcon   from "@mui/icons-material/DirectionsWalkRounded";
 import LocalShippingRoundedIcon    from "@mui/icons-material/LocalShippingRounded";
-import SavingsRoundedIcon          from "@mui/icons-material/SavingsRounded";
 
 const PROOF_MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_PROOF_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"];
@@ -74,6 +73,7 @@ export default function SplitCheckoutPage() {
   const [qrModal,         setQrModal]         = useState({ open: false });
   const [paymentMethod,   setPaymentMethod]   = useState("ONLINE");
   const [pickupRec,       setPickupRec]       = useState(null);
+  const [pickupLoading,   setPickupLoading]   = useState(false);
   const [fulfillmentType, setFulfillmentType] = useState("DELIVERY");
   const [pickupTracked,   setPickupTracked]   = useState(false);
   const fileInputRefs = useRef({});
@@ -163,18 +163,27 @@ export default function SplitCheckoutPage() {
 
   // Fetch self-pickup recommendation for single-caterer orders
   useEffect(() => {
-    if (catererGroups.length !== 1 || loading || !customerCoords) return;
+    if (catererGroups.length !== 1 || loading) return;
+    // Use GPS coords if available, fall back to saved address coordinates
+    const lat = customerCoords?.lat ?? defaultAddress?.latitude  ?? null;
+    const lng = customerCoords?.lng ?? defaultAddress?.longitude ?? null;
+    if (!lat || !lng) return;
     const group = catererGroups[0];
     const foodIds = group.items.map((i) => i.food_item_id).filter(Boolean);
+    setPickupLoading(true);
     masterOrderService.getPickupRecommendation({
       caterer_id:    group.caterer_id,
-      customer_lat:  customerCoords.lat,
-      customer_lng:  customerCoords.lng,
+      customer_lat:  lat,
+      customer_lng:  lng,
       food_item_ids: foodIds,
     }).then((rec) => {
       setPickupRec(rec);
-    }).catch(() => {});
-  }, [catererGroups, loading, customerCoords]);
+    }).catch(() => {
+      setPickupRec({ show: false, reason: 'error' });
+    }).finally(() => {
+      setPickupLoading(false);
+    });
+  }, [catererGroups, loading, customerCoords, defaultAddress]);
 
   // Track SHOWN once when recommendation becomes visible
   useEffect(() => {
@@ -308,61 +317,142 @@ export default function SplitCheckoutPage() {
           </Paper>
         )}
 
-        {/* ── Self-Pickup Recommendation ── */}
-        {pickupRec?.show && catererGroups.length === 1 && (
-          <Paper elevation={0} sx={{
-            border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : brand.border}`,
-            borderRadius: 3, p: 2, mb: 2,
-            background: fulfillmentType === 'SELF_PICKUP' ? '#F1F8F0' : '#FAFFF8',
-            transition: 'all 0.2s',
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-              <SavingsRoundedIcon sx={{ color: '#2E7D32', fontSize: 22 }} />
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#2E7D32' }}>
-                Self-Pickup Available
-              </Typography>
-              <Chip label={`Save ₹${Math.round(pickupRec.saving)}`} size="small"
-                sx={{ ml: 'auto', backgroundColor: '#2E7D32', color: '#fff', fontWeight: 700, fontSize: '0.7rem' }} />
+        {/* ── Fulfillment Method ── always visible ── */}
+        <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5 }}>
+            How would you like your order?
+          </Typography>
+          <Stack spacing={1.5}>
+
+            {/* Home Delivery */}
+            <Box
+              onClick={() => { if (fulfillmentType !== 'DELIVERY') handlePickupChoice('DELIVERY'); }}
+              sx={{
+                display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                border: `2px solid ${fulfillmentType === 'DELIVERY' ? brand.orange : brand.border}`,
+                backgroundColor: fulfillmentType === 'DELIVERY' ? brand.orangeLight : 'transparent',
+                transition: 'all 0.15s',
+              }}
+            >
+              <Box sx={{
+                width: 20, height: 20, borderRadius: '50%', flexShrink: 0, mt: 0.15,
+                border: `2px solid ${fulfillmentType === 'DELIVERY' ? brand.orange : '#C4C4C4'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {fulfillmentType === 'DELIVERY' && (
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: brand.orange }} />
+                )}
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocalShippingRoundedIcon sx={{ fontSize: 17, color: brand.orange }} />
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: brand.orange }}>Home Delivery</Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Delivered to your address by a rider
+                </Typography>
+              </Box>
             </Box>
 
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5, lineHeight: 1.6 }}>
-              {pickupRec.message}
-            </Typography>
-
-            <Stack direction="row" spacing={1}>
+            {/* Self Pickup — three states: loading / eligible / disabled */}
+            {catererGroups.length > 1 ? (
+              /* Multi-caterer — always disabled */
+              <Box sx={{
+                display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2,
+                border: `1px dashed ${brand.border}`, backgroundColor: '#FAFAFA',
+              }}>
+                <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #D0D0D0', flexShrink: 0, mt: 0.15 }} />
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DirectionsWalkRoundedIcon sx={{ fontSize: 17, color: 'text.disabled' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.disabled' }}>Self Pickup</Typography>
+                    <Chip label="Multi-caterer" size="small" sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18 }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    Only available for single caterer orders
+                  </Typography>
+                </Box>
+              </Box>
+            ) : pickupLoading ? (
+              /* Checking eligibility */
+              <Box sx={{
+                display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2,
+                border: `1px solid ${brand.border}`,
+              }}>
+                <CircularProgress size={16} sx={{ color: brand.orange, flexShrink: 0 }} />
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>Self Pickup</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>Checking availability…</Typography>
+                </Box>
+              </Box>
+            ) : pickupRec?.show ? (
+              /* Eligible — selectable */
               <Box
-                onClick={() => handlePickupChoice('SELF_PICKUP')}
+                onClick={() => { if (fulfillmentType !== 'SELF_PICKUP') handlePickupChoice('SELF_PICKUP'); }}
                 sx={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
-                  py: 1.25, borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s',
+                  display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2, cursor: 'pointer',
                   border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : brand.border}`,
-                  backgroundColor: fulfillmentType === 'SELF_PICKUP' ? '#E8F5E9' : 'transparent',
+                  backgroundColor: fulfillmentType === 'SELF_PICKUP' ? '#E8F5E9' : '#FAFFF8',
+                  transition: 'all 0.15s',
                   '&:hover': { borderColor: '#2E7D32', backgroundColor: '#E8F5E9' },
                 }}
               >
-                <DirectionsWalkRoundedIcon sx={{ fontSize: 18, color: '#2E7D32' }} />
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#2E7D32' }}>
-                  Pick Up ({pickupRec.distance_label})
-                </Typography>
+                <Box sx={{
+                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0, mt: 0.15,
+                  border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : '#C4C4C4'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {fulfillmentType === 'SELF_PICKUP' && (
+                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#2E7D32' }} />
+                  )}
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <DirectionsWalkRoundedIcon sx={{ fontSize: 17, color: '#2E7D32' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#2E7D32' }}>Self Pickup</Typography>
+                    {pickupRec.saving > 0 && (
+                      <Chip label={`Save ₹${Math.round(pickupRec.saving)}`} size="small"
+                        sx={{ backgroundColor: '#2E7D32', color: '#fff', fontWeight: 700, fontSize: '0.6rem', height: 18 }} />
+                    )}
+                    <Chip label={pickupRec.distance_label} size="small"
+                      sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18, backgroundColor: '#E8F5E9', color: '#2E7D32' }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#388E3C', display: 'block', mt: 0.25 }}>
+                    {pickupRec.message}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Ready in ~{pickupRec.prep_time} min
+                  </Typography>
+                </Box>
               </Box>
-              <Box
-                onClick={() => handlePickupChoice('DELIVERY')}
-                sx={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
-                  py: 1.25, borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s',
-                  border: `2px solid ${fulfillmentType === 'DELIVERY' ? brand.orange : brand.border}`,
-                  backgroundColor: fulfillmentType === 'DELIVERY' ? brand.orangeLight : 'transparent',
-                  '&:hover': { borderColor: brand.orange, backgroundColor: brand.orangeLight },
-                }}
-              >
-                <LocalShippingRoundedIcon sx={{ fontSize: 18, color: brand.orange }} />
-                <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange }}>
-                  Get Delivered
-                </Typography>
+            ) : pickupRec && !pickupRec.show ? (
+              /* Not eligible — show reason, disabled */
+              <Box sx={{
+                display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2,
+                border: `1px dashed ${brand.border}`, backgroundColor: '#FAFAFA',
+              }}>
+                <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #D0D0D0', flexShrink: 0, mt: 0.15 }} />
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DirectionsWalkRoundedIcon sx={{ fontSize: 17, color: 'text.disabled' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.disabled' }}>Self Pickup</Typography>
+                    <Chip label="Unavailable" size="small" sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18 }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    {pickupRec.reason === 'too_far'
+                      ? `Caterer is ${pickupRec.distance_km?.toFixed(1)} km away (max 3 km for pickup)`
+                      : pickupRec.reason === 'no_caterer_coords'
+                      ? 'Caterer location not set — contact support'
+                      : pickupRec.reason === 'prep_too_long'
+                      ? 'Preparation time exceeds 60 min for pickup'
+                      : 'Not available for this order'}
+                  </Typography>
+                </Box>
               </Box>
-            </Stack>
-          </Paper>
-        )}
+            ) : null}
+
+          </Stack>
+        </Paper>
 
         {unavailableItems.length > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>

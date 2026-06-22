@@ -37,36 +37,54 @@ function generatePickupCode() {
 
 // ─── Smart message builder ────────────────────────────────────────────────────
 function buildMessage(distKm, saving) {
-  if (saving >= 50) return `Save ₹${Math.round(saving)} by picking up your order 🚀`;
-  if (distKm < 0.5) return 'Your food is ready nearby. Skip the wait for delivery!';
-  if (distKm < 1.5) return 'Nearby caterer! Collect faster and save delivery charges.';
-  return `Only ${distKm.toFixed(1)} km away — pick up and save ₹${Math.round(saving)}`;
+  if (saving >= 50) return `Save ₹${Math.round(saving)} by picking up your order`;
+  if (saving > 0)   return `Pick up and save ₹${Math.round(saving)} on delivery charges`;
+  if (distKm < 0.5) return 'Your caterer is right nearby — collect and get it fresh!';
+  if (distKm < 1.5) return 'Caterer is close by — pick up for faster, fresher food';
+  return `Only ${distKm.toFixed(1)} km away — pick up and skip the delivery wait`;
 }
 
 // ─── Eligibility engine ───────────────────────────────────────────────────────
 async function getRecommendation({ caterer_id, customer_lat, customer_lng, food_item_ids = [] }) {
   const cfg = await getPickupConfig();
 
-  if (!cfg.pickup_recommendation_enabled) return { show: false };
-  if (!customer_lat || !customer_lng)     return { show: false };
+  console.log('[SelfPickup] Config:', JSON.stringify(cfg));
+
+  if (!cfg.pickup_recommendation_enabled) {
+    console.log('[SelfPickup] Disabled in platform settings');
+    return { show: false, reason: 'disabled' };
+  }
+  if (!customer_lat || !customer_lng) {
+    console.log('[SelfPickup] No customer coordinates');
+    return { show: false, reason: 'no_customer_coords' };
+  }
 
   // Get caterer location
   const { rows: catRows } = await pool.query(
     `SELECT latitude, longitude FROM users WHERE id = $1`, [caterer_id]
   );
   const caterer = catRows[0];
-  if (!caterer?.latitude || !caterer?.longitude) return { show: false };
+  console.log(`[SelfPickup] Caterer coords: ${caterer?.latitude}, ${caterer?.longitude}`);
+  if (!caterer?.latitude || !caterer?.longitude) {
+    return { show: false, reason: 'no_caterer_coords' };
+  }
 
   // Rule 1 — Distance
   const distKm = haversineKm(
     parseFloat(customer_lat), parseFloat(customer_lng),
     parseFloat(caterer.latitude), parseFloat(caterer.longitude)
   );
-  if (distKm > parseFloat(cfg.pickup_radius_km)) return { show: false };
+  console.log(`[SelfPickup] Distance: ${distKm.toFixed(2)} km (max: ${cfg.pickup_radius_km})`);
+  if (distKm > parseFloat(cfg.pickup_radius_km)) {
+    return { show: false, reason: 'too_far', distance_km: parseFloat(distKm.toFixed(2)) };
+  }
 
-  // Rule 2 — Saving (platform fee = delivery charge the customer pays)
+  // Rule 2 — Saving (strict less-than: min_saving=0 means any saving ≥ 0 qualifies)
   const saving = cfg.platform_fee_enabled ? parseFloat(cfg.platform_fee_amount) : 0;
-  if (saving <= parseFloat(cfg.pickup_min_saving)) return { show: false };
+  console.log(`[SelfPickup] Saving: ₹${saving} (min required: ₹${cfg.pickup_min_saving})`);
+  if (saving < parseFloat(cfg.pickup_min_saving)) {
+    return { show: false, reason: 'saving_too_low' };
+  }
 
   // Rule 3 — Prep time ≤ 60 min
   let maxPrep = 20;
@@ -78,21 +96,24 @@ async function getRecommendation({ caterer_id, customer_lat, customer_lng, food_
     );
     maxPrep = parseInt(prepRows[0]?.max_prep ?? 20, 10);
   }
-  if (maxPrep > 60) return { show: false };
+  console.log(`[SelfPickup] Max prep: ${maxPrep} min. Eligible: true`);
+  if (maxPrep > 60) {
+    return { show: false, reason: 'prep_too_long' };
+  }
 
   const distLabel = distKm < 1
     ? `${Math.round(distKm * 1000)} m`
     : `${distKm.toFixed(1)} km`;
 
   return {
-    show:          true,
-    distance_km:   parseFloat(distKm.toFixed(2)),
+    show:           true,
+    distance_km:    parseFloat(distKm.toFixed(2)),
     distance_label: distLabel,
-    saving:        saving,
-    prep_time:     maxPrep,
-    message:       buildMessage(distKm, saving),
-    caterer_lat:   parseFloat(caterer.latitude),
-    caterer_lng:   parseFloat(caterer.longitude),
+    saving,
+    prep_time:      maxPrep,
+    message:        buildMessage(distKm, saving),
+    caterer_lat:    parseFloat(caterer.latitude),
+    caterer_lng:    parseFloat(caterer.longitude),
   };
 }
 
