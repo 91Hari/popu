@@ -82,9 +82,20 @@ export default function ProfileSettingsPage() {
       return;
     }
     setDetecting(true);
+
+    // Safety net: reset if GPS + geocoding takes more than 18s total
+    const safetyTimer = setTimeout(() => {
+      setDetecting(false);
+      showSnack("Location detection timed out. Use the map or enter address manually.", "warning");
+    }, 18000);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => geocodePosition(pos.coords.latitude, pos.coords.longitude),
+      (pos) => {
+        clearTimeout(safetyTimer);
+        geocodePosition(pos.coords.latitude, pos.coords.longitude);
+      },
       (err) => {
+        clearTimeout(safetyTimer);
         setDetecting(false);
         showSnack(
           err.code === 1
@@ -93,7 +104,7 @@ export default function ProfileSettingsPage() {
           "warning"
         );
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
     );
   }, [geocodePosition]);
 

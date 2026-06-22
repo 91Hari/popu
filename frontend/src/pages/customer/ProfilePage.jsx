@@ -14,7 +14,6 @@ import {
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
-import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
 import PaymentRoundedIcon from "@mui/icons-material/PaymentRounded";
 import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
@@ -25,7 +24,6 @@ import LogoutConfirmationDialog from "../../components/LogoutConfirmationDialog"
 const MENU = [
   { label: "My Catering Bookings", to: "/customer/catering-bookings",      icon: <ReceiptLongRoundedIcon fontSize="small" /> },
   { label: "My Food Orders",       to: "/customer/master-orders",          icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: "My Addresses",    to: "/customer/profile/addresses",      icon: <LocationOnRoundedIcon fontSize="small" /> },
   { label: "Payment Methods", to: "/customer/profile/payment-methods",icon: <PaymentRoundedIcon fontSize="small" /> },
   { label: "Wallet & Offers", to: "/customer/offers",                 icon: <LocalOfferRoundedIcon fontSize="small" /> },
   { label: "Settings",        to: "/customer/profile/settings",       icon: <SettingsRoundedIcon fontSize="small" /> },
