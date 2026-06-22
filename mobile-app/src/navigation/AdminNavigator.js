@@ -4,11 +4,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config/theme';
 
-import DashboardScreen     from '../screens/admin/DashboardScreen';
-import UsersScreen         from '../screens/admin/UsersScreen';
-import OrdersScreen        from '../screens/admin/OrdersScreen';
-import NotificationsScreen from '../screens/admin/NotificationsScreen';
-import SettingsScreen      from '../screens/admin/SettingsScreen';
+import DashboardScreen          from '../screens/admin/DashboardScreen';
+import UsersScreen              from '../screens/admin/UsersScreen';
+import OrdersScreen             from '../screens/admin/OrdersScreen';
+import NotificationsScreen      from '../screens/admin/NotificationsScreen';
+import SettingsScreen           from '../screens/admin/SettingsScreen';
+import DeliveryManagementScreen from '../screens/admin/DeliveryManagementScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -51,8 +52,9 @@ export default function AdminNavigator() {
       <Stack.Screen name="AdminCaterers"      component={UsersScreen}   options={{ headerShown: true, title: 'Caterers',      headerTintColor: COLORS.primary }} />
       <Stack.Screen name="AdminOrders"        component={OrdersScreen}  options={{ headerShown: true, title: 'All Orders',    headerTintColor: COLORS.primary }} />
       <Stack.Screen name="AdminPayments"      component={SettingsScreen} options={{ headerShown: true, title: 'Payments',     headerTintColor: COLORS.primary }} />
-      <Stack.Screen name="AdminNotifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications', headerTintColor: COLORS.primary }} />
-      <Stack.Screen name="AdminSettings"      component={SettingsScreen} options={{ headerShown: true, title: 'Settings',    headerTintColor: COLORS.primary }} />
+      <Stack.Screen name="AdminNotifications"  component={NotificationsScreen}      options={{ headerShown: true, title: 'Notifications',       headerTintColor: COLORS.primary }} />
+      <Stack.Screen name="AdminSettings"       component={SettingsScreen}           options={{ headerShown: true, title: 'Settings',            headerTintColor: COLORS.primary }} />
+      <Stack.Screen name="DeliveryManagement"  component={DeliveryManagementScreen} options={{ headerShown: true, title: 'Delivery Management', headerTintColor: COLORS.primary }} />
     </Stack.Navigator>
   );
 }

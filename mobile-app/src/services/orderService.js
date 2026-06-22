@@ -31,10 +31,24 @@ const orderService = {
   markDelivered:    (orderId)   => api.patch(`/api/riders/deliveries/${orderId}/delivered`).then(r => r.data),
   lookupOrder:      (id)        => api.get(`/api/riders/lookup/${id}`).then(r => r.data),
 
-  // Tracking
+  // Tracking (legacy — single caterer order)
   getRiderLocation: (orderId)   => api.get(`/api/riders/location/${orderId}`).then(r => r.data),
   updateRiderLocation: (lat, lng, orderId) =>
     api.patch('/api/riders/location', { lat, lng, orderId }).then(r => r.data),
+
+  // Delivery engine — Rider
+  getCurrentBatch:         ()                   => api.get('/api/delivery/rider/current-batch').then(r => r.data),
+  setRiderDeliveryStatus:  (status)             => api.patch('/api/delivery/rider/status', { status }).then(r => r.data),
+  pushRiderDeliveryLocation: (lat, lng, batchId) =>
+    api.patch('/api/delivery/rider/location', { latitude: lat, longitude: lng, batch_id: batchId }).then(r => r.data),
+  startBatch:              (batchId)            => api.post(`/api/delivery/rider/batch/${batchId}/start`).then(r => r.data),
+  markBatchTaskPickedUp:   (batchId, taskId)    => api.patch(`/api/delivery/rider/batch/${batchId}/task/${taskId}/pickup`).then(r => r.data),
+  confirmBatchTaskDelivery:(batchId, taskId, code) =>
+    api.patch(`/api/delivery/rider/batch/${batchId}/task/${taskId}/deliver`, { code }).then(r => r.data),
+
+  // Delivery engine — Customer
+  getOrderTracking: (masterOrderId) =>
+    api.get(`/api/delivery/customer/tracking/${masterOrderId}`).then(r => r.data),
 };
 
 export default orderService;

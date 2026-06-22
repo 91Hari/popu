@@ -24,6 +24,7 @@ const paymentRoutes              = require('./routes/paymentRoutes');
 const webhookRoutes              = require('./routes/webhookRoutes');
 const profileRoutes              = require('./routes/profileRoutes');
 const tiffinRoutes               = require('./routes/tiffinRoutes');
+const deliveryRoutes             = require('./routes/deliveryRoutes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/payments',               paymentRoutes);
 app.use('/api/webhooks',               webhookRoutes);
 app.use('/api/profile',                profileRoutes);
 app.use('/api/tiffin',                 tiffinRoutes);
+app.use('/api/delivery',               deliveryRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not Found' }));
 

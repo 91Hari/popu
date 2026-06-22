@@ -2,6 +2,7 @@ require('dotenv').config();
 const app                 = require('./app');
 const pool                = require('./config/db');
 const escalationScheduler = require('./services/orderEscalationScheduler');
+const deliveryScheduler   = require('./services/deliveryScheduler');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
@@ -11,6 +12,7 @@ pool.query('SELECT 1')
     app.listen(PORT, () => {
       console.log(`Server listening on port ${PORT}`);
       escalationScheduler.start();
+      deliveryScheduler.start();
     });
   })
   .catch((err) => {

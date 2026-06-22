@@ -4,11 +4,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config/theme';
 
-import DashboardScreen     from '../screens/rider/DashboardScreen';
-import DeliveriesScreen    from '../screens/rider/DeliveriesScreen';
+import DashboardScreen      from '../screens/rider/DashboardScreen';
+import DeliveriesScreen     from '../screens/rider/DeliveriesScreen';
 import DeliveryDetailScreen from '../screens/rider/DeliveryDetailScreen';
-import EarningsScreen      from '../screens/rider/EarningsScreen';
-import ProfileScreen       from '../screens/rider/ProfileScreen';
+import ActiveBatchScreen    from '../screens/rider/ActiveBatchScreen';
+import EarningsScreen       from '../screens/rider/EarningsScreen';
+import ProfileScreen        from '../screens/rider/ProfileScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -45,8 +46,9 @@ export default function RiderNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="RiderTabs"      component={RiderTabs} />
-      <Stack.Screen name="RiderDeliveries" component={DeliveriesScreen} options={{ headerShown: true, title: 'Deliveries', headerTintColor: COLORS.primary }} />
-      <Stack.Screen name="DeliveryDetail" component={DeliveryDetailScreen} options={{ headerShown: true, title: 'Delivery Details', headerTintColor: COLORS.primary }} />
+      <Stack.Screen name="RiderDeliveries" component={DeliveriesScreen}    options={{ headerShown: true, title: 'Deliveries',      headerTintColor: COLORS.primary }} />
+      <Stack.Screen name="DeliveryDetail"  component={DeliveryDetailScreen} options={{ headerShown: true, title: 'Delivery Details', headerTintColor: COLORS.primary }} />
+      <Stack.Screen name="ActiveBatch"     component={ActiveBatchScreen}    options={{ headerShown: true, title: 'Active Batch',     headerTintColor: COLORS.primary }} />
     </Stack.Navigator>
   );
 }

@@ -390,6 +390,15 @@ async function updateCatererOrderStatus(id, status, user) {
                   expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
   } else if (status === 'READY') {
     extraCols = ', ready_at = NOW()';
+    // Auto-create delivery task and enter pooling queue (fire-and-forget)
+    setImmediate(async () => {
+      try {
+        const { createDeliveryTask } = require('./deliveryTaskService');
+        await createDeliveryTask(id);
+      } catch (err) {
+        console.error('[MasterOrderService] Auto-create delivery task failed:', err.message);
+      }
+    });
   } else if (status === 'DELIVERED') {
     extraCols = ', delivered_at = NOW()';
   } else if (status === 'CANCELLED') {

@@ -68,6 +68,7 @@ const ProfileSettingsPage          = React.lazy(() => import("../pages/customer/
 const RiderDashboard       = React.lazy(() => import("../pages/rider/RiderDashboard"));
 const RiderOrderLookupPage = React.lazy(() => import("../pages/rider/RiderOrderLookupPage"));
 const RiderDeliveryPage    = React.lazy(() => import("../pages/rider/RiderDeliveryPage"));
+const RiderActiveBatchPage = React.lazy(() => import("../pages/rider/RiderActiveBatchPage"));
 
 // Admin
 const AdminDashboard       = React.lazy(() => import("../pages/admin/AdminDashboard"));
@@ -82,10 +83,11 @@ const AdminMasterOrdersPage      = React.lazy(() => import("../pages/admin/Admin
 const AdminRidersPage            = React.lazy(() => import("../pages/admin/AdminRidersPage"));
 const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/AdminCateringBookingsPage"));
 const PlatformSettingsPage       = React.lazy(() => import("../pages/admin/PlatformSettingsPage"));
-const AdminPaymentsPage          = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
-const AdminRefundsPage           = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
+const AdminPaymentsPage              = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
+const AdminRefundsPage               = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
 const ServiceManagementPage          = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
 const AdminAccountManagementPage     = React.lazy(() => import("../pages/admin/AdminAccountManagementPage"));
+const AdminDeliveryManagementPage    = React.lazy(() => import("../pages/admin/AdminDeliveryManagementPage"));
 const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
 // Tiffin Box module
@@ -206,6 +208,7 @@ export default function AppRoutes() {
           <Route path="/rider"                element={<C allowed={RIDER} element={<RiderDashboard />} />} />
           <Route path="/rider/lookup"         element={<C allowed={RIDER} element={<RiderOrderLookupPage />} />} />
           <Route path="/rider/delivery/:id"   element={<C allowed={RIDER} element={<RiderDeliveryPage />} />} />
+          <Route path="/rider/batch"          element={<C allowed={RIDER} element={<RiderActiveBatchPage />} />} />
 
           {/* Admin */}
           <Route path="/admin"               element={<C allowed={ADMIN} element={<AdminDashboard />} />} />
@@ -226,6 +229,7 @@ export default function AppRoutes() {
           {/* Tiffin Box — admin */}
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
           <Route path="/admin/account-management" element={<C allowed={ADMIN} element={<AdminAccountManagementPage />} />} />
+          <Route path="/admin/delivery"           element={<C allowed={ADMIN} element={<AdminDeliveryManagementPage />} />} />
 
           {/* Root: auto-route based on auth state */}
           <Route path="/" element={

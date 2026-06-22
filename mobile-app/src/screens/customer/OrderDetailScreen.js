@@ -56,16 +56,25 @@ export default function OrderDetailScreen({ route, navigation }) {
         </View>
       </Card>
 
-      {/* Track rider */}
-      {['ready', 'out_for_delivery'].includes(order.status) && (
-        <TouchableOpacity
-          style={styles.trackBtn}
-          onPress={() => navigation.navigate('TrackOrder', { orderId: order._id })}
-        >
-          <Ionicons name="navigate-outline" size={20} color="#fff" />
-          <Text style={styles.trackText}>Track your rider</Text>
-        </TouchableOpacity>
-      )}
+      {/* Track rider — show once any sub-order has a rider assigned */}
+      {(() => {
+        const id = order.id ?? order._id;
+        const subOrders = order.subOrders ?? order.caterer_orders ?? [];
+        const trackable =
+          subOrders.some(s =>
+            ['ASSIGNED_TO_RIDER', 'OUT_FOR_DELIVERY', 'READY'].includes(s.status ?? s.order_status ?? '')
+          ) || ['ASSIGNED_TO_RIDER', 'OUT_FOR_DELIVERY', 'READY'].includes(order.status ?? '');
+        if (!trackable) return null;
+        return (
+          <TouchableOpacity
+            style={styles.trackBtn}
+            onPress={() => navigation.navigate('TrackOrder', { masterOrderId: id })}
+          >
+            <Ionicons name="navigate-outline" size={20} color="#fff" />
+            <Text style={styles.trackText}>Track your rider</Text>
+          </TouchableOpacity>
+        );
+      })()}
 
       {/* Sub-orders */}
       {(order.subOrders ?? order.items ?? []).map((sub, idx) => (
