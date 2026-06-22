@@ -20,12 +20,16 @@ import CreditCardRoundedIcon           from "@mui/icons-material/CreditCardRound
 import HelpOutlineRoundedIcon          from "@mui/icons-material/HelpOutlineRounded";
 import ExpandMoreRoundedIcon           from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon           from "@mui/icons-material/ExpandLessRounded";
-import { useCart }        from "../../contexts/CartContext";
-import AppLayout          from "../../components/AppLayout";
-import QRCodeModal        from "../../components/QRCodeModal";
-import { brand }          from "../../theme";
-import { useCustomerGeo } from "../../utils/geoUtils";
-import api                from "../../services/api";
+import { useCart }             from "../../contexts/CartContext";
+import AppLayout               from "../../components/AppLayout";
+import QRCodeModal             from "../../components/QRCodeModal";
+import { brand }               from "../../theme";
+import { useCustomerGeo }      from "../../utils/geoUtils";
+import api                     from "../../services/api";
+import masterOrderService      from "../../services/masterOrderService";
+import DirectionsWalkRoundedIcon   from "@mui/icons-material/DirectionsWalkRounded";
+import LocalShippingRoundedIcon    from "@mui/icons-material/LocalShippingRounded";
+import SavingsRoundedIcon          from "@mui/icons-material/SavingsRounded";
 
 const PROOF_MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_PROOF_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"];
@@ -69,6 +73,9 @@ export default function SplitCheckoutPage() {
   const [proofFiles,      setProofFiles]      = useState({});
   const [qrModal,         setQrModal]         = useState({ open: false });
   const [paymentMethod,   setPaymentMethod]   = useState("ONLINE");
+  const [pickupRec,       setPickupRec]       = useState(null);
+  const [fulfillmentType, setFulfillmentType] = useState("DELIVERY");
+  const [pickupTracked,   setPickupTracked]   = useState(false);
   const fileInputRefs = useRef({});
 
   const catererGroups = useMemo(() => {
@@ -154,6 +161,54 @@ export default function SplitCheckoutPage() {
     setProofFiles((prev) => { const next = { ...prev }; delete next[catererId]; return next; });
   };
 
+  // Fetch self-pickup recommendation for single-caterer orders
+  useEffect(() => {
+    if (catererGroups.length !== 1 || loading || !customerCoords) return;
+    const group = catererGroups[0];
+    const foodIds = group.items.map((i) => i.food_item_id).filter(Boolean);
+    masterOrderService.getPickupRecommendation({
+      caterer_id:    group.caterer_id,
+      customer_lat:  customerCoords.lat,
+      customer_lng:  customerCoords.lng,
+      food_item_ids: foodIds,
+    }).then((rec) => {
+      setPickupRec(rec);
+    }).catch(() => {});
+  }, [catererGroups, loading, customerCoords]);
+
+  // Track SHOWN once when recommendation becomes visible
+  useEffect(() => {
+    if (!pickupRec?.show || pickupTracked || catererGroups.length !== 1) return;
+    setPickupTracked(true);
+    masterOrderService.trackPickupEvent({
+      caterer_id:    catererGroups[0].caterer_id,
+      event:         'SHOWN',
+      distance_km:   pickupRec.distance_km,
+      saving_amount: pickupRec.saving,
+    }).catch(() => {});
+  }, [pickupRec, pickupTracked, catererGroups]);
+
+  const handlePickupChoice = (choice) => {
+    if (catererGroups.length !== 1) return;
+    if (choice === fulfillmentType) return;
+    setFulfillmentType(choice);
+    if (choice === 'SELF_PICKUP') {
+      masterOrderService.trackPickupEvent({
+        caterer_id:    catererGroups[0].caterer_id,
+        event:         'ACCEPTED',
+        distance_km:   pickupRec?.distance_km,
+        saving_amount: pickupRec?.saving,
+      }).catch(() => {});
+    } else {
+      masterOrderService.trackPickupEvent({
+        caterer_id:    catererGroups[0].caterer_id,
+        event:         'REJECTED',
+        distance_km:   pickupRec?.distance_km,
+        saving_amount: pickupRec?.saving,
+      }).catch(() => {});
+    }
+  };
+
   const [upiTipId,   setUpiTipId]   = useState(null);
   const [guideOpen,  setGuideOpen]  = useState({}); // { [caterer_id]: bool }
 
@@ -179,24 +234,26 @@ export default function SplitCheckoutPage() {
             payment_screenshot_url: data.url,
           }))
         : [];
-      await api.request("/checkout/split-order", {
-        method: "POST",
-        body: JSON.stringify({
-          items:             items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
-          customer_lat:      customerCoords?.lat ?? defaultAddress?.latitude  ?? null,
-          customer_lng:      customerCoords?.lng ?? defaultAddress?.longitude ?? null,
-          delivery_house_no: defaultAddress?.house_no  ?? null,
-          delivery_street:   defaultAddress?.street    ?? null,
-          delivery_landmark: defaultAddress?.landmark  ?? null,
-          delivery_city:     defaultAddress?.city      ?? null,
-          delivery_state:    defaultAddress?.state     ?? null,
-          delivery_pincode:  defaultAddress?.pincode   ?? null,
-          payment_method:    paymentMethod,
-          payment_proofs,
-        }),
+      const masterOrder = await masterOrderService.createSplitOrder({
+        items:             items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
+        customer_lat:      customerCoords?.lat ?? defaultAddress?.latitude  ?? null,
+        customer_lng:      customerCoords?.lng ?? defaultAddress?.longitude ?? null,
+        delivery_house_no: defaultAddress?.house_no  ?? null,
+        delivery_street:   defaultAddress?.street    ?? null,
+        delivery_landmark: defaultAddress?.landmark  ?? null,
+        delivery_city:     defaultAddress?.city      ?? null,
+        delivery_state:    defaultAddress?.state     ?? null,
+        delivery_pincode:  defaultAddress?.pincode   ?? null,
+        payment_method:    paymentMethod,
+        payment_proofs,
+        fulfillment_type:  fulfillmentType,
       });
       await clearCart();
-      navigate("/customer/master-orders", { state: { justPlaced: true } });
+      if (fulfillmentType === 'SELF_PICKUP' && masterOrder?.id) {
+        navigate(`/customer/pickup/${masterOrder.id}`);
+      } else {
+        navigate("/customer/master-orders", { state: { justPlaced: true } });
+      }
     } catch (err) {
       setError(err?.message || "Could not place order. Please try again.");
     } finally {
@@ -248,6 +305,62 @@ export default function SplitCheckoutPage() {
                 </Typography>
               </Box>
             </Box>
+          </Paper>
+        )}
+
+        {/* ── Self-Pickup Recommendation ── */}
+        {pickupRec?.show && catererGroups.length === 1 && (
+          <Paper elevation={0} sx={{
+            border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : brand.border}`,
+            borderRadius: 3, p: 2, mb: 2,
+            background: fulfillmentType === 'SELF_PICKUP' ? '#F1F8F0' : '#FAFFF8',
+            transition: 'all 0.2s',
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+              <SavingsRoundedIcon sx={{ color: '#2E7D32', fontSize: 22 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#2E7D32' }}>
+                Self-Pickup Available
+              </Typography>
+              <Chip label={`Save ₹${Math.round(pickupRec.saving)}`} size="small"
+                sx={{ ml: 'auto', backgroundColor: '#2E7D32', color: '#fff', fontWeight: 700, fontSize: '0.7rem' }} />
+            </Box>
+
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5, lineHeight: 1.6 }}>
+              {pickupRec.message}
+            </Typography>
+
+            <Stack direction="row" spacing={1}>
+              <Box
+                onClick={() => handlePickupChoice('SELF_PICKUP')}
+                sx={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+                  py: 1.25, borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s',
+                  border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : brand.border}`,
+                  backgroundColor: fulfillmentType === 'SELF_PICKUP' ? '#E8F5E9' : 'transparent',
+                  '&:hover': { borderColor: '#2E7D32', backgroundColor: '#E8F5E9' },
+                }}
+              >
+                <DirectionsWalkRoundedIcon sx={{ fontSize: 18, color: '#2E7D32' }} />
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#2E7D32' }}>
+                  Pick Up ({pickupRec.distance_label})
+                </Typography>
+              </Box>
+              <Box
+                onClick={() => handlePickupChoice('DELIVERY')}
+                sx={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+                  py: 1.25, borderRadius: 2, cursor: 'pointer', transition: 'all 0.15s',
+                  border: `2px solid ${fulfillmentType === 'DELIVERY' ? brand.orange : brand.border}`,
+                  backgroundColor: fulfillmentType === 'DELIVERY' ? brand.orangeLight : 'transparent',
+                  '&:hover': { borderColor: brand.orange, backgroundColor: brand.orangeLight },
+                }}
+              >
+                <LocalShippingRoundedIcon sx={{ fontSize: 18, color: brand.orange }} />
+                <Typography variant="caption" sx={{ fontWeight: 700, color: brand.orange }}>
+                  Get Delivered
+                </Typography>
+              </Box>
+            </Stack>
           </Paper>
         )}
 

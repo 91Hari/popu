@@ -3,6 +3,7 @@
 const pool = require('../config/db');
 const { notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 const payCalc = require('./paymentCalculationService');
+const { generatePickupCode } = require('./selfPickupService');
 
 const CATERER_ORDER_WITH_ITEMS = `
   SELECT
@@ -38,8 +39,10 @@ async function createSplitOrder({
   delivery_house_no, delivery_street, delivery_landmark,
   delivery_city, delivery_state, delivery_pincode,
   payment_proofs = [], payment_method = 'ONLINE',
+  fulfillment_type = 'DELIVERY',
 }) {
-  const isCod = payment_method === 'COD';
+  const isCod        = payment_method === 'COD';
+  const isSelfPickup = fulfillment_type === 'SELF_PICKUP';
   if (!items || items.length === 0) {
     const err = new Error('Order must contain at least one item');
     err.status = 400;
@@ -116,15 +119,31 @@ async function createSplitOrder({
     for (const [caterer_id, lines] of catererGroups) {
       const subtotal = lines.reduce((s, l) => s + l.total_price, 0);
       const pc = await payCalc.calculate(subtotal);
+
+      // Self-pickup waives platform fee (the delivery charge)
+      const effectivePlatformFee = isSelfPickup ? 0 : pc.platform_fee;
+      const effectivePayout      = isSelfPickup
+        ? Math.max(0, Math.round((subtotal - pc.commission_amount) * 100) / 100)
+        : pc.caterer_payout;
+
+      // Per-caterer pickup metadata
+      const catererMaxPrep = Math.max(...lines.map(l => foodMap.get(l.food_item_id)?.preparation_time_minutes || 20));
+      const pickupCode = isSelfPickup ? generatePickupCode() : null;
+      const pickupTime = isSelfPickup ? new Date(Date.now() + catererMaxPrep * 60_000) : null;
+
       const { rows: coRows } = await client.query(
         `INSERT INTO caterer_orders
            (master_order_id, caterer_id, subtotal,
             commission_percentage, commission_amount, platform_fee, caterer_payout,
-            payment_method)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            payment_method, fulfillment_type, pickup_code, pickup_time)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
         [masterOrder.id, caterer_id, subtotal,
-         pc.commission_percentage, pc.commission_amount, pc.platform_fee, pc.caterer_payout,
-         isCod ? 'COD' : 'ONLINE']
+         pc.commission_percentage, pc.commission_amount,
+         effectivePlatformFee, effectivePayout,
+         isCod ? 'COD' : 'ONLINE',
+         isSelfPickup ? 'SELF_PICKUP' : 'DELIVERY',
+         pickupCode,
+         pickupTime]
       );
       const catererOrder = coRows[0];
 
@@ -214,6 +233,10 @@ async function getMasterOrders(user) {
              'rider_name',                (SELECT u2.name FROM users u2 WHERE u2.id = co.rider_id),
              'delivery_confirmation_code',co.delivery_confirmation_code,
              'payment_method',            co.payment_method,
+             'fulfillment_type',          co.fulfillment_type,
+             'pickup_code',               co.pickup_code,
+             'pickup_time',               co.pickup_time,
+             'collected_at',              co.collected_at,
              'created_at',                co.created_at,
              'items', (
                SELECT json_agg(

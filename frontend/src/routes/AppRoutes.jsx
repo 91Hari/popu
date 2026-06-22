@@ -29,7 +29,8 @@ const NotificationsPage  = React.lazy(() => import("../pages/customer/Notificati
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
 const SplitCheckoutPage  = React.lazy(() => import("../pages/customer/SplitCheckoutPage"));
 const MasterOrdersPage   = React.lazy(() => import("../pages/customer/MasterOrdersPage"));
-const RiderTrackingPage  = React.lazy(() => import("../pages/customer/RiderTrackingPage"));
+const RiderTrackingPage    = React.lazy(() => import("../pages/customer/RiderTrackingPage"));
+const CustomerPickupPage   = React.lazy(() => import("../pages/customer/CustomerPickupPage"));
 
 // Services
 const ServicesPage      = React.lazy(() => import("../pages/services/ServicesPage"));
@@ -163,7 +164,8 @@ export default function AppRoutes() {
           <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
           <Route path="/checkout/split"           element={<ErrorBoundary><C allowed={CUST} element={<SplitCheckoutPage />} /></ErrorBoundary>} />
           <Route path="/customer/master-orders"   element={<ErrorBoundary><C allowed={CUST} element={<MasterOrdersPage />} /></ErrorBoundary>} />
-          <Route path="/customer/track/:orderId"  element={<ErrorBoundary><C allowed={CUST} element={<RiderTrackingPage />} /></ErrorBoundary>} />
+          <Route path="/customer/track/:orderId"    element={<ErrorBoundary><C allowed={CUST} element={<RiderTrackingPage />} /></ErrorBoundary>} />
+          <Route path="/customer/pickup/:masterOrderId" element={<ErrorBoundary><C allowed={CUST} element={<CustomerPickupPage />} /></ErrorBoundary>} />
           <Route path="/payment/callback"          element={<ErrorBoundary><C allowed={CUST} element={<PaymentCallbackPage />} /></ErrorBoundary>} />
 
           {/* Services */}
