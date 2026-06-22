@@ -52,15 +52,15 @@ async function getRecommendation({ caterer_id, customer_lat, customer_lng, food_
 
   // Get caterer location
   const { rows: catRows } = await pool.query(
-    `SELECT caterer_lat, caterer_lng FROM users WHERE id = $1`, [caterer_id]
+    `SELECT latitude, longitude FROM users WHERE id = $1`, [caterer_id]
   );
   const caterer = catRows[0];
-  if (!caterer?.caterer_lat || !caterer?.caterer_lng) return { show: false };
+  if (!caterer?.latitude || !caterer?.longitude) return { show: false };
 
   // Rule 1 — Distance
   const distKm = haversineKm(
     parseFloat(customer_lat), parseFloat(customer_lng),
-    parseFloat(caterer.caterer_lat), parseFloat(caterer.caterer_lng)
+    parseFloat(caterer.latitude), parseFloat(caterer.longitude)
   );
   if (distKm > parseFloat(cfg.pickup_radius_km)) return { show: false };
 
@@ -91,8 +91,8 @@ async function getRecommendation({ caterer_id, customer_lat, customer_lng, food_
     saving:        saving,
     prep_time:     maxPrep,
     message:       buildMessage(distKm, saving),
-    caterer_lat:   parseFloat(caterer.caterer_lat),
-    caterer_lng:   parseFloat(caterer.caterer_lng),
+    caterer_lat:   parseFloat(caterer.latitude),
+    caterer_lng:   parseFloat(caterer.longitude),
   };
 }
 
