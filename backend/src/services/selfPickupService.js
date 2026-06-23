@@ -155,7 +155,7 @@ async function confirmPickupCollection(caterer_order_id, pickup_code, caterer_id
 
   const { rows: updated } = await pool.query(
     `UPDATE caterer_orders
-     SET status = 'COLLECTED', collected_at = NOW(), updated_at = NOW()
+     SET status = 'COLLECTED', collected_at = NOW()
      WHERE id = $1 RETURNING *`,
     [caterer_order_id]
   );
