@@ -105,6 +105,7 @@ export default function CaterersPage() {
                   <TableCell sx={{ fontWeight: 700 }}>Business</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Location</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Joined</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>Rating</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>Availability</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
@@ -118,6 +119,9 @@ export default function CaterersPage() {
                     <TableCell sx={{ color: "text.secondary" }}>{c.business_name || "—"}</TableCell>
                     <TableCell sx={{ fontSize: "0.8rem", color: "text.secondary" }}>{c.phone || "—"}</TableCell>
                     <TableCell sx={{ color: "text.secondary" }}>{c.location || "—"}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
+                      {c.created_at ? new Date(c.created_at).toLocaleDateString("en-IN") : "—"}
+                    </TableCell>
                     <TableCell align="center">
                       {c.avg_rating != null ? (
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}>

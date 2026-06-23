@@ -124,6 +124,7 @@ export default function AdminRidersPage() {
                   <TableCell>Phone</TableCell>
                   <TableCell>Vehicle</TableCell>
                   <TableCell>Caterer</TableCell>
+                  <TableCell>Joined</TableCell>
                   <TableCell align="center">Rating</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="right">Actions</TableCell>
@@ -139,6 +140,9 @@ export default function AdminRidersPage() {
                       {r.vehicle_type || "—"} {r.vehicle_number ? `· ${r.vehicle_number}` : ""}
                     </TableCell>
                     <TableCell sx={{ fontSize: "0.8rem" }}>{r.caterer_name || "—"}</TableCell>
+                    <TableCell sx={{ fontSize: "0.8rem", color: "text.secondary" }}>
+                      {r.created_at ? new Date(r.created_at).toLocaleDateString("en-IN") : "—"}
+                    </TableCell>
                     <TableCell align="center">
                       {r.avg_rating != null ? (
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}>
