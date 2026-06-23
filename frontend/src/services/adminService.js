@@ -4,14 +4,20 @@ const adminService = {
   async getDashboard() {
     return api.request("/admin/dashboard");
   },
-  async getCustomers({ search, page = 1, limit = 20 } = {}) {
+  async getCustomers({ search, page = 1, limit = 20, date_from, date_to, sort } = {}) {
     const p = new URLSearchParams({ page, limit });
-    if (search) p.set("search", search);
+    if (search)    p.set("search",    search);
+    if (date_from) p.set("date_from", date_from);
+    if (date_to)   p.set("date_to",   date_to);
+    if (sort)      p.set("sort",      sort);
     return api.request(`/admin/customers?${p}`);
   },
-  async getCaterers({ search, page = 1, limit = 20 } = {}) {
+  async getCaterers({ search, page = 1, limit = 20, date_from, date_to, sort } = {}) {
     const p = new URLSearchParams({ page, limit });
-    if (search) p.set("search", search);
+    if (search)    p.set("search",    search);
+    if (date_from) p.set("date_from", date_from);
+    if (date_to)   p.set("date_to",   date_to);
+    if (sort)      p.set("sort",      sort);
     return api.request(`/admin/caterers?${p}`);
   },
   async getFoods({ search, page = 1, limit = 20 } = {}) {

@@ -14,8 +14,11 @@ import StoreMallDirectoryRoundedIcon from "@mui/icons-material/StoreMallDirector
 import PercentRoundedIcon            from "@mui/icons-material/PercentRounded";
 import AccountBalanceRoundedIcon     from "@mui/icons-material/AccountBalanceRounded";
 import LocalAtmRoundedIcon           from "@mui/icons-material/LocalAtmRounded";
-import CheckCircleRoundedIcon        from "@mui/icons-material/CheckCircleRounded";
-import PendingActionsRoundedIcon     from "@mui/icons-material/PendingActionsRounded";
+import CheckCircleRoundedIcon          from "@mui/icons-material/CheckCircleRounded";
+import PendingActionsRoundedIcon       from "@mui/icons-material/PendingActionsRounded";
+import CheckCircleOutlineRoundedIcon   from "@mui/icons-material/CheckCircleOutlineRounded";
+import LocalShippingRoundedIcon        from "@mui/icons-material/LocalShippingRounded";
+import CancelRoundedIcon               from "@mui/icons-material/CancelRounded";
 import AppLayout    from "../../components/AppLayout";
 import adminService from "../../services/adminService";
 import { brand }    from "../../theme";
@@ -34,6 +37,12 @@ const FINANCIAL_DEFS = [
   { key: "totalCommission",    label: "Commission Collected",  color: "#C62828",     bg: "#FFEBEE",         icon: <PercentRoundedIcon />,            prefix: "₹" },
   { key: "totalPlatformFees",  label: "Platform Fees",         color: "#6A1B9A",     bg: "#F3E5F5",         icon: <AccountBalanceRoundedIcon />,     prefix: "₹" },
   { key: "totalCatererPayout", label: "Caterer Payout",        color: brand.green,   bg: brand.greenLight,  icon: <CurrencyRupeeRoundedIcon />,      prefix: "₹" },
+];
+
+const ORDER_PERF_DEFS = [
+  { key: "platformOrdersAccepted",  label: "Orders Accepted",  color: "#2E7D32", bg: "#E8F5E9", icon: <CheckCircleOutlineRoundedIcon /> },
+  { key: "platformOrdersDelivered", label: "Orders Delivered", color: "#1565C0", bg: "#E3F2FD", icon: <LocalShippingRoundedIcon /> },
+  { key: "platformOrdersCancelled", label: "Orders Cancelled", color: "#C62828", bg: "#FFEBEE", icon: <CancelRoundedIcon /> },
 ];
 
 const COD_DEFS = [
@@ -98,6 +107,21 @@ export default function AdminDashboard() {
         <Grid container spacing={2} sx={{ mb: 1 }}>
           {PLATFORM_DEFS.map((def) => (
             <Grid item xs={12} sm={6} md={4} key={def.key}>
+              <StatCard def={def} value={stats?.[def.key]} loading={loading} />
+            </Grid>
+          ))}
+        </Grid>
+
+        <Divider sx={{ my: 3 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", px: 1 }}>
+            ORDER PERFORMANCE (ALL TIME)
+          </Typography>
+        </Divider>
+
+        {/* Order performance summary */}
+        <Grid container spacing={2} sx={{ mb: 1 }}>
+          {ORDER_PERF_DEFS.map((def) => (
+            <Grid item xs={12} sm={4} key={def.key}>
               <StatCard def={def} value={stats?.[def.key]} loading={loading} />
             </Grid>
           ))}
