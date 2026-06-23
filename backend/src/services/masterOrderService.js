@@ -458,7 +458,7 @@ async function updateCatererOrderStatus(id, status, user) {
   const notifMessages = {
     ACCEPTED:  { title: 'Order Accepted',        message: `Your sub-order #${shortId} has been accepted.` },
     PREPARING: { title: 'Order Being Prepared',  message: `Your sub-order #${shortId} is now being prepared.` },
-    READY:     { title: 'Order Ready',           message: `Your sub-order #${shortId} is ready and out for delivery!` },
+    READY:     { title: 'Order Ready',           message: isPickupOrder ? `Your order #${shortId} is ready for pickup.` : `Your sub-order #${shortId} is ready and out for delivery!` },
     DELIVERED: { title: 'Order Delivered',       message: `Your sub-order #${shortId} has been delivered!` },
     CANCELLED: { title: 'Order Cancelled',       message: `Your sub-order #${shortId} has been cancelled by the caterer.` },
   };
