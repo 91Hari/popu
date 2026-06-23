@@ -16,27 +16,8 @@ import AppLayout               from "../../components/AppLayout";
 import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
 import api                     from "../../services/api";
 import { brand } from "../../theme";
-import { Geolocation } from "@capacitor/geolocation";
-
-async function nominatimReverse(lat, lng) {
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
-  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-  if (!res.ok) return null;
-  return res.json();
-}
-
-function parseNominatim(data) {
-  const a = data?.address || {};
-  const road = a.road || a.pedestrian || a.footway || a.suburb || "";
-  const area = a.suburb || a.neighbourhood || a.village || "";
-  const address = [road, area].filter(Boolean).join(", ");
-  return {
-    address,
-    city:    a.city || a.town || a.village || a.county || "",
-    state:   a.state || "",
-    pincode: a.postcode || "",
-  };
-}
+import { Geolocation }   from "@capacitor/geolocation";
+import { reverseGeocode } from "../../utils/geocodeService";
 
 const STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
@@ -136,9 +117,8 @@ export default function AddressManagementPage() {
       const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
       const { latitude, longitude } = pos.coords;
       try {
-        const data = await nominatimReverse(latitude, longitude);
-        if (data) {
-          const parsed = parseNominatim(data);
+        const parsed = await reverseGeocode(latitude, longitude);
+        if (parsed) {
           setForm((f) => ({
             ...f,
             street:  parsed.address || f.street,

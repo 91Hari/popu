@@ -16,6 +16,7 @@ import Logo                     from "../../components/Logo";
 import MapLocationPicker        from "../../components/MapLocationPicker";
 import authService              from "../../services/authService";
 import { brand }                from "../../theme";
+import { reverseGeocode }       from "../../utils/geocodeService";
 
 function validatePassword(pw) {
   if (!pw || pw.length < 8)  return "Password must be at least 8 characters";
@@ -68,28 +69,22 @@ export default function RegisterPage() {
 
   const navigate = useNavigate();
 
-  // ── Nominatim reverse geocode ────────────────────────────────────────────────
   const geocodePosition = useCallback(async (latitude, longitude) => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      if (!res.ok) throw new Error("Nominatim failed");
-      const data = await res.json();
-      const a = data?.address || {};
-      const road = a.road || a.pedestrian || a.footway || a.suburb || "";
-      const area = a.suburb || a.neighbourhood || a.village || "";
-      const address = [road, area].filter(Boolean).join(", ") || data.display_name?.split(",")[0] || "";
-      setLocField({
-        address,
-        city:      a.city || a.town || a.village || a.county || "",
-        addrState: a.state || "",
-        pincode:   a.postcode || "",
-        lat:       latitude,
-        lng:       longitude,
-      });
-      setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
+      const result = await reverseGeocode(latitude, longitude);
+      if (result) {
+        setLocField({
+          address:   result.address,
+          city:      result.city,
+          addrState: result.state,
+          pincode:   result.pincode,
+          lat:       latitude,
+          lng:       longitude,
+        });
+        setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
+      } else {
+        throw new Error("Geocoding returned null");
+      }
     } catch {
       setLocField({ lat: latitude, lng: longitude });
       setLocInfo({ type: "info", message: "Could not auto-fill address. Please enter manually." });

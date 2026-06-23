@@ -21,7 +21,8 @@ import SearchSuggestions from "../../components/SearchSuggestions";
 import ComingSoonModal from "../../components/ComingSoonModal";
 import foodService from "../../services/foodService";
 import serviceConfigService from "../../services/serviceConfigService";
-import { useCustomerGeo } from "../../utils/geoUtils";
+import { useCustomerGeo }  from "../../utils/geoUtils";
+import { reverseGeocode }  from "../../utils/geocodeService";
 
 const CARD_W = 200;
 
@@ -104,34 +105,24 @@ export default function CustomerDashboard() {
     fetchFoods({ lat, lng });
   };
 
-  // ── Reverse geocode coords → update label + localStorage ────────────────────
   const applyGeocoderResult = useCallback(async (lat, lng) => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      if (!res.ok) throw new Error("Nominatim failed");
-      const data = await res.json();
-      const a    = data?.address || {};
-      const road = a.road || a.pedestrian || a.suburb || "";
-      const city = a.city || a.town || a.village || a.county || "";
-      const address = road || city || data.display_name?.split(",")[0] || "";
-      const label   = address || city || null;
-      setLocationLabel(label);
+      const result = await reverseGeocode(lat, lng);
+      const address = result?.address || "";
+      const city    = result?.city    || "";
+      setLocationLabel(address || city || null);
       try {
         const u = JSON.parse(localStorage.getItem("user") || "{}");
         u.latitude  = lat;
         u.longitude = lng;
-        if (address) u.address = address;
-        if (city)    u.city    = city;
-        if (a.state)    u.state   = a.state;
-        if (a.postcode) u.pincode = a.postcode;
+        if (address)        u.address = address;
+        if (city)           u.city    = city;
+        if (result?.state)  u.state   = result.state;
+        if (result?.pincode) u.pincode = result.pincode;
         localStorage.setItem("user", JSON.stringify(u));
       } catch { /* ignore */ }
       fetchFoods({ lat, lng });
     } catch {
-      // Geocoding failed — store coordinates anyway
       try {
         const u = JSON.parse(localStorage.getItem("user") || "{}");
         u.latitude  = lat;
