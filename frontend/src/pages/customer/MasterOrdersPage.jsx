@@ -23,6 +23,8 @@ import LocalAtmRoundedIcon       from "@mui/icons-material/LocalAtmRounded";
 import CreditCardRoundedIcon     from "@mui/icons-material/CreditCardRounded";
 import GpsFixedRoundedIcon       from "@mui/icons-material/GpsFixedRounded";
 import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
+import StorefrontRoundedIcon     from "@mui/icons-material/StorefrontRounded";
+import OpenInNewRoundedIcon      from "@mui/icons-material/OpenInNewRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
@@ -248,6 +250,7 @@ export default function MasterOrdersPage() {
                           const canCancel   = ["PLACED", "ACCEPTED"].includes(co.status);
                           const isCod       = co.payment_method === "COD";
                           const needsProof  = !isCod && ["PENDING", "REJECTED", "REUPLOAD_REQUESTED"].includes(co.payment_status);
+                          const isPickup    = co.fulfillment_type === "SELF_PICKUP";
 
                           return (
                             <Box key={co.id} sx={{ p: 1.5, border: `1px solid ${brand.border}`, borderRadius: 2 }}>
@@ -333,8 +336,8 @@ export default function MasterOrdersPage() {
                                 </Box>
                               )}
 
-                              {/* ETA block */}
-                              {ETA_STATUSES.has(co.status) && (
+                              {/* ETA block — delivery only */}
+                              {!isPickup && ETA_STATUSES.has(co.status) && (
                                 <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: brand.greenLight, border: `1px solid ${brand.border}` }}>
                                   {(co.eta_minutes != null || co.expected_arrival_at != null) ? (
                                     <Stack direction="row" alignItems="center" gap={1.25}>
@@ -362,6 +365,42 @@ export default function MasterOrdersPage() {
                                         Delivery time will be confirmed shortly
                                       </Typography>
                                     </Stack>
+                                  )}
+                                </Box>
+                              )}
+
+                              {/* Pickup navigation — active pickup states only */}
+                              {isPickup && ["ACCEPTED", "PREPARING", "READY"].includes(co.status) && (
+                                <Box sx={{ mb: 1.25, p: 1.5, borderRadius: 1.5, backgroundColor: "#F1F8E9", border: "1px solid #C5E1A5" }}>
+                                  <Stack direction="row" alignItems="flex-start" gap={1.25} sx={{ mb: co.caterer_lat ? 1.25 : 0 }}>
+                                    <StorefrontRoundedIcon sx={{ fontSize: 18, color: "#558B2F", flexShrink: 0, mt: 0.15 }} />
+                                    <Box sx={{ flex: 1 }}>
+                                      <Typography variant="caption" sx={{ color: "#558B2F", fontWeight: 800, display: "block", lineHeight: 1.3 }}>
+                                        {co.status === "READY" ? "Your order is ready! 🎉 Collect from:" : "Being prepared at:"}
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#33691E", mt: 0.25 }}>
+                                        {co.caterer_name}
+                                      </Typography>
+                                      {(co.caterer_address || co.caterer_city) && (
+                                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                          {[co.caterer_address, co.caterer_city].filter(Boolean).join(", ")}
+                                        </Typography>
+                                      )}
+                                    </Box>
+                                  </Stack>
+                                  {co.caterer_lat && co.caterer_lng && (
+                                    <Button
+                                      fullWidth size="small" variant="contained"
+                                      startIcon={<OpenInNewRoundedIcon fontSize="small" />}
+                                      onClick={() => window.open(
+                                        `https://www.google.com/maps/dir/?api=1&destination=${co.caterer_lat},${co.caterer_lng}`,
+                                        "_blank"
+                                      )}
+                                      sx={{ fontWeight: 700, fontSize: "0.75rem", textTransform: "none",
+                                        backgroundColor: "#558B2F", "&:hover": { backgroundColor: "#33691E" } }}
+                                    >
+                                      Navigate to Pickup Location
+                                    </Button>
                                   )}
                                 </Box>
                               )}
@@ -423,7 +462,7 @@ export default function MasterOrdersPage() {
 
                               {co.status !== "CANCELLED" && (
                                 <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
-                                  {["ASSIGNED_TO_RIDER", "OUT_FOR_DELIVERY"].includes(co.status) && co.rider_id && (
+                                  {!isPickup && ["ASSIGNED_TO_RIDER", "OUT_FOR_DELIVERY"].includes(co.status) && co.rider_id && (
                                     <>
                                       <Chip
                                         icon={<TwoWheelerRoundedIcon fontSize="small" />}
@@ -477,8 +516,8 @@ export default function MasterOrdersPage() {
                                 </Stack>
                               )}
 
-                              {/* Rate section — shown only for DELIVERED orders */}
-                              {co.status === "DELIVERED" && (
+                              {/* Rate section — DELIVERED (delivery) or COLLECTED (pickup) */}
+                              {(co.status === "DELIVERED" || co.status === "COLLECTED") && (
                                 <Box sx={{ mt: 1.5 }}>
                                   <Divider sx={{ mb: 1 }} />
                                   <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
@@ -493,7 +532,7 @@ export default function MasterOrdersPage() {
                                     >
                                       Rate Caterer
                                     </Button>
-                                    {co.rider_id && (
+                                    {!isPickup && co.rider_id && (
                                       <Button
                                         size="small" variant="outlined"
                                         startIcon={<TwoWheelerRoundedIcon fontSize="small" />}

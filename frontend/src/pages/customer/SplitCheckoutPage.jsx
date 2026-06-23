@@ -14,7 +14,6 @@ import QrCodeRoundedIcon               from "@mui/icons-material/QrCodeRounded";
 import UploadFileRoundedIcon           from "@mui/icons-material/UploadFileRounded";
 import CheckCircleRoundedIcon          from "@mui/icons-material/CheckCircleRounded";
 import DeleteOutlineRoundedIcon        from "@mui/icons-material/DeleteOutlineRounded";
-import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import LocalAtmRoundedIcon             from "@mui/icons-material/LocalAtmRounded";
 import CreditCardRoundedIcon           from "@mui/icons-material/CreditCardRounded";
 import HelpOutlineRoundedIcon          from "@mui/icons-material/HelpOutlineRounded";
@@ -225,15 +224,7 @@ export default function SplitCheckoutPage() {
     }
   };
 
-  const [upiTipId,   setUpiTipId]   = useState(null);
   const [guideOpen,  setGuideOpen]  = useState({}); // { [caterer_id]: bool }
-
-  const handleUpiPay = (upiLink, catererId) => {
-    // Show fallback tip after 2.5s — if PhonePe declines (browser security),
-    // the page will still be here and the tip guides the user to copy the UPI ID.
-    window.location.href = upiLink;
-    setTimeout(() => setUpiTipId(catererId), 2500);
-  };
 
   const handlePlaceOrder = async () => {
     if (!items.length || unavailableItems.length > 0) return;
@@ -376,7 +367,7 @@ export default function SplitCheckoutPage() {
                     <Chip label="Multi-caterer" size="small" sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18 }} />
                   </Box>
                   <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                    Only available for single caterer orders
+                    Self Pickup is available only when ordering from one caterer
                   </Typography>
                 </Box>
               </Box>
@@ -397,9 +388,9 @@ export default function SplitCheckoutPage() {
               <Box
                 onClick={() => { if (fulfillmentType !== 'SELF_PICKUP') handlePickupChoice('SELF_PICKUP'); }}
                 sx={{
-                  display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2, cursor: 'pointer',
-                  border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : brand.border}`,
-                  backgroundColor: fulfillmentType === 'SELF_PICKUP' ? '#E8F5E9' : '#FAFFF8',
+                  display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.75, borderRadius: 2, cursor: 'pointer',
+                  border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : '#81C784'}`,
+                  backgroundColor: fulfillmentType === 'SELF_PICKUP' ? '#E8F5E9' : '#F9FFF9',
                   transition: 'all 0.15s',
                   '&:hover': { borderColor: '#2E7D32', backgroundColor: '#E8F5E9' },
                 }}
@@ -424,12 +415,47 @@ export default function SplitCheckoutPage() {
                     <Chip label={pickupRec.distance_label} size="small"
                       sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18, backgroundColor: '#E8F5E9', color: '#2E7D32' }} />
                   </Box>
-                  <Typography variant="caption" sx={{ color: '#388E3C', display: 'block', mt: 0.25 }}>
-                    {pickupRec.message}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Ready in ~{pickupRec.prep_time} min
-                  </Typography>
+                  {fulfillmentType === 'SELF_PICKUP' ? (
+                    <Box sx={{ mt: 0.75 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: '#2E7D32' }}>
+                        You selected Self Pickup! 🎉
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#388E3C', display: 'block', mt: 0.25 }}>
+                        Pickup from: {catererGroups[0]?.caterer_name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        Ready in ~{pickupRec.prep_time} min · {pickupRec.distance_label} away
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ mt: 0.75 }}>
+                      <Typography variant="caption" sx={{ color: '#388E3C', display: 'block', fontStyle: 'italic', mb: 0.75 }}>
+                        {pickupRec.message}
+                      </Typography>
+                      <Stack spacing={0.35}>
+                        {pickupRec.saving > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <CheckRoundedIcon sx={{ fontSize: 13, color: '#2E7D32', flexShrink: 0 }} />
+                            <Typography variant="caption" sx={{ color: '#2E7D32', fontWeight: 700 }}>
+                              Save ₹{Math.round(pickupRec.saving)} on delivery charges
+                            </Typography>
+                          </Box>
+                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <CheckRoundedIcon sx={{ fontSize: 13, color: '#2E7D32', flexShrink: 0 }} />
+                          <Typography variant="caption" sx={{ color: '#388E3C', fontWeight: 600 }}>
+                            Ready in ~{pickupRec.prep_time} min
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <CheckRoundedIcon sx={{ fontSize: 13, color: '#2E7D32', flexShrink: 0 }} />
+                          <Typography variant="caption" sx={{ color: '#388E3C', fontWeight: 600 }}>
+                            No delivery waiting
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             ) : pickupRec && !pickupRec.show ? (

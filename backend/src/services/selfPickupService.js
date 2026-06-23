@@ -135,8 +135,11 @@ async function trackEvent({ master_order_id = null, customer_id, caterer_id, eve
 // ─── Caterer confirms pickup ──────────────────────────────────────────────────
 async function confirmPickupCollection(caterer_order_id, pickup_code, caterer_id) {
   const { rows } = await pool.query(
-    `SELECT id, pickup_code, status, fulfillment_type, caterer_id, customer_id, master_order_id
-     FROM caterer_orders WHERE id = $1`,
+    `SELECT co.id, co.pickup_code, co.status, co.fulfillment_type, co.caterer_id, co.master_order_id,
+            mo.customer_id
+     FROM caterer_orders co
+     JOIN master_orders mo ON mo.id = co.master_order_id
+     WHERE co.id = $1`,
     [caterer_order_id]
   );
   const order = rows[0];

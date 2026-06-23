@@ -15,6 +15,10 @@ const CATERER_ORDER_WITH_ITEMS = `
     u.payment_name,
     u.qr_code_image_url,
     u.bank_account_name,
+    u.latitude            AS caterer_lat,
+    u.longitude           AS caterer_lng,
+    u.address             AS caterer_address,
+    u.city                AS caterer_city,
     json_agg(
       json_build_object(
         'id',           coi.id,
@@ -30,7 +34,8 @@ const CATERER_ORDER_WITH_ITEMS = `
   JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
   JOIN food_items f ON f.id = coi.food_item_id
   WHERE co.master_order_id = $1
-  GROUP BY co.id, u.name, u.business_name, u.upi_id, u.phonepe_id, u.payment_name, u.qr_code_image_url, u.bank_account_name
+  GROUP BY co.id, u.name, u.business_name, u.upi_id, u.phonepe_id, u.payment_name, u.qr_code_image_url, u.bank_account_name,
+           u.latitude, u.longitude, u.address, u.city
   ORDER BY co.created_at ASC
 `;
 
@@ -237,6 +242,10 @@ async function getMasterOrders(user) {
              'pickup_code',               co.pickup_code,
              'pickup_time',               co.pickup_time,
              'collected_at',              co.collected_at,
+             'caterer_lat',               cu.latitude,
+             'caterer_lng',               cu.longitude,
+             'caterer_address',           cu.address,
+             'caterer_city',              cu.city,
              'created_at',                co.created_at,
              'items', (
                SELECT json_agg(
@@ -369,59 +378,71 @@ async function updateCatererOrderStatus(id, status, user) {
   let extraCols = '';
   let etaMin    = null;
 
+  const isPickupOrder = catererOrder.fulfillment_type === 'SELF_PICKUP';
+
   if (status === 'ACCEPTED') {
-    etaMin    = 30;
-    extraCols = `, accepted_at = NOW(),
-                  eta_minutes = ${etaMin},
-                  expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
-  } else if (status === 'PREPARING') {
-    etaMin = catererOrder.eta_minutes || 30; // keep existing if already set from ACCEPTED
-
-    // Try GPS-based calculation using customer coords stored on master_order
-    try {
-      const { rows: moRows } = await pool.query(
-        `SELECT mo.customer_lat, mo.customer_lng FROM master_orders mo WHERE mo.id = $1`,
-        [catererOrder.master_order_id]
-      );
-      const mo   = moRows[0];
-      const cLat = mo?.customer_lat != null ? parseFloat(mo.customer_lat) : null;
-      const cLng = mo?.customer_lng != null ? parseFloat(mo.customer_lng) : null;
-
-      if (cLat != null && cLng != null) {
-        const { rows: itemRows } = await pool.query(
-          `SELECT f.preparation_time_minutes, u.latitude AS caterer_lat, u.longitude AS caterer_lng
-           FROM caterer_order_items coi
-           JOIN food_items f  ON f.id = coi.food_item_id
-           JOIN users u        ON u.id = f.caterer_id
-           WHERE coi.caterer_order_id = $1`,
-          [id]
-        );
-        if (itemRows.length > 0) {
-          const { haversineKm, travelTimeMinutes } = require('./locationService');
-          const maxPrep = Math.max(...itemRows.map((r) => r.preparation_time_minutes || 20));
-          const distKm  = haversineKm(cLat, cLng, parseFloat(itemRows[0].caterer_lat), parseFloat(itemRows[0].caterer_lng));
-          const calc    = maxPrep + travelTimeMinutes(distKm);
-          if (calc > 0) etaMin = calc;
-        }
-      }
-    } catch (geoErr) {
-      console.error('[MasterOrderService] ETA geo calc failed, using default:', geoErr.message);
+    if (isPickupOrder) {
+      extraCols = `, accepted_at = NOW()`;
+    } else {
+      etaMin    = 30;
+      extraCols = `, accepted_at = NOW(),
+                    eta_minutes = ${etaMin},
+                    expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
     }
+  } else if (status === 'PREPARING') {
+    if (isPickupOrder) {
+      extraCols = `, preparing_at = NOW()`;
+    } else {
+      etaMin = catererOrder.eta_minutes || 30; // keep existing if already set from ACCEPTED
 
-    extraCols = `, preparing_at = NOW(),
-                  eta_minutes = ${etaMin},
-                  expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
+      // Try GPS-based calculation using customer coords stored on master_order
+      try {
+        const { rows: moRows } = await pool.query(
+          `SELECT mo.customer_lat, mo.customer_lng FROM master_orders mo WHERE mo.id = $1`,
+          [catererOrder.master_order_id]
+        );
+        const mo   = moRows[0];
+        const cLat = mo?.customer_lat != null ? parseFloat(mo.customer_lat) : null;
+        const cLng = mo?.customer_lng != null ? parseFloat(mo.customer_lng) : null;
+
+        if (cLat != null && cLng != null) {
+          const { rows: itemRows } = await pool.query(
+            `SELECT f.preparation_time_minutes, u.latitude AS caterer_lat, u.longitude AS caterer_lng
+             FROM caterer_order_items coi
+             JOIN food_items f  ON f.id = coi.food_item_id
+             JOIN users u        ON u.id = f.caterer_id
+             WHERE coi.caterer_order_id = $1`,
+            [id]
+          );
+          if (itemRows.length > 0) {
+            const { haversineKm, travelTimeMinutes } = require('./locationService');
+            const maxPrep = Math.max(...itemRows.map((r) => r.preparation_time_minutes || 20));
+            const distKm  = haversineKm(cLat, cLng, parseFloat(itemRows[0].caterer_lat), parseFloat(itemRows[0].caterer_lng));
+            const calc    = maxPrep + travelTimeMinutes(distKm);
+            if (calc > 0) etaMin = calc;
+          }
+        }
+      } catch (geoErr) {
+        console.error('[MasterOrderService] ETA geo calc failed, using default:', geoErr.message);
+      }
+
+      extraCols = `, preparing_at = NOW(),
+                    eta_minutes = ${etaMin},
+                    expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
+    }
   } else if (status === 'READY') {
     extraCols = ', ready_at = NOW()';
-    // Auto-create delivery task and enter pooling queue (fire-and-forget)
-    setImmediate(async () => {
-      try {
-        const { createDeliveryTask } = require('./deliveryTaskService');
-        await createDeliveryTask(id);
-      } catch (err) {
-        console.error('[MasterOrderService] Auto-create delivery task failed:', err.message);
-      }
-    });
+    // Delivery orders: auto-create task for rider pooling. Pickup orders skip this.
+    if (!isPickupOrder) {
+      setImmediate(async () => {
+        try {
+          const { createDeliveryTask } = require('./deliveryTaskService');
+          await createDeliveryTask(id);
+        } catch (err) {
+          console.error('[MasterOrderService] Auto-create delivery task failed:', err.message);
+        }
+      });
+    }
   } else if (status === 'DELIVERED') {
     extraCols = ', delivered_at = NOW()';
   } else if (status === 'CANCELLED') {
