@@ -21,6 +21,9 @@ async function createSplitOrder(req, res, next) {
     const fType = ['SELF_PICKUP', 'DELIVERY'].includes((fulfillment_type || '').toUpperCase())
       ? fulfillment_type.toUpperCase()
       : 'DELIVERY';
+    if (fType === 'SELF_PICKUP' && method === 'COD') {
+      return res.status(400).json({ error: 'Self pickup requires advance payment. Cash on delivery is not available for self pickup orders.' });
+    }
     const masterOrder = await masterOrderService.createSplitOrder({
       customer_id:        req.user.id,
       items,

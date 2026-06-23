@@ -22,6 +22,7 @@ import RateReviewRoundedIcon     from "@mui/icons-material/RateReviewRounded";
 import LocalAtmRoundedIcon       from "@mui/icons-material/LocalAtmRounded";
 import CreditCardRoundedIcon     from "@mui/icons-material/CreditCardRounded";
 import GpsFixedRoundedIcon       from "@mui/icons-material/GpsFixedRounded";
+import DirectionsWalkRoundedIcon from "@mui/icons-material/DirectionsWalkRounded";
 import masterOrderService from "../../services/masterOrderService";
 import paymentProofService from "../../services/paymentProofService";
 import AppLayout from "../../components/AppLayout";
@@ -36,6 +37,7 @@ const STATUS_CFG = {
   ASSIGNED_TO_RIDER: { label: "Rider Assigned",   color: "info"    },
   OUT_FOR_DELIVERY:  { label: "Out for Delivery", color: "warning" },
   DELIVERED:         { label: "Delivered",        color: "success" },
+  COLLECTED:         { label: "Collected",        color: "success" },
   CANCELLED:         { label: "Cancelled",        color: "default" },
 };
 
@@ -361,6 +363,41 @@ export default function MasterOrdersPage() {
                                       </Typography>
                                     </Stack>
                                   )}
+                                </Box>
+                              )}
+
+                              {/* Self-pickup code — visible whenever order is a pickup and not cancelled */}
+                              {co.fulfillment_type === "SELF_PICKUP" && co.pickup_code && co.status !== "CANCELLED" && (
+                                <Box sx={{ mb: 1.25, p: 1.25, borderRadius: 1.5, backgroundColor: "#E8F5E9", border: "1px solid #A5D6A7" }}>
+                                  <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+                                    <DirectionsWalkRoundedIcon sx={{ fontSize: 14, color: "#2E7D32" }} />
+                                    <Box sx={{ flex: 1 }}>
+                                      <Typography variant="caption" sx={{ color: "#2E7D32", fontWeight: 700, display: "block" }}>
+                                        {co.status === "COLLECTED" ? "Order Collected ✓" : "Self Pickup Code"}
+                                      </Typography>
+                                      {co.status !== "COLLECTED" && (
+                                        <Typography sx={{ fontFamily: "monospace", fontWeight: 900, fontSize: "1.15rem", color: "#1B5E20", letterSpacing: "0.2em", lineHeight: 1.3 }}>
+                                          {co.pickup_code}
+                                        </Typography>
+                                      )}
+                                      <Typography variant="caption" sx={{ color: "#388E3C", opacity: 0.85 }}>
+                                        {co.status === "COLLECTED"
+                                          ? "Food collected successfully. Enjoy your meal!"
+                                          : "Show this code to the caterer when you arrive"}
+                                      </Typography>
+                                    </Box>
+                                    {co.status !== "COLLECTED" && (
+                                      <Button
+                                        size="small" variant="outlined"
+                                        startIcon={<DirectionsWalkRoundedIcon fontSize="small" />}
+                                        onClick={() => navigate(`/customer/pickup/${masterOrder.id}`)}
+                                        sx={{ fontWeight: 700, fontSize: "0.7rem", borderColor: "#2E7D32", color: "#2E7D32", flexShrink: 0,
+                                          "&:hover": { borderColor: "#1B5E20", backgroundColor: "#E8F5E9" } }}
+                                      >
+                                        View Pickup
+                                      </Button>
+                                    )}
+                                  </Stack>
                                 </Box>
                               )}
 

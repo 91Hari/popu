@@ -17,6 +17,7 @@ import LockRoundedIcon           from "@mui/icons-material/LockRounded";
 import VisibilityRoundedIcon     from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon  from "@mui/icons-material/VisibilityOffRounded";
 import authService               from "../../services/authService";
+import { requestLocation }    from "../../services/locationService";
 import AppLayout              from "../../components/AppLayout";
 import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
 import MapLocationPicker      from "../../components/MapLocationPicker";
@@ -76,36 +77,27 @@ export default function ProfileSettingsPage() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleDetectLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      showSnack("Geolocation is not supported by your browser.", "warning");
-      return;
-    }
+  const handleDetectLocation = useCallback(async () => {
     setDetecting(true);
-
-    // Safety net: reset if GPS + geocoding takes more than 18s total
     const safetyTimer = setTimeout(() => {
       setDetecting(false);
       showSnack("Location detection timed out. Use the map or enter address manually.", "warning");
     }, 18000);
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        clearTimeout(safetyTimer);
-        geocodePosition(pos.coords.latitude, pos.coords.longitude);
-      },
-      (err) => {
-        clearTimeout(safetyTimer);
-        setDetecting(false);
-        showSnack(
-          err.code === 1
-            ? "Location permission denied. Please enter address manually."
-            : "Could not detect location. Please enter manually.",
-          "warning"
-        );
-      },
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
-    );
+    try {
+      const { latitude, longitude } = await requestLocation();
+      clearTimeout(safetyTimer);
+      geocodePosition(latitude, longitude);
+    } catch (err) {
+      clearTimeout(safetyTimer);
+      setDetecting(false);
+      showSnack(
+        err.code === 1
+          ? "Location permission denied. Please enable location access from settings."
+          : "Could not detect location. Please enter manually.",
+        "warning"
+      );
+    }
   }, [geocodePosition]);
 
   // ── mobile number (auth field) ───────────────────────────────────────────────

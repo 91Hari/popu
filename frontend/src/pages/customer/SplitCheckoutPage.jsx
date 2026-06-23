@@ -197,6 +197,13 @@ export default function SplitCheckoutPage() {
     }).catch(() => {});
   }, [pickupRec, pickupTracked, catererGroups]);
 
+  // Self pickup requires advance payment — reset to ONLINE when selected
+  useEffect(() => {
+    if (fulfillmentType === 'SELF_PICKUP' && paymentMethod === 'COD') {
+      setPaymentMethod('ONLINE');
+    }
+  }, [fulfillmentType, paymentMethod]);
+
   const handlePickupChoice = (choice) => {
     if (catererGroups.length !== 1) return;
     if (choice === fulfillmentType) return;
@@ -490,6 +497,7 @@ export default function SplitCheckoutPage() {
             </ToggleButton>
             <ToggleButton
               value="COD"
+              disabled={fulfillmentType === 'SELF_PICKUP'}
               sx={{
                 flex: 1, borderRadius: "10px !important", border: `1.5px solid ${brand.border} !important`,
                 fontWeight: 700, textTransform: "none", py: 1.25, gap: 1,
@@ -498,6 +506,7 @@ export default function SplitCheckoutPage() {
                   borderColor: `#2E7D32 !important`,
                   color: "#2E7D32",
                 },
+                "&.Mui-disabled": { opacity: 0.4 },
               }}
             >
               <LocalAtmRoundedIcon sx={{ fontSize: 18 }} />
@@ -505,13 +514,19 @@ export default function SplitCheckoutPage() {
             </ToggleButton>
           </ToggleButtonGroup>
 
-          {paymentMethod === "COD" && (
+          {fulfillmentType === 'SELF_PICKUP' && (
+            <Alert severity="info" icon={<DirectionsWalkRoundedIcon fontSize="inherit" />}
+              sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
+              Self pickup requires advance payment to confirm your order.
+            </Alert>
+          )}
+          {paymentMethod === "COD" && fulfillmentType !== 'SELF_PICKUP' && (
             <Alert severity="success" icon={<LocalAtmRoundedIcon fontSize="inherit" />}
               sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
               Pay the rider in cash when your order arrives. Your rider will show the caterer's QR for payment.
             </Alert>
           )}
-          {paymentMethod === "ONLINE" && (
+          {paymentMethod === "ONLINE" && fulfillmentType !== 'SELF_PICKUP' && (
             <Alert severity="info" icon={<CreditCardRoundedIcon fontSize="inherit" />}
               sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
               Pay each caterer online using UPI or QR, then upload your payment screenshot below.
