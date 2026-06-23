@@ -45,6 +45,7 @@ const SORT_OPTIONS = [
   { label: "Orders delivered", value: "orders_delivered" },
   { label: "Orders cancelled", value: "orders_cancelled" },
   { label: "Rating",           value: "avg_rating" },
+  { label: "Amount earned",    value: "total_earned" },
 ];
 
 export default function CaterersPage() {
@@ -193,6 +194,7 @@ export default function CaterersPage() {
                   <TableCell align="center">
                     <Tooltip title="Orders cancelled"><Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}><CancelOutlinedIcon sx={{ fontSize: 14, color: "error.main" }} />Cancelled</Box></Tooltip>
                   </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.8rem" }}>Earned (₹)</TableCell>
                   <TableCell align="center">Avail.</TableCell>
                   <TableCell align="center">Status</TableCell>
                   <TableCell align="center">Action</TableCell>
@@ -232,6 +234,11 @@ export default function CaterersPage() {
                     <TableCell align="center">
                       <Typography variant="body2" sx={{ fontWeight: 700, color: c.orders_cancelled > 0 ? "error.main" : "text.disabled" }}>
                         {c.orders_cancelled ?? 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: parseFloat(c.total_earned) > 0 ? "success.main" : "text.disabled" }}>
+                        {parseFloat(c.total_earned || 0) > 0 ? `₹${Number(c.total_earned).toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">

@@ -344,9 +344,9 @@ export default function MapLocationPicker({ open, onClose, onConfirm, initialLat
           >
             <MapRoundedIcon sx={{ fontSize: 52, color: "text.disabled" }} />
             <Typography variant="body1" fontWeight={700}>Map unavailable</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 260 }}>
-              Could not load the map. Close this dialog and use the{" "}
-              <strong>manual address fields</strong> below.
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 280 }}>
+              Unable to load Google Maps. This may be due to no internet connection or location permission being denied.
+              Please use the <strong>manual address fields</strong> below.
             </Typography>
             <Button
               variant="outlined"

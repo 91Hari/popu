@@ -96,6 +96,7 @@ async function getCustomers({ search, date_from, date_to, sort = 'created_at', p
     orders_accepted:  'orders_accepted  DESC NULLS LAST, u.name ASC',
     orders_delivered: 'orders_delivered DESC NULLS LAST, u.name ASC',
     orders_cancelled: 'orders_cancelled DESC NULLS LAST, u.name ASC',
+    total_spent:      'total_spent      DESC NULLS LAST, u.name ASC',
   };
   const orderBy = SORT[sort] || 'u.created_at DESC';
 
@@ -104,7 +105,8 @@ async function getCustomers({ search, date_from, date_to, sort = 'created_at', p
     `SELECT u.id, u.name, u.email, u.phone, u.is_active, u.created_at,
             COUNT(CASE WHEN co.status IN ('ACCEPTED','PREPARING','READY','DELIVERED','COLLECTED') THEN co.id END)::int AS orders_accepted,
             COUNT(CASE WHEN co.status IN ('DELIVERED','COLLECTED')                                THEN co.id END)::int AS orders_delivered,
-            COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS orders_cancelled
+            COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS orders_cancelled,
+            COALESCE(SUM(CASE WHEN co.status IN ('DELIVERED','COLLECTED') THEN co.subtotal ELSE 0 END), 0)::numeric   AS total_spent
      FROM users u
      LEFT JOIN master_orders  mo ON mo.customer_id      = u.id
      LEFT JOIN caterer_orders co ON co.master_order_id  = mo.id${coJoin}
@@ -140,6 +142,8 @@ async function getCaterers({ search, date_from, date_to, sort = 'created_at', pa
     orders_accepted:  'orders_accepted  DESC NULLS LAST, u.name ASC',
     orders_delivered: 'orders_delivered DESC NULLS LAST, u.name ASC',
     orders_cancelled: 'orders_cancelled DESC NULLS LAST, u.name ASC',
+    avg_rating:       'avg_rating       DESC NULLS LAST, u.name ASC',
+    total_earned:     'total_earned     DESC NULLS LAST, u.name ASC',
   };
   const orderBy = SORT[sort] || 'u.created_at DESC';
 
@@ -151,10 +155,11 @@ async function getCaterers({ search, date_from, date_to, sort = 'created_at', pa
             COUNT(DISTINCT r.id)::int                       AS review_count,
             COUNT(CASE WHEN co.status IN ('ACCEPTED','PREPARING','READY','DELIVERED','COLLECTED') THEN co.id END)::int AS orders_accepted,
             COUNT(CASE WHEN co.status IN ('DELIVERED','COLLECTED')                                THEN co.id END)::int AS orders_delivered,
-            COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS orders_cancelled
+            COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS orders_cancelled,
+            COALESCE(SUM(CASE WHEN co.status IN ('DELIVERED','COLLECTED') THEN co.caterer_payout ELSE 0 END), 0)::numeric AS total_earned
      FROM users u
-     LEFT JOIN reviews r       ON r.subject_type = 'caterer' AND r.subject_id = u.id
-     LEFT JOIN caterer_orders co ON co.caterer_id = u.id${coJoin}
+     LEFT JOIN reviews r          ON r.subject_type = 'caterer' AND r.subject_id = u.id
+     LEFT JOIN caterer_orders co  ON co.caterer_id = u.id${coJoin}
      WHERE ${userWhere}
      GROUP BY u.id
      ORDER BY ${orderBy}

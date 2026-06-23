@@ -39,10 +39,11 @@ function presetToDates(preset) {
 }
 
 const SORT_OPTIONS = [
-  { label: "Joined (newest)", value: "created_at" },
-  { label: "Orders accepted", value: "orders_accepted" },
+  { label: "Joined (newest)",  value: "created_at" },
+  { label: "Orders accepted",  value: "orders_accepted" },
   { label: "Orders delivered", value: "orders_delivered" },
   { label: "Orders cancelled", value: "orders_cancelled" },
+  { label: "Amount spent",     value: "total_spent" },
 ];
 
 export default function CustomersPage() {
@@ -189,6 +190,7 @@ export default function CustomersPage() {
                   <TableCell align="center">
                     <Tooltip title="Orders cancelled"><Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}><CancelOutlinedIcon sx={{ fontSize: 14, color: "error.main" }} />Cancelled</Box></Tooltip>
                   </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.8rem" }}>Spent (₹)</TableCell>
                   <TableCell align="center">Status</TableCell>
                   <TableCell align="center">Action</TableCell>
                 </TableRow>
@@ -215,6 +217,11 @@ export default function CustomersPage() {
                     <TableCell align="center">
                       <Typography variant="body2" sx={{ fontWeight: 700, color: c.orders_cancelled > 0 ? "error.main" : "text.disabled" }}>
                         {c.orders_cancelled ?? 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: parseFloat(c.total_spent) > 0 ? "text.primary" : "text.disabled" }}>
+                        {parseFloat(c.total_spent || 0) > 0 ? `₹${Number(c.total_spent).toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
