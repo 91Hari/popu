@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -14,10 +14,10 @@ import ErrorBoundary from "../components/ErrorBoundary";
 const LandingPage = React.lazy(() => import("../pages/LandingPage"));
 
 // Auth
-const LoginPage           = React.lazy(() => import("../pages/auth/LoginPage"));
-const RegisterPage        = React.lazy(() => import("../pages/auth/RegisterPage"));
-const ForgotPasswordPage  = React.lazy(() => import("../pages/auth/ForgotPasswordPage"));
-const ResetPasswordPage   = React.lazy(() => import("../pages/auth/ResetPasswordPage"));
+const LoginPage             = React.lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage          = React.lazy(() => import("../pages/auth/RegisterPage"));
+const ForgotPasswordPage    = React.lazy(() => import("../pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage     = React.lazy(() => import("../pages/auth/ResetPasswordPage"));
 
 // Customer
 const CustomerDashboard  = React.lazy(() => import("../pages/customer/CustomerDashboard"));
@@ -29,7 +29,8 @@ const NotificationsPage  = React.lazy(() => import("../pages/customer/Notificati
 const CartPage           = React.lazy(() => import("../pages/customer/CartPage"));
 const SplitCheckoutPage  = React.lazy(() => import("../pages/customer/SplitCheckoutPage"));
 const MasterOrdersPage   = React.lazy(() => import("../pages/customer/MasterOrdersPage"));
-const RiderTrackingPage  = React.lazy(() => import("../pages/customer/RiderTrackingPage"));
+const RiderTrackingPage    = React.lazy(() => import("../pages/customer/RiderTrackingPage"));
+const CustomerPickupPage   = React.lazy(() => import("../pages/customer/CustomerPickupPage"));
 
 // Services
 const ServicesPage      = React.lazy(() => import("../pages/services/ServicesPage"));
@@ -68,6 +69,7 @@ const ProfileSettingsPage          = React.lazy(() => import("../pages/customer/
 const RiderDashboard       = React.lazy(() => import("../pages/rider/RiderDashboard"));
 const RiderOrderLookupPage = React.lazy(() => import("../pages/rider/RiderOrderLookupPage"));
 const RiderDeliveryPage    = React.lazy(() => import("../pages/rider/RiderDeliveryPage"));
+const RiderActiveBatchPage = React.lazy(() => import("../pages/rider/RiderActiveBatchPage"));
 
 // Admin
 const AdminDashboard       = React.lazy(() => import("../pages/admin/AdminDashboard"));
@@ -82,9 +84,11 @@ const AdminMasterOrdersPage      = React.lazy(() => import("../pages/admin/Admin
 const AdminRidersPage            = React.lazy(() => import("../pages/admin/AdminRidersPage"));
 const AdminCateringBookingsPage  = React.lazy(() => import("../pages/admin/AdminCateringBookingsPage"));
 const PlatformSettingsPage       = React.lazy(() => import("../pages/admin/PlatformSettingsPage"));
-const AdminPaymentsPage          = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
-const AdminRefundsPage           = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
-const ServiceManagementPage      = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
+const AdminPaymentsPage              = React.lazy(() => import("../pages/admin/AdminPaymentsPage"));
+const AdminRefundsPage               = React.lazy(() => import("../pages/admin/AdminRefundsPage"));
+const ServiceManagementPage          = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
+const AdminAccountManagementPage     = React.lazy(() => import("../pages/admin/AdminAccountManagementPage"));
+const AdminDeliveryManagementPage    = React.lazy(() => import("../pages/admin/AdminDeliveryManagementPage"));
 const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
 // Tiffin Box module
@@ -136,11 +140,11 @@ const Loader = () => (
 
 export default function AppRoutes() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ScrollToTop />
       <Suspense fallback={<Loader />}>
         <Routes>
-          <Route path="/login"            element={<LoginPage />} />
+          <Route path="/login"             element={<LoginPage />} />
           <Route path="/register"         element={<RegisterPage />} />
           <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
           <Route path="/reset-password"   element={<ResetPasswordPage />} />
@@ -160,7 +164,8 @@ export default function AppRoutes() {
           <Route path="/cart"                     element={<ErrorBoundary><C allowed={CUST} element={<CartPage />} /></ErrorBoundary>} />
           <Route path="/checkout/split"           element={<ErrorBoundary><C allowed={CUST} element={<SplitCheckoutPage />} /></ErrorBoundary>} />
           <Route path="/customer/master-orders"   element={<ErrorBoundary><C allowed={CUST} element={<MasterOrdersPage />} /></ErrorBoundary>} />
-          <Route path="/customer/track/:orderId"  element={<ErrorBoundary><C allowed={CUST} element={<RiderTrackingPage />} /></ErrorBoundary>} />
+          <Route path="/customer/track/:orderId"    element={<ErrorBoundary><C allowed={CUST} element={<RiderTrackingPage />} /></ErrorBoundary>} />
+          <Route path="/customer/pickup/:masterOrderId" element={<ErrorBoundary><C allowed={CUST} element={<CustomerPickupPage />} /></ErrorBoundary>} />
           <Route path="/payment/callback"          element={<ErrorBoundary><C allowed={CUST} element={<PaymentCallbackPage />} /></ErrorBoundary>} />
 
           {/* Services */}
@@ -205,6 +210,7 @@ export default function AppRoutes() {
           <Route path="/rider"                element={<C allowed={RIDER} element={<RiderDashboard />} />} />
           <Route path="/rider/lookup"         element={<C allowed={RIDER} element={<RiderOrderLookupPage />} />} />
           <Route path="/rider/delivery/:id"   element={<C allowed={RIDER} element={<RiderDeliveryPage />} />} />
+          <Route path="/rider/batch"          element={<C allowed={RIDER} element={<RiderActiveBatchPage />} />} />
 
           {/* Admin */}
           <Route path="/admin"               element={<C allowed={ADMIN} element={<AdminDashboard />} />} />
@@ -224,11 +230,19 @@ export default function AppRoutes() {
           <Route path="/admin/services"            element={<C allowed={ADMIN} element={<ServiceManagementPage />} />} />
           {/* Tiffin Box — admin */}
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
+          <Route path="/admin/account-management" element={<C allowed={ADMIN} element={<AdminAccountManagementPage />} />} />
+          <Route path="/admin/delivery"           element={<C allowed={ADMIN} element={<AdminDeliveryManagementPage />} />} />
 
-          <Route path="/" element={<LandingPage />} />
-          <Route path="*" element={<div style={{ padding: 24 }}>Page not found.</div>} />
+          {/* Root: auto-route based on auth state */}
+          <Route path="/" element={
+            isAuthenticated()
+              ? (() => { const r = getUserRole(); return <Navigate to={r === 'caterer' ? '/caterer' : r === 'admin' ? '/admin' : r === 'rider' ? '/rider' : '/customer'} replace />; })()
+              : <Navigate to="/login" replace />
+          } />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

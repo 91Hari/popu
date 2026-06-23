@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import PersonPinRoundedIcon from "@mui/icons-material/PersonPinRounded";
 import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
@@ -122,14 +121,6 @@ export default function FoodDetailsPage() {
     <AppLayout>
 
       <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4 }}>
-        <Button
-          startIcon={<ArrowBackRoundedIcon />}
-          onClick={() => navigate(-1)}
-          sx={{ mb: 2, color: brand.muted }}
-        >
-          Back
-        </Button>
-
         <Card
           sx={{
             display: "flex",
@@ -193,6 +184,16 @@ export default function FoodDetailsPage() {
                 By: {food.caterer_name || "Premium Caterer"}
               </Typography>
             </Box>
+
+            {food.serves_count != null && (
+              <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, mt: 1,
+                px: 1.5, py: 0.5, borderRadius: 2,
+                backgroundColor: brand.orangeLight, border: `1px solid ${brand.border}` }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: brand.orange }}>
+                  🍽 Serves {food.serves_count} {food.serves_count === 1 ? "Person" : "Persons"}
+                </Typography>
+              </Box>
+            )}
 
             {/* ETA section */}
             {food.estimatedDeliveryTime != null && (

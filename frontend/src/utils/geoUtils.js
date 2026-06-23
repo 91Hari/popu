@@ -52,6 +52,29 @@ export function formatArrivalTime(dateOrIso) {
   return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
+// Get current position using Capacitor Geolocation if available, else browser API
+async function getNativePosition() {
+  try {
+    const { Geolocation } = await import("@capacitor/geolocation");
+    const perms = await Geolocation.checkPermissions();
+    if (perms.location === "denied") {
+      await Geolocation.requestPermissions();
+    }
+    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+    return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+  } catch {
+    // Fall back to browser geolocation
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error("No geolocation")); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        reject,
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  }
+}
+
 // React hook — returns customer's location; prefers saved DB location from localStorage
 export function useCustomerGeo() {
   const [coords, setCoords] = useState(() => {
@@ -65,13 +88,12 @@ export function useCustomerGeo() {
   });
 
   useEffect(() => {
-    if (coords) return; // already have saved location
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {}
-    );
+    if (coords) return;
+    getNativePosition().then(setCoords).catch(() => {});
   }, [coords]);
 
   return coords;
 }
+
+// Export for use in other modules
+export { getNativePosition };

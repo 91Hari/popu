@@ -3,7 +3,7 @@ import DinnerDiningRoundedIcon from "@mui/icons-material/DinnerDiningRounded";
 import { brand } from "../theme";
 
 export const CARD_IMG_HEIGHT  = 120;
-export const CARD_BODY_HEIGHT = 130;
+export const CARD_BODY_HEIGHT = 148;
 export const CARD_BTN_HEIGHT  = 44;
 export const CARD_TOTAL_HEIGHT = CARD_IMG_HEIGHT + CARD_BODY_HEIGHT + CARD_BTN_HEIGHT;
 
@@ -23,6 +23,8 @@ export default function CommonCard({
     <Card
       onClick={!disabled && onClick ? onClick : undefined}
       sx={{
+        width: "100%",
+        minWidth: 0,
         height: CARD_TOTAL_HEIGHT,
         minHeight: CARD_TOTAL_HEIGHT,
         maxHeight: CARD_TOTAL_HEIGHT,
@@ -81,10 +83,14 @@ export default function CommonCard({
             sx={{
               fontWeight: 700,
               overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              minWidth: 0,
+              maxWidth: "100%",
               lineHeight: 1.25,
               mb: 0.4,
+              minHeight: "2.5em",
             }}
           >
             {title}

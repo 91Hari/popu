@@ -12,13 +12,31 @@ import EditRoundedIcon            from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon          from "@mui/icons-material/DeleteRounded";
 import MyLocationRoundedIcon      from "@mui/icons-material/MyLocationRounded";
 import CheckCircleRoundedIcon     from "@mui/icons-material/CheckCircleRounded";
-import ArrowBackRoundedIcon       from "@mui/icons-material/ArrowBackRounded";
 import AppLayout               from "../../components/AppLayout";
 import PlacesAutocompleteField from "../../components/PlacesAutocompleteField";
 import api                     from "../../services/api";
-import { ensureMapsInit }      from "../../utils/mapsLoader";
-import { parseAddressComponents } from "../../utils/parseAddressComponents";
 import { brand } from "../../theme";
+import { Geolocation } from "@capacitor/geolocation";
+
+async function nominatimReverse(lat, lng) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+  const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+function parseNominatim(data) {
+  const a = data?.address || {};
+  const road = a.road || a.pedestrian || a.footway || a.suburb || "";
+  const area = a.suburb || a.neighbourhood || a.village || "";
+  const address = [road, area].filter(Boolean).join(", ");
+  return {
+    address,
+    city:    a.city || a.town || a.village || a.county || "",
+    state:   a.state || "",
+    pincode: a.postcode || "",
+  };
+}
 
 const STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
@@ -106,53 +124,44 @@ export default function AddressManagementPage() {
     setDialog({ open: true, mode: "edit", data: addr });
   };
 
-  const handleDetectLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      showSnack("Geolocation is not supported by your browser.", "warning");
-      return;
-    }
+  const handleDetectLocation = useCallback(async () => {
     setDetecting(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        try {
-          const ok = await ensureMapsInit("geocoding");
-          if (!ok) throw new Error("Maps unavailable");
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-            if (status === "OK" && results?.[0]) {
-              const parsed = parseAddressComponents(results[0].address_components);
-              setForm((f) => ({
-                ...f,
-                street:  parsed.address || f.street,
-                city:    parsed.city    || f.city,
-                state:   parsed.state   || f.state,
-                pincode: parsed.pincode || f.pincode,
-                _lat:    latitude,
-                _lng:    longitude,
-              }));
-              showSnack("Location detected. Review and edit the auto-filled fields.");
-            } else {
-              setForm((f) => ({ ...f, _lat: latitude, _lng: longitude }));
-              showSnack("Coordinates captured. Please fill in the address.", "info");
-            }
-            setDetecting(false);
-          });
-        } catch {
-          setForm((f) => ({ ...f, _lat: latitude, _lng: longitude }));
-          showSnack("Could not reverse-geocode location. Please fill manually.", "warning");
-          setDetecting(false);
-        }
-      },
-      (err) => {
+    try {
+      const perm = await Geolocation.requestPermissions();
+      if (perm.location !== "granted") {
+        showSnack("Location permission denied.", "warning");
         setDetecting(false);
-        showSnack(
-          err.code === 1 ? "Location permission denied." : "Could not detect location.",
-          "warning"
-        );
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+        return;
+      }
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const { latitude, longitude } = pos.coords;
+      try {
+        const data = await nominatimReverse(latitude, longitude);
+        if (data) {
+          const parsed = parseNominatim(data);
+          setForm((f) => ({
+            ...f,
+            street:  parsed.address || f.street,
+            city:    parsed.city    || f.city,
+            state:   parsed.state   || f.state,
+            pincode: parsed.pincode || f.pincode,
+            _lat:    latitude,
+            _lng:    longitude,
+          }));
+          showSnack("Location detected. Review and edit the auto-filled fields.");
+        } else {
+          setForm((f) => ({ ...f, _lat: latitude, _lng: longitude }));
+          showSnack("Coordinates captured. Please fill in the address.", "info");
+        }
+      } catch {
+        setForm((f) => ({ ...f, _lat: latitude, _lng: longitude }));
+        showSnack("Could not reverse-geocode. Please fill manually.", "warning");
+      }
+    } catch (err) {
+      showSnack(err?.message?.includes("denied") ? "Location permission denied." : "Could not detect location.", "warning");
+    } finally {
+      setDetecting(false);
+    }
   }, []);
 
   const handleSave = async () => {
@@ -230,9 +239,6 @@ export default function AddressManagementPage() {
       <Container maxWidth="sm" sx={{ pt: 3, pb: 6 }}>
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: brand.orange }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <LocationOnRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>My Addresses</Typography>
           <Box sx={{ flex: 1 }} />
@@ -378,12 +384,12 @@ export default function AddressManagementPage() {
                 <TextField fullWidth size="small" label="Landmark (optional)"
                   value={form.landmark} onChange={set("landmark")} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField fullWidth size="small" label="City *"
                   value={form.city} onChange={set("city")}
                   error={!!errors.city} helperText={errors.city} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField fullWidth size="small" select label="State *"
                   value={form.state} onChange={set("state")}
                   error={!!errors.state} helperText={errors.state}>

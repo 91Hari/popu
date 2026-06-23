@@ -1,9 +1,10 @@
 'use strict';
 
-const bcrypt = require('bcrypt');
-const jwt    = require('jsonwebtoken');
-const crypto = require('crypto');
-const pool   = require('../config/db');
+const bcrypt  = require('bcrypt');
+const jwt     = require('jsonwebtoken');
+const crypto  = require('crypto');
+const pool    = require('../config/db');
+const { sendPasswordResetEmail } = require('./emailService');
 
 const SALT_ROUNDS = 12;
 const JWT_SECRET  = process.env.JWT_SECRET;
@@ -14,9 +15,7 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-// In-memory password reset tokens — single instance only.
-// Multi-instance deployments: move to a database table with expiry.
-const resetTokens = new Map();
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeError(message, status) {
   const err = new Error(message);
@@ -33,48 +32,41 @@ function validatePasswordStrength(password) {
     throw makeError('Password must contain at least one lowercase letter', 400);
   if (!/[0-9]/.test(password))
     throw makeError('Password must contain at least one number', 400);
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password))
+    throw makeError('Password must contain at least one special character', 400);
 }
 
-function detectInputType(username) {
-  if (!username) return null;
-  const trimmed = username.trim();
-  if (trimmed.includes('@')) return 'email';
-  if (/^\d{10}$/.test(trimmed)) return 'mobile';
-  return null;
+function hashToken(rawToken) {
+  return crypto.createHash('sha256').update(rawToken).digest('hex');
 }
 
-// ─── Login ────────────────────────────────────────────────────────────────────
+// ── Login ─────────────────────────────────────────────────────────────────────
 
 async function login({ username, password }) {
-  const type = detectInputType(username);
-  if (!type) {
-    throw makeError('Enter a valid email address or 10-digit mobile number', 400);
-  }
+  if (!username) throw makeError('Email or mobile number is required', 400);
 
-  const column = type === 'email' ? 'email' : 'mobile_number';
-  const value  = type === 'email'
-    ? username.trim().toLowerCase()
-    : username.trim();
+  const v = username.trim();
+  const isEmail  = v.includes('@');
+  const isMobile = /^\d{10}$/.test(v);
+
+  if (!isEmail && !isMobile)
+    throw makeError('Enter a valid email address or 10-digit mobile number', 400);
+
+  const column = isEmail ? 'email' : 'mobile_number';
+  const value  = isEmail ? v.toLowerCase() : v;
 
   const { rows } = await pool.query(
-    `SELECT id, name, email, mobile_number, password_hash, role, is_active
+    `SELECT id, name, email, mobile_number, password_hash, role, is_active, is_deleted
      FROM users WHERE ${column} = $1`,
     [value]
   );
 
   const user = rows[0];
-  if (!user) throw makeError('Invalid credentials', 401);
-
-  if (!user.is_active) {
-    throw makeError('Account is deactivated. Please contact support.', 403);
-  }
-
-  if (!user.password_hash) {
-    throw makeError(
-      'No password is set for this account. Use Forgot Password to set one.',
-      400
-    );
-  }
+  if (!user)            throw makeError('Invalid credentials', 401);
+  if (user.is_deleted)  throw makeError('This account has been deleted.', 403);
+  if (!user.is_active)  throw makeError('Account is deactivated. Please contact support.', 403);
+  if (!user.password_hash)
+    throw makeError('No password set. Use Forgot Password to set one.', 400);
 
   const match = await bcrypt.compare(password, user.password_hash);
   if (!match) throw makeError('Invalid credentials', 401);
@@ -85,7 +77,7 @@ async function login({ username, password }) {
     { expiresIn: JWT_EXPIRES }
   );
 
-  console.log(`[Auth] Login — ${user.role} ${user.id} via ${type}`);
+  console.log(`[Auth] Login — ${user.role} ${user.id} via ${isEmail ? 'email' : 'mobile'}`);
 
   return {
     token,
@@ -99,16 +91,21 @@ async function login({ username, password }) {
   };
 }
 
-// ─── Register ─────────────────────────────────────────────────────────────────
+// ── Register ──────────────────────────────────────────────────────────────────
 
 async function register({
   name, mobileNumber, email, password, role,
   address, city, state, pincode, latitude, longitude,
 }) {
   if (!name?.trim()) throw makeError('Name is required', 400);
-  if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber).trim())) {
+  if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber).trim()))
     throw makeError('A valid 10-digit mobile number is required', 400);
-  }
+
+  // Email is mandatory — required for password recovery and account identity
+  if (!email || !email.trim())
+    throw makeError('Email address is required', 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+    throw makeError('Please enter a valid email address', 400);
 
   validatePasswordStrength(password);
 
@@ -117,22 +114,19 @@ async function register({
     ? String(role).toUpperCase()
     : 'CUSTOMER';
 
-  const mobile = String(mobileNumber).trim();
+  const mobile     = String(mobileNumber).trim();
+  const cleanEmail = email.trim().toLowerCase();
 
   const { rows: mobileRows } = await pool.query(
-    'SELECT id FROM users WHERE mobile_number = $1',
-    [mobile]
+    'SELECT id FROM users WHERE mobile_number = $1', [mobile]
   );
   if (mobileRows.length) throw makeError('Mobile number is already registered', 409);
 
-  const cleanEmail = email?.trim().toLowerCase() || null;
-  if (cleanEmail) {
-    const { rows: emailRows } = await pool.query(
-      'SELECT id FROM users WHERE email = $1',
-      [cleanEmail]
-    );
-    if (emailRows.length) throw makeError('Email address is already registered', 409);
-  }
+  const { rows: emailRows } = await pool.query(
+    'SELECT id FROM users WHERE email = $1', [cleanEmail]
+  );
+  if (emailRows.length)
+    throw makeError('An account already exists with this email address', 409);
 
   const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -148,13 +142,12 @@ async function register({
        (name, email, mobile_number, password_hash, role, address, city, state, pincode, latitude, longitude)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING id, name, email, mobile_number, role, address, city, state, pincode, latitude, longitude`,
-    [name.trim(), cleanEmail, mobile, password_hash, userRole,
+    [name.trim(), cleanEmail, mobile, password_hash, userRole,        // cleanEmail is always set
      cleanAddress, cleanCity, cleanState, cleanPincode, lat, lng]
   );
 
   const newUser = rows[0];
 
-  // Create a default delivery address entry if location was captured during registration
   if (cleanAddress && cleanCity && cleanState && cleanPincode) {
     await pool.query(
       `INSERT INTO user_addresses
@@ -169,64 +162,145 @@ async function register({
   return { success: true, user: newUser };
 }
 
-// ─── Forgot Password ──────────────────────────────────────────────────────────
+// ── Forgot Password (email-only) ──────────────────────────────────────────────
 
-async function forgotPassword({ username }) {
-  const type = detectInputType(username);
-  if (!type) throw makeError('Enter a valid email address or 10-digit mobile number', 400);
+async function forgotPassword({ email }) {
+  // Always return the same message — never reveal whether the account exists
+  const GENERIC_MSG = 'If an account exists with this email address, password reset instructions have been sent.';
 
-  const column = type === 'email' ? 'email' : 'mobile_number';
-  const value  = type === 'email'
-    ? username.trim().toLowerCase()
-    : username.trim();
+  if (!email || !email.trim().includes('@'))
+    throw makeError('Enter a valid email address', 400);
+
+  const cleanEmail = email.trim().toLowerCase();
 
   const { rows } = await pool.query(
-    `SELECT id, name, email, mobile_number FROM users WHERE ${column} = $1`,
-    [value]
+    `SELECT id, name, email FROM users
+     WHERE email = $1 AND is_active = TRUE AND is_deleted = FALSE`,
+    [cleanEmail]
   );
 
-  // Always succeed — do not reveal whether the account exists
   if (!rows.length) {
-    return { success: true, message: 'If an account exists, a reset link has been sent.' };
+    // Do not reveal that account doesn't exist
+    console.log(`[Auth] Forgot password: no account for ${cleanEmail}`);
+    return { success: true, message: GENERIC_MSG };
   }
 
-  const user      = rows[0];
-  const token     = crypto.randomBytes(32).toString('hex');
-  const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
-  resetTokens.set(token, { userId: user.id, expiresAt });
+  const user = rows[0];
+
+  // Invalidate all pending tokens for this user before issuing a new one
+  await pool.query(
+    `UPDATE password_reset_tokens SET used = TRUE
+     WHERE user_id = $1 AND used = FALSE`,
+    [user.id]
+  );
+
+  // Generate raw token (sent in email) and store only the SHA-256 hash
+  const rawToken   = crypto.randomBytes(32).toString('hex');
+  const tokenHash  = hashToken(rawToken);
+  const expiresAt  = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+  await pool.query(
+    `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)`,
+    [user.id, tokenHash, expiresAt]
+  );
 
   const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
-  const resetUrl    = `${frontendUrl}/reset-password?token=${token}`;
+  const resetUrl    = `${frontendUrl}/#/reset-password?token=${rawToken}`;
 
-  // Log to console — replace with email/SMS delivery in production
-  console.log('\n🔑 [Password Reset]');
-  console.log(`   User     : ${user.name} (${user.email || user.mobile_number})`);
-  console.log(`   Reset URL: ${resetUrl}`);
-  console.log(`   Expires  : ${new Date(expiresAt).toISOString()}\n`);
+  // Fire and forget — email failure must not crash this endpoint
+  sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl })
+    .catch((err) => console.error('[Auth] Unexpected email error:', err.message));
 
-  return { success: true, message: 'If an account exists, a reset link has been sent.' };
+  console.log(`[Auth] Password reset email queued for user ${user.id}`);
+  return { success: true, message: GENERIC_MSG };
 }
 
-// ─── Reset Password ───────────────────────────────────────────────────────────
+// ── Reset Password ────────────────────────────────────────────────────────────
 
 async function resetPassword({ token, newPassword }) {
-  const record = resetTokens.get(token);
-  if (!record || Date.now() > record.expiresAt) {
+  if (!token)
     throw makeError('Invalid or expired reset link. Please request a new one.', 400);
-  }
+
+  validatePasswordStrength(newPassword);
+
+  const tokenHash = hashToken(token);
+
+  const { rows } = await pool.query(
+    `SELECT id, user_id, expires_at, used
+     FROM password_reset_tokens
+     WHERE token_hash = $1`,
+    [tokenHash]
+  );
+
+  if (!rows.length || rows[0].used)
+    throw makeError('Invalid or expired reset link. Please request a new one.', 400);
+
+  if (new Date() > new Date(rows[0].expires_at))
+    throw makeError('This reset link has expired. Please request a new one.', 400);
+
+  const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+  // Update password + set password_changed_at to invalidate all existing sessions
+  await pool.query(
+    `UPDATE users
+     SET password_hash = $1, password_changed_at = NOW(), updated_at = NOW()
+     WHERE id = $2`,
+    [password_hash, rows[0].user_id]
+  );
+
+  // Mark token as used (single-use)
+  await pool.query(
+    `UPDATE password_reset_tokens SET used = TRUE WHERE id = $1`,
+    [rows[0].id]
+  );
+
+  // Invalidate all other pending tokens for this user
+  await pool.query(
+    `UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1`,
+    [rows[0].user_id]
+  );
+
+  console.log(`[Auth] Password reset completed for user ${rows[0].user_id}`);
+  return {
+    success: true,
+    message: 'Password updated successfully. Please login with your new password.',
+  };
+}
+
+// ── Change Password (authenticated) ──────────────────────────────────────────
+
+async function changePassword({ userId, currentPassword, newPassword }) {
+  const { rows } = await pool.query(
+    `SELECT id, password_hash FROM users WHERE id = $1 AND is_active = TRUE`,
+    [userId]
+  );
+  if (!rows.length) throw makeError('User not found', 404);
+
+  if (!rows[0].password_hash)
+    throw makeError('No password set. Use Forgot Password to set one.', 400);
+
+  const currentMatch = await bcrypt.compare(currentPassword, rows[0].password_hash);
+  if (!currentMatch) throw makeError('Current password is incorrect', 400);
+
+  const sameAsOld = await bcrypt.compare(newPassword, rows[0].password_hash);
+  if (sameAsOld) throw makeError('New password must be different from your current password', 400);
 
   validatePasswordStrength(newPassword);
 
   const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
   await pool.query(
-    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-    [password_hash, record.userId]
+    `UPDATE users
+     SET password_hash = $1, password_changed_at = NOW(), updated_at = NOW()
+     WHERE id = $2`,
+    [password_hash, userId]
   );
 
-  resetTokens.delete(token);
-  console.log(`[Auth] Password reset for user ${record.userId}`);
-
-  return { success: true, message: 'Password reset successfully. Please log in.' };
+  console.log(`[Auth] Password changed for user ${userId}`);
+  return {
+    success: true,
+    message: 'Password updated successfully. Please login again.',
+  };
 }
 
-module.exports = { login, register, forgotPassword, resetPassword };
+module.exports = { login, register, forgotPassword, resetPassword, changePassword };

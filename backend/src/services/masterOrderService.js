@@ -3,6 +3,7 @@
 const pool = require('../config/db');
 const { notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 const payCalc = require('./paymentCalculationService');
+const { generatePickupCode } = require('./selfPickupService');
 
 const CATERER_ORDER_WITH_ITEMS = `
   SELECT
@@ -14,6 +15,10 @@ const CATERER_ORDER_WITH_ITEMS = `
     u.payment_name,
     u.qr_code_image_url,
     u.bank_account_name,
+    u.latitude            AS caterer_lat,
+    u.longitude           AS caterer_lng,
+    u.address             AS caterer_address,
+    u.city                AS caterer_city,
     json_agg(
       json_build_object(
         'id',           coi.id,
@@ -29,7 +34,8 @@ const CATERER_ORDER_WITH_ITEMS = `
   JOIN caterer_order_items coi ON coi.caterer_order_id = co.id
   JOIN food_items f ON f.id = coi.food_item_id
   WHERE co.master_order_id = $1
-  GROUP BY co.id, u.name, u.business_name, u.upi_id, u.phonepe_id, u.payment_name, u.qr_code_image_url, u.bank_account_name
+  GROUP BY co.id, u.name, u.business_name, u.upi_id, u.phonepe_id, u.payment_name, u.qr_code_image_url, u.bank_account_name,
+           u.latitude, u.longitude, u.address, u.city
   ORDER BY co.created_at ASC
 `;
 
@@ -38,8 +44,10 @@ async function createSplitOrder({
   delivery_house_no, delivery_street, delivery_landmark,
   delivery_city, delivery_state, delivery_pincode,
   payment_proofs = [], payment_method = 'ONLINE',
+  fulfillment_type = 'DELIVERY',
 }) {
-  const isCod = payment_method === 'COD';
+  const isCod        = payment_method === 'COD';
+  const isSelfPickup = fulfillment_type === 'SELF_PICKUP';
   if (!items || items.length === 0) {
     const err = new Error('Order must contain at least one item');
     err.status = 400;
@@ -116,15 +124,31 @@ async function createSplitOrder({
     for (const [caterer_id, lines] of catererGroups) {
       const subtotal = lines.reduce((s, l) => s + l.total_price, 0);
       const pc = await payCalc.calculate(subtotal);
+
+      // Self-pickup waives platform fee (the delivery charge)
+      const effectivePlatformFee = isSelfPickup ? 0 : pc.platform_fee;
+      const effectivePayout      = isSelfPickup
+        ? Math.max(0, Math.round((subtotal - pc.commission_amount) * 100) / 100)
+        : pc.caterer_payout;
+
+      // Per-caterer pickup metadata
+      const catererMaxPrep = Math.max(...lines.map(l => foodMap.get(l.food_item_id)?.preparation_time_minutes || 20));
+      const pickupCode = isSelfPickup ? generatePickupCode() : null;
+      const pickupTime = isSelfPickup ? new Date(Date.now() + catererMaxPrep * 60_000) : null;
+
       const { rows: coRows } = await client.query(
         `INSERT INTO caterer_orders
            (master_order_id, caterer_id, subtotal,
             commission_percentage, commission_amount, platform_fee, caterer_payout,
-            payment_method)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            payment_method, fulfillment_type, pickup_code, pickup_time)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
         [masterOrder.id, caterer_id, subtotal,
-         pc.commission_percentage, pc.commission_amount, pc.platform_fee, pc.caterer_payout,
-         isCod ? 'COD' : 'ONLINE']
+         pc.commission_percentage, pc.commission_amount,
+         effectivePlatformFee, effectivePayout,
+         isCod ? 'COD' : 'ONLINE',
+         isSelfPickup ? 'SELF_PICKUP' : 'DELIVERY',
+         pickupCode,
+         pickupTime]
       );
       const catererOrder = coRows[0];
 
@@ -214,6 +238,14 @@ async function getMasterOrders(user) {
              'rider_name',                (SELECT u2.name FROM users u2 WHERE u2.id = co.rider_id),
              'delivery_confirmation_code',co.delivery_confirmation_code,
              'payment_method',            co.payment_method,
+             'fulfillment_type',          co.fulfillment_type,
+             'pickup_code',               co.pickup_code,
+             'pickup_time',               co.pickup_time,
+             'collected_at',              co.collected_at,
+             'caterer_lat',               cu.latitude,
+             'caterer_lng',               cu.longitude,
+             'caterer_address',           cu.address,
+             'caterer_city',              cu.city,
              'created_at',                co.created_at,
              'items', (
                SELECT json_agg(
@@ -346,50 +378,71 @@ async function updateCatererOrderStatus(id, status, user) {
   let extraCols = '';
   let etaMin    = null;
 
+  const isPickupOrder = catererOrder.fulfillment_type === 'SELF_PICKUP';
+
   if (status === 'ACCEPTED') {
-    etaMin    = 30;
-    extraCols = `, accepted_at = NOW(),
-                  eta_minutes = ${etaMin},
-                  expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
-  } else if (status === 'PREPARING') {
-    etaMin = catererOrder.eta_minutes || 30; // keep existing if already set from ACCEPTED
-
-    // Try GPS-based calculation using customer coords stored on master_order
-    try {
-      const { rows: moRows } = await pool.query(
-        `SELECT mo.customer_lat, mo.customer_lng FROM master_orders mo WHERE mo.id = $1`,
-        [catererOrder.master_order_id]
-      );
-      const mo   = moRows[0];
-      const cLat = mo?.customer_lat != null ? parseFloat(mo.customer_lat) : null;
-      const cLng = mo?.customer_lng != null ? parseFloat(mo.customer_lng) : null;
-
-      if (cLat != null && cLng != null) {
-        const { rows: itemRows } = await pool.query(
-          `SELECT f.preparation_time_minutes, u.latitude AS caterer_lat, u.longitude AS caterer_lng
-           FROM caterer_order_items coi
-           JOIN food_items f  ON f.id = coi.food_item_id
-           JOIN users u        ON u.id = f.caterer_id
-           WHERE coi.caterer_order_id = $1`,
-          [id]
-        );
-        if (itemRows.length > 0) {
-          const { haversineKm, travelTimeMinutes } = require('./locationService');
-          const maxPrep = Math.max(...itemRows.map((r) => r.preparation_time_minutes || 20));
-          const distKm  = haversineKm(cLat, cLng, parseFloat(itemRows[0].caterer_lat), parseFloat(itemRows[0].caterer_lng));
-          const calc    = maxPrep + travelTimeMinutes(distKm);
-          if (calc > 0) etaMin = calc;
-        }
-      }
-    } catch (geoErr) {
-      console.error('[MasterOrderService] ETA geo calc failed, using default:', geoErr.message);
+    if (isPickupOrder) {
+      extraCols = `, accepted_at = NOW()`;
+    } else {
+      etaMin    = 30;
+      extraCols = `, accepted_at = NOW(),
+                    eta_minutes = ${etaMin},
+                    expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
     }
+  } else if (status === 'PREPARING') {
+    if (isPickupOrder) {
+      extraCols = `, preparing_at = NOW()`;
+    } else {
+      etaMin = catererOrder.eta_minutes || 30; // keep existing if already set from ACCEPTED
 
-    extraCols = `, preparing_at = NOW(),
-                  eta_minutes = ${etaMin},
-                  expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
+      // Try GPS-based calculation using customer coords stored on master_order
+      try {
+        const { rows: moRows } = await pool.query(
+          `SELECT mo.customer_lat, mo.customer_lng FROM master_orders mo WHERE mo.id = $1`,
+          [catererOrder.master_order_id]
+        );
+        const mo   = moRows[0];
+        const cLat = mo?.customer_lat != null ? parseFloat(mo.customer_lat) : null;
+        const cLng = mo?.customer_lng != null ? parseFloat(mo.customer_lng) : null;
+
+        if (cLat != null && cLng != null) {
+          const { rows: itemRows } = await pool.query(
+            `SELECT f.preparation_time_minutes, u.latitude AS caterer_lat, u.longitude AS caterer_lng
+             FROM caterer_order_items coi
+             JOIN food_items f  ON f.id = coi.food_item_id
+             JOIN users u        ON u.id = f.caterer_id
+             WHERE coi.caterer_order_id = $1`,
+            [id]
+          );
+          if (itemRows.length > 0) {
+            const { haversineKm, travelTimeMinutes } = require('./locationService');
+            const maxPrep = Math.max(...itemRows.map((r) => r.preparation_time_minutes || 20));
+            const distKm  = haversineKm(cLat, cLng, parseFloat(itemRows[0].caterer_lat), parseFloat(itemRows[0].caterer_lng));
+            const calc    = maxPrep + travelTimeMinutes(distKm);
+            if (calc > 0) etaMin = calc;
+          }
+        }
+      } catch (geoErr) {
+        console.error('[MasterOrderService] ETA geo calc failed, using default:', geoErr.message);
+      }
+
+      extraCols = `, preparing_at = NOW(),
+                    eta_minutes = ${etaMin},
+                    expected_arrival_at = NOW() + make_interval(mins => ${etaMin})`;
+    }
   } else if (status === 'READY') {
     extraCols = ', ready_at = NOW()';
+    // Delivery orders: auto-create task for rider pooling. Pickup orders skip this.
+    if (!isPickupOrder) {
+      setImmediate(async () => {
+        try {
+          const { createDeliveryTask } = require('./deliveryTaskService');
+          await createDeliveryTask(id);
+        } catch (err) {
+          console.error('[MasterOrderService] Auto-create delivery task failed:', err.message);
+        }
+      });
+    }
   } else if (status === 'DELIVERED') {
     extraCols = ', delivered_at = NOW()';
   } else if (status === 'CANCELLED') {
@@ -405,7 +458,7 @@ async function updateCatererOrderStatus(id, status, user) {
   const notifMessages = {
     ACCEPTED:  { title: 'Order Accepted',        message: `Your sub-order #${shortId} has been accepted.` },
     PREPARING: { title: 'Order Being Prepared',  message: `Your sub-order #${shortId} is now being prepared.` },
-    READY:     { title: 'Order Ready',           message: `Your sub-order #${shortId} is ready and out for delivery!` },
+    READY:     { title: 'Order Ready',           message: isPickupOrder ? `Your order #${shortId} is ready for pickup.` : `Your sub-order #${shortId} is ready and out for delivery!` },
     DELIVERED: { title: 'Order Delivered',       message: `Your sub-order #${shortId} has been delivered!` },
     CANCELLED: { title: 'Order Cancelled',       message: `Your sub-order #${shortId} has been cancelled by the caterer.` },
   };

@@ -16,15 +16,17 @@ export default function FoodCard({ food = {}, onClick }) {
 
   useEffect(() => () => { if (resetRef.current) clearTimeout(resetRef.current); }, []);
 
-  const id          = food.foodId  || food.id;
-  const name        = food.foodName || food.food_name || food.name || "Food Item";
-  const caterer     = food.catererName || food.caterer_name || "";
-  const price       = food.price;
-  const isAvailable = food.available ?? food.is_available ?? true;
-  const imgSrc      = food.imageUrl || food.image_url;
-  const category    = food.category;
-  const eta         = food.estimatedDeliveryTime;
-  const etaRange    = food.etaRange;
+  const id           = food.foodId  || food.id;
+  const name         = food.foodName || food.food_name || food.name || "Food Item";
+  const caterer      = food.catererName || food.caterer_name || "";
+  const price        = food.price;
+  const isAvailable  = food.available ?? food.is_available ?? true;
+  const imgSrc       = food.imageUrl || food.image_url;
+  const category     = food.category;
+  const foodCategory = food.foodCategory || food.food_category;
+  const servesCount  = food.servesCount  || food.serves_count || null;
+  const eta          = food.estimatedDeliveryTime;
+  const etaRange     = food.etaRange;
   const avgRating   = food.avgRating != null ? Number(food.avgRating) : null;
   const reviewCount = food.reviewCount != null ? Number(food.reviewCount) : null;
 
@@ -56,6 +58,28 @@ export default function FoodCard({ food = {}, onClick }) {
 
   const meta = (
     <Box>
+      {/* VEG / NON-VEG badge */}
+      {foodCategory && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+          <Box sx={{
+            width: 10, height: 10, borderRadius: foodCategory === "VEG" ? "50%" : "2px",
+            backgroundColor: foodCategory === "VEG" ? "#4CAF50" : "#E53935",
+            border: `1.5px solid ${foodCategory === "VEG" ? "#2E7D32" : "#B71C1C"}`,
+            flexShrink: 0,
+          }} />
+          <Typography variant="caption" sx={{
+            fontWeight: 700, fontSize: "0.6rem",
+            color: foodCategory === "VEG" ? "#2E7D32" : "#B71C1C",
+          }}>
+            {foodCategory === "VEG" ? "Veg" : "Non-Veg"}
+          </Typography>
+        </Box>
+      )}
+      {servesCount != null && (
+        <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontSize: "0.62rem", mb: 0.25 }}>
+          Serves {servesCount} {servesCount === 1 ? "Person" : "Persons"}
+        </Typography>
+      )}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: brand.orange }}>
           ₹{price}

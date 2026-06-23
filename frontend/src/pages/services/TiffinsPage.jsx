@@ -6,7 +6,6 @@ import {
   Stack, ToggleButton, ToggleButtonGroup,
 } from "@mui/material";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import LunchDiningRoundedIcon from "@mui/icons-material/LunchDiningRounded";
 import SortRoundedIcon from "@mui/icons-material/SortRounded";
 import { brand } from "../../theme";
@@ -14,48 +13,44 @@ import AppLayout from "../../components/AppLayout";
 import FoodCard from "../../components/FoodCard";
 import EmptyState from "../../components/EmptyState";
 import foodService from "../../services/foodService";
-import { useCustomerGeo } from "../../utils/geoUtils";
 
 const SORT_OPTIONS = [
   { value: "default",    label: "Default" },
   { value: "price_asc",  label: "Price ↑" },
   { value: "price_desc", label: "Price ↓" },
-  { value: "eta_asc",    label: "ETA ↑" },
 ];
 
 function sortFoods(foods, sort) {
   if (sort === "price_asc")  return [...foods].sort((a, b) => Number(a.price) - Number(b.price));
   if (sort === "price_desc") return [...foods].sort((a, b) => Number(b.price) - Number(a.price));
-  if (sort === "eta_asc")    return [...foods].sort((a, b) => (a.estimatedDeliveryTime ?? 999) - (b.estimatedDeliveryTime ?? 999));
   return foods;
 }
 
 export default function TiffinsPage() {
-  const navigate       = useNavigate();
-  const customerCoords = useCustomerGeo();
+  const navigate = useNavigate();
 
   const [foods, setFoods]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState("");
   const [inputVal, setInputVal]     = useState("");
   const [catererFilter, setCaterer] = useState("");
+  const [categoryFilter, setCategory] = useState(""); // "" | "VEG" | "NON_VEG"
   const [sort, setSort]             = useState("default");
   const [catererNames, setCaterers] = useState([]);
 
-  const load = useCallback(async (foodName, catererName, coords) => {
+  const load = useCallback(async (foodName, catererName, foodCategory) => {
     setLoading(true);
     setError("");
     try {
       let data;
-      const geo = coords || customerCoords;
       if (foodName || catererName) {
         data = await foodService.searchFoodsFull({
           foodName, catererName, available: true,
-          customerLat: geo?.lat, customerLng: geo?.lng,
+          food_category: foodCategory || undefined,
         });
       } else {
         data = await foodService.getCustomerFoods({
-          customerLat: geo?.lat, customerLng: geo?.lng,
+          food_category: foodCategory || undefined,
         });
       }
       setFoods(data || []);
@@ -66,19 +61,26 @@ export default function TiffinsPage() {
     } finally {
       setLoading(false);
     }
-  }, [customerCoords]);  // re-run whenever customer GPS resolves
+  }, []);
 
-  useEffect(() => { load("", ""); }, [load]);
+  useEffect(() => { load("", "", categoryFilter); }, [load, categoryFilter]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    load(inputVal.trim(), catererFilter);
+    const q = inputVal.trim();
+    load(q, catererFilter, categoryFilter);
   };
 
   const handleCatererChange = (e) => {
     const val = e.target.value;
     setCaterer(val);
-    load(inputVal.trim(), val);
+    load(inputVal.trim(), val, categoryFilter);
+  };
+
+  const handleCategoryChange = (_, val) => {
+    if (val === null) return;
+    setCategory(val);
+    load(inputVal.trim(), catererFilter, val);
   };
 
   const displayed = sortFoods(foods, sort);
@@ -89,17 +91,37 @@ export default function TiffinsPage() {
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         {/* Header */}
         <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate("/services")} sx={{ color: brand.muted }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <LunchDiningRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Food Marketplace</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {displayed.length} item{displayed.length !== 1 ? "s" : ""} available
-              {customerCoords && " · showing ETA"}
             </Typography>
           </Box>
+        </Stack>
+
+        {/* Category filter */}
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 2 }}>
+          <ToggleButtonGroup size="small" exclusive value={categoryFilter} onChange={handleCategoryChange}>
+            {[
+              { value: "", label: "All" },
+              { value: "VEG",     label: "🟢 Veg" },
+              { value: "NON_VEG", label: "🔴 Non-Veg" },
+            ].map((o) => (
+              <ToggleButton
+                key={o.value} value={o.value}
+                sx={{
+                  px: 2, fontWeight: 700, fontSize: "0.8rem", textTransform: "none",
+                  "&.Mui-selected": {
+                    backgroundColor: o.value === "VEG" ? "#E8F5E9" : o.value === "NON_VEG" ? "#FFEBEE" : brand.orangeLight,
+                    color:           o.value === "VEG" ? "#2E7D32" : o.value === "NON_VEG" ? "#B71C1C" : brand.orange,
+                  },
+                }}
+              >
+                {o.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
         </Stack>
 
         {/* Filters */}

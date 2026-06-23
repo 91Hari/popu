@@ -4,27 +4,33 @@ import {
   Box, Card, CardContent, Typography, Button, TextField,
   Alert, CircularProgress, Stack,
 } from "@mui/material";
+import EmailRoundedIcon from "@mui/icons-material/EmailRounded";
+
 import Logo from "../../components/Logo";
 import authService from "../../services/authService";
 import { brand } from "../../theme";
 
 export default function ForgotPasswordPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail]       = useState("");
   const [error, setError]       = useState("");
-  const [success, setSuccess]   = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading]   = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim()) { setError("Enter your email or mobile number"); return; }
+    const val = email.trim();
+    if (!val) { setError("Enter your email address"); return; }
+    if (!val.includes("@")) { setError("Enter a valid email address"); return; }
 
     setError("");
     setLoading(true);
     try {
-      await authService.forgotPassword({ username: username.trim() });
-      setSuccess(true);
+      await authService.forgotPassword({ email: val });
+      // Always show success — backend never reveals whether account exists
+      setSubmitted(true);
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      // Show generic message even on network error — don't expose internals
+      setSubmitted(true);
     } finally {
       setLoading(false);
     }
@@ -62,15 +68,29 @@ export default function ForgotPasswordPage() {
             Forgot Password
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-            Enter your email or mobile number and we'll send a reset link
+            Enter your registered email address and we'll send you a reset link.
           </Typography>
 
-          {success ? (
-            <Stack spacing={2}>
-              <Alert severity="success">
-                If an account exists, a reset link has been sent. Check the server
-                console for the link during development.
+          {submitted ? (
+            <Stack spacing={2.5}>
+              {/* Consistent message regardless of whether account exists */}
+              <Alert
+                severity="success"
+                icon={<EmailRoundedIcon />}
+                sx={{ alignItems: "flex-start" }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  Check your inbox
+                </Typography>
+                <Typography variant="body2">
+                  If an account exists with <strong>{email}</strong>, password reset
+                  instructions have been sent. The link expires in 15 minutes.
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+                  Don't see it? Check your spam or junk folder.
+                </Typography>
               </Alert>
+
               <Button
                 fullWidth
                 component={Link}
@@ -88,6 +108,17 @@ export default function ForgotPasswordPage() {
               >
                 Back to Sign In
               </Button>
+
+              <Typography variant="body2" sx={{ textAlign: "center", color: "text.secondary" }}>
+                Wrong email?{" "}
+                <Box
+                  component="span"
+                  onClick={() => { setSubmitted(false); setError(""); }}
+                  sx={{ color: brand.orange, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Try again
+                </Box>
+              </Typography>
             </Stack>
           ) : (
             <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -96,13 +127,21 @@ export default function ForgotPasswordPage() {
 
                 <TextField
                   fullWidth
-                  label="Email or Mobile Number"
-                  value={username}
-                  onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
                   disabled={loading}
-                  autoComplete="username"
-                  placeholder="email@example.com or 10-digit mobile"
+                  autoComplete="email"
+                  placeholder="you@example.com"
                   autoFocus
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <EmailRoundedIcon sx={{ color: "text.disabled", mr: 1, fontSize: 20 }} />
+                      ),
+                    },
+                  }}
                 />
 
                 <Button

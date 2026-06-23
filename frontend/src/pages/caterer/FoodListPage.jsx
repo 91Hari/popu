@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Typography, Button, Grid,
-  Card, CardContent, CardMedia, CardActions,
+  Box, Container, Typography, Button, Grid, Tooltip,
+  Card, CardContent, CardActions,
   IconButton, Stack, Chip, Switch, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Snackbar, Alert,
@@ -33,13 +33,15 @@ export default function FoodListPage() {
         const data = await foodService.getFoods();
         const mine = user.id ? (data || []).filter((f) => f.caterer_id === user.id) : (data || []);
         setRows(mine.map((f) => ({
-          id:           f.id,
-          name:         f.food_name || "",
-          price:        Number(f.price ?? 0),
-          available:    !!f.is_available,
-          imageUrl:     f.imageUrl || f.image_url || null,
-          avg_rating:   f.avg_rating != null ? Number(f.avg_rating) : null,
-          review_count: f.review_count != null ? Number(f.review_count) : 0,
+          id:            f.id,
+          name:          f.food_name || "",
+          price:         Number(f.price ?? 0),
+          available:     !!f.is_available,
+          food_category: f.food_category || "VEG",
+          serves_count:  f.serves_count != null ? Number(f.serves_count) : 1,
+          imageUrl:      f.imageUrl || f.image_url || null,
+          avg_rating:    f.avg_rating != null ? Number(f.avg_rating) : null,
+          review_count:  f.review_count != null ? Number(f.review_count) : 0,
         })));
       } catch {
         setRows([]);
@@ -128,29 +130,58 @@ export default function FoodListPage() {
               <Grid item xs={12} sm={6} md={4} key={r.id}>
                 <Card elevation={0} sx={{
                   border: `1px solid ${brand.border}`, borderRadius: 2.5,
-                  height: "100%", display: "flex", flexDirection: "column",
+                  width: "100%", minWidth: 0,
+                  height: 380, minHeight: 380, maxHeight: 380,
+                  display: "flex", flexDirection: "column",
+                  overflow: "hidden",
                   opacity: r.available ? 1 : 0.75,
                 }}>
-                  {/* Image */}
-                  {r.imageUrl ? (
-                    <CardMedia
-                      component="img"
-                      image={r.imageUrl}
-                      alt={r.name}
-                      sx={{ height: 160, objectFit: "cover" }}
-                    />
-                  ) : (
-                    <Box sx={{
-                      height: 160, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
-                    }}>
-                      <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.5 }} />
-                    </Box>
-                  )}
+                  {/* Image — fixed 160px container so photo vs placeholder never shifts content below */}
+                  <Box sx={{ height: 160, minHeight: 160, maxHeight: 160, flexShrink: 0, overflow: "hidden" }}>
+                    {r.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={r.imageUrl}
+                        alt={r.name}
+                        sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : (
+                      <Box sx={{
+                        height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                        background: `linear-gradient(135deg, ${brand.orangeLight}, #A5D6A7)`,
+                      }}>
+                        <DinnerDiningRoundedIcon sx={{ fontSize: 56, color: brand.orange, opacity: 0.5 }} />
+                      </Box>
+                    )}
+                  </Box>
 
-                  <CardContent sx={{ flex: 1, pb: 0.5 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.5, lineHeight: 1.3 }}>
-                      {r.name}
+                  <CardContent sx={{ flex: 1, pb: 0.5, minWidth: 0 }}>
+                    <Tooltip title={r.name} placement="top" enterDelay={600}
+                      disableHoverListener={r.name.length <= 20}>
+                      <Typography variant="subtitle1" sx={{
+                        fontWeight: 800, mb: 0.25, lineHeight: 1.3,
+                        overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+                      }}>
+                        {r.name.length > 20 ? `${r.name.slice(0, 20)}…` : r.name}
+                      </Typography>
+                    </Tooltip>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                      <Box sx={{
+                        width: 9, height: 9,
+                        borderRadius: r.food_category === "VEG" ? "50%" : "2px",
+                        backgroundColor: r.food_category === "VEG" ? "#4CAF50" : "#E53935",
+                        border: `1.5px solid ${r.food_category === "VEG" ? "#2E7D32" : "#B71C1C"}`,
+                        flexShrink: 0,
+                      }} />
+                      <Typography variant="caption" sx={{
+                        fontWeight: 700, fontSize: "0.6rem",
+                        color: r.food_category === "VEG" ? "#2E7D32" : "#B71C1C",
+                      }}>
+                        {r.food_category === "VEG" ? "Veg" : "Non-Veg"}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontSize: "0.62rem", mb: 0.25 }}>
+                      Serves {r.serves_count} {r.serves_count === 1 ? "Person" : "Persons"}
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange, mb: 0.5 }}>
                       ₹{r.price}
@@ -162,7 +193,9 @@ export default function FoodListPage() {
                     {/* Availability toggle */}
                     <Stack direction="row" spacing={0.75} alignItems="center">
                       {toggling[r.id] ? (
-                        <CircularProgress size={16} sx={{ color: brand.orange }} />
+                        <Box sx={{ width: 34, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <CircularProgress size={16} sx={{ color: brand.orange }} />
+                        </Box>
                       ) : (
                         <Switch
                           size="small"
@@ -179,6 +212,8 @@ export default function FoodListPage() {
                         size="small"
                         sx={{
                           fontWeight: 700, fontSize: "0.62rem",
+                          minWidth: 72,
+                          justifyContent: "center",
                           backgroundColor: r.available ? brand.greenLight : "#FFEBEE",
                           color: r.available ? brand.green : "#C62828",
                         }}

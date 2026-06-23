@@ -33,6 +33,36 @@ const riderService = {
 
   getOrderRiderLocation: (orderId) =>
     api.request(`/riders/orders/${orderId}/rider-location`),
+
+  // Delivery engine — Rider
+  getCurrentBatch: () =>
+    api.request("/delivery/rider/current-batch"),
+
+  setRiderDeliveryStatus: (status) =>
+    api.request("/delivery/rider/status", { method: "PATCH", body: JSON.stringify({ status }) }),
+
+  updateDeliveryLocation: (latitude, longitude, batch_id) =>
+    api.request("/delivery/rider/location", { method: "PATCH", body: JSON.stringify({ latitude, longitude, batch_id }) }),
+
+  startBatch: (batchId) =>
+    api.request(`/delivery/rider/batch/${batchId}/start`, { method: "POST" }),
+
+  markTaskPickedUp: (batchId, taskId) =>
+    api.request(`/delivery/rider/batch/${batchId}/task/${taskId}/pickup`, { method: "PATCH" }),
+
+  confirmTaskDelivered: (batchId, taskId, code) =>
+    api.request(`/delivery/rider/batch/${batchId}/task/${taskId}/deliver`, { method: "PATCH", body: JSON.stringify({ code }) }),
+
+  // Delivery engine — Customer
+  getDeliveryTracking: (masterOrderId) =>
+    api.request(`/delivery/customer/tracking/${masterOrderId}`),
+
+  // Delivery engine — Admin
+  getAdminDeliveryStatus: () =>
+    api.request("/delivery/admin/status"),
+
+  triggerDeliveryBatch: () =>
+    api.request("/delivery/create-batch", { method: "POST" }),
 };
 
 export default riderService;

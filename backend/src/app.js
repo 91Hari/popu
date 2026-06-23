@@ -24,8 +24,14 @@ const paymentRoutes              = require('./routes/paymentRoutes');
 const webhookRoutes              = require('./routes/webhookRoutes');
 const profileRoutes              = require('./routes/profileRoutes');
 const tiffinRoutes               = require('./routes/tiffinRoutes');
+const deliveryRoutes             = require('./routes/deliveryRoutes');
+const pickupRoutes               = require('./routes/pickupRoutes');
 
 const app = express();
+
+// Trust the first proxy (required on Render, Railway, Heroku, etc.)
+// Allows express-rate-limit to read real client IP from X-Forwarded-For
+app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors({
@@ -59,6 +65,8 @@ app.use('/api/payments',               paymentRoutes);
 app.use('/api/webhooks',               webhookRoutes);
 app.use('/api/profile',                profileRoutes);
 app.use('/api/tiffin',                 tiffinRoutes);
+app.use('/api/delivery',               deliveryRoutes);
+app.use('/api/pickup',                 pickupRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not Found' }));
 

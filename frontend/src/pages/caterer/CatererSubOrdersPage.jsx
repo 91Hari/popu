@@ -6,15 +6,18 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Select, MenuItem, FormControl, InputLabel, Snackbar,
 } from "@mui/material";
-import Inventory2RoundedIcon     from "@mui/icons-material/Inventory2Rounded";
-import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
-import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded";
-import TwoWheelerRoundedIcon     from "@mui/icons-material/TwoWheelerRounded";
-import VerifiedRoundedIcon       from "@mui/icons-material/VerifiedRounded";
-import BlockRoundedIcon          from "@mui/icons-material/BlockRounded";
-import ImageSearchRoundedIcon    from "@mui/icons-material/ImageSearchRounded";
-import LocalAtmRoundedIcon       from "@mui/icons-material/LocalAtmRounded";
-import CreditCardRoundedIcon     from "@mui/icons-material/CreditCardRounded";
+import Inventory2RoundedIcon      from "@mui/icons-material/Inventory2Rounded";
+import DinnerDiningRoundedIcon    from "@mui/icons-material/DinnerDiningRounded";
+import HourglassEmptyRoundedIcon  from "@mui/icons-material/HourglassEmptyRounded";
+import TwoWheelerRoundedIcon      from "@mui/icons-material/TwoWheelerRounded";
+import VerifiedRoundedIcon        from "@mui/icons-material/VerifiedRounded";
+import BlockRoundedIcon           from "@mui/icons-material/BlockRounded";
+import ImageSearchRoundedIcon     from "@mui/icons-material/ImageSearchRounded";
+import LocalAtmRoundedIcon        from "@mui/icons-material/LocalAtmRounded";
+import CreditCardRoundedIcon      from "@mui/icons-material/CreditCardRounded";
+import DirectionsWalkRoundedIcon  from "@mui/icons-material/DirectionsWalkRounded";
+import QrCodeRoundedIcon          from "@mui/icons-material/QrCodeRounded";
+import CheckCircleRoundedIcon     from "@mui/icons-material/CheckCircleRounded";
 import masterOrderService  from "../../services/masterOrderService";
 import riderService        from "../../services/riderService";
 import paymentProofService from "../../services/paymentProofService";
@@ -22,15 +25,16 @@ import AppLayout from "../../components/AppLayout";
 import { brand } from "../../theme";
 
 const STATUS_CFG = {
-  PLACED:            { label: "New Order",      color: "info",    actions: ["ACCEPTED", "CANCELLED"] },
-  ACCEPTED:          { label: "Accepted",       color: "primary", actions: ["PREPARING", "CANCELLED"] },
-  PREPARING:         { label: "Preparing",      color: "warning", actions: ["READY"] },
-  READY:             { label: "Ready",          color: "success", actions: ["DELIVERED"] },
-  ASSIGNED_TO_RIDER: { label: "Rider Assigned", color: "info",    actions: [] },
+  PLACED:            { label: "New Order",       color: "info",    actions: ["ACCEPTED", "CANCELLED"] },
+  ACCEPTED:          { label: "Accepted",        color: "primary", actions: ["PREPARING", "CANCELLED"] },
+  PREPARING:         { label: "Preparing",       color: "warning", actions: ["READY"] },
+  READY:             { label: "Ready",           color: "success", actions: ["DELIVERED"] },
+  ASSIGNED_TO_RIDER: { label: "Rider Assigned",  color: "info",    actions: [] },
   OUT_FOR_DELIVERY:  { label: "Out for Delivery",color: "warning", actions: [] },
-  DELIVERED:         { label: "Delivered",      color: "success", actions: [] },
-  CANCELLED:         { label: "Cancelled",      color: "default", actions: [] },
-  AUTO_CANCELLED:    { label: "Auto-Cancelled", color: "error",   actions: [] },
+  DELIVERED:         { label: "Delivered",       color: "success", actions: [] },
+  COLLECTED:         { label: "Collected",       color: "success", actions: [] },
+  CANCELLED:         { label: "Cancelled",       color: "default", actions: [] },
+  AUTO_CANCELLED:    { label: "Auto-Cancelled",  color: "error",   actions: [] },
 };
 
 const ACTION_LABELS = {
@@ -74,6 +78,8 @@ export default function CatererSubOrdersPage() {
   const [rejectDialog, setRejectDialog]   = useState({ open: false, proofId: null, orderId: null, reason: "" });
   const [proofReviewing, setProofReviewing] = useState({});
   const [proofPreview, setProofPreview]   = useState({ open: false, url: "" });
+  const [pickupDialog, setPickupDialog]   = useState({ open: false, orderId: null, code: "" });
+  const [verifying,    setVerifying]      = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -179,6 +185,21 @@ export default function CatererSubOrdersPage() {
     }
   };
 
+  const handleVerifyPickup = async () => {
+    const { orderId, code } = pickupDialog;
+    setVerifying(true);
+    try {
+      await masterOrderService.confirmPickup(orderId, code.toUpperCase().trim());
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: "COLLECTED" } : o));
+      setPickupDialog({ open: false, orderId: null, code: "" });
+      setSnack({ open: true, message: "Order marked as collected!", severity: "success" });
+    } catch (err) {
+      setSnack({ open: true, message: err?.message || "Invalid pickup code. Please try again.", severity: "error" });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleCancelConfirm = async () => {
     const { id, reason } = cancelDialog;
     setUpdating((u) => ({ ...u, [id]: true }));
@@ -261,24 +282,37 @@ export default function CatererSubOrdersPage() {
                       </Box>
                       <Stack spacing={0.5} alignItems="flex-end">
                         <Chip label={cfg.label} color={cfg.color} size="small" sx={{ fontWeight: 700 }} />
-                        <Chip
-                          label={payCfg.label}
-                          size="small"
-                          sx={{ fontWeight: 600, fontSize: "0.6rem", color: payCfg.color, border: `1px solid ${payCfg.color}`, backgroundColor: "transparent" }}
-                          variant="outlined"
-                        />
-                        <Chip
-                          icon={isCod
-                            ? <LocalAtmRoundedIcon sx={{ fontSize: "12px !important" }} />
-                            : <CreditCardRoundedIcon sx={{ fontSize: "12px !important" }} />}
-                          label={isCod ? "Cash on Delivery" : "Online"}
-                          size="small"
-                          sx={{
-                            fontWeight: 700, fontSize: "0.6rem",
-                            backgroundColor: isCod ? "#E8F5E9" : "#EDE9FE",
-                            color: isCod ? "#2E7D32" : "#5A4EE8",
-                          }}
-                        />
+                        {order.fulfillment_type === "SELF_PICKUP" ? (
+                          <Chip
+                            icon={order.status === "COLLECTED"
+                              ? <CheckCircleRoundedIcon sx={{ fontSize: "12px !important" }} />
+                              : <DirectionsWalkRoundedIcon sx={{ fontSize: "12px !important" }} />}
+                            label={order.status === "COLLECTED" ? "Collected" : "Self Pickup"}
+                            size="small"
+                            sx={{ fontWeight: 700, fontSize: "0.6rem", backgroundColor: "#E8F5E9", color: "#2E7D32" }}
+                          />
+                        ) : (
+                          <>
+                            <Chip
+                              label={payCfg.label}
+                              size="small"
+                              sx={{ fontWeight: 600, fontSize: "0.6rem", color: payCfg.color, border: `1px solid ${payCfg.color}`, backgroundColor: "transparent" }}
+                              variant="outlined"
+                            />
+                            <Chip
+                              icon={isCod
+                                ? <LocalAtmRoundedIcon sx={{ fontSize: "12px !important" }} />
+                                : <CreditCardRoundedIcon sx={{ fontSize: "12px !important" }} />}
+                              label={isCod ? "Cash on Delivery" : "Online"}
+                              size="small"
+                              sx={{
+                                fontWeight: 700, fontSize: "0.6rem",
+                                backgroundColor: isCod ? "#E8F5E9" : "#EDE9FE",
+                                color: isCod ? "#2E7D32" : "#5A4EE8",
+                              }}
+                            />
+                          </>
+                        )}
                       </Stack>
                     </Stack>
 
@@ -461,21 +495,34 @@ export default function CatererSubOrdersPage() {
                       </Typography>
 
                       <Stack direction="row" spacing={1}>
-                        {cfg.actions.length > 0 && cfg.actions.map((action) => (
+                        {cfg.actions
+                          .filter((a) => !(order.fulfillment_type === "SELF_PICKUP" && a === "DELIVERED"))
+                          .map((action) => (
+                            <Button
+                              key={action}
+                              size="small"
+                              variant={action === "CANCELLED" ? "outlined" : "contained"}
+                              color={action === "CANCELLED" ? "error" : "primary"}
+                              disabled={isUpdating}
+                              onClick={() => handleAction(order.id, action)}
+                              startIcon={isUpdating ? <CircularProgress size={12} color="inherit" /> : null}
+                              sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                            >
+                              {ACTION_LABELS[action] || action}
+                            </Button>
+                          ))}
+                        {statusKey === "READY" && order.fulfillment_type === "SELF_PICKUP" && (
                           <Button
-                            key={action}
-                            size="small"
-                            variant={action === "CANCELLED" ? "outlined" : "contained"}
-                            color={action === "CANCELLED" ? "error" : "primary"}
+                            size="small" variant="contained"
+                            startIcon={<QrCodeRoundedIcon fontSize="small" />}
                             disabled={isUpdating}
-                            onClick={() => handleAction(order.id, action)}
-                            startIcon={isUpdating ? <CircularProgress size={12} color="inherit" /> : null}
-                            sx={{ fontWeight: 600, fontSize: "0.75rem" }}
+                            onClick={() => setPickupDialog({ open: true, orderId: order.id, code: "" })}
+                            sx={{ fontWeight: 700, fontSize: "0.75rem", backgroundColor: "#2E7D32", "&:hover": { backgroundColor: "#1B5E20" } }}
                           >
-                            {ACTION_LABELS[action] || action}
+                            Verify Pickup Code
                           </Button>
-                        ))}
-                        {statusKey === "READY" && (
+                        )}
+                        {statusKey === "READY" && order.fulfillment_type !== "SELF_PICKUP" && (
                           <Button
                             size="small" variant="outlined"
                             startIcon={<TwoWheelerRoundedIcon fontSize="small" />}
@@ -590,6 +637,36 @@ export default function CatererSubOrdersPage() {
             </Typography>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Verify Pickup Code Dialog */}
+      <Dialog open={pickupDialog.open} onClose={() => !verifying && setPickupDialog({ open: false, orderId: null, code: "" })} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Verify Customer Pickup Code</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            Ask the customer for their 6-character pickup code and enter it below to confirm collection.
+          </Typography>
+          <TextField
+            fullWidth size="small" label="Pickup Code"
+            value={pickupDialog.code}
+            onChange={(e) => setPickupDialog((s) => ({ ...s, code: e.target.value.toUpperCase().slice(0, 6) }))}
+            inputProps={{ style: { fontFamily: "monospace", fontWeight: 800, fontSize: "1.3rem", letterSpacing: "0.25em", textAlign: "center" } }}
+            placeholder="A B C D E F"
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setPickupDialog({ open: false, orderId: null, code: "" })} disabled={verifying}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={verifying || pickupDialog.code.length < 6}
+            onClick={handleVerifyPickup}
+            startIcon={verifying ? <CircularProgress size={14} color="inherit" /> : <CheckCircleRoundedIcon fontSize="small" />}
+            sx={{ fontWeight: 700, backgroundColor: "#2E7D32", "&:hover": { backgroundColor: "#1B5E20" } }}
+          >
+            Confirm Collection
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Snackbar

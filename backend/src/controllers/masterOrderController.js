@@ -9,6 +9,7 @@ async function createSplitOrder(req, res, next) {
       items, customer_lat, customer_lng, payment_proofs, payment_method,
       delivery_house_no, delivery_street, delivery_landmark,
       delivery_city, delivery_state, delivery_pincode,
+      fulfillment_type,
     } = req.body;
     if (!items || !items.length) {
       return res.status(400).json({ error: 'items are required' });
@@ -16,6 +17,12 @@ async function createSplitOrder(req, res, next) {
     const method = (payment_method || 'ONLINE').toUpperCase();
     if (!['ONLINE', 'COD'].includes(method)) {
       return res.status(400).json({ error: 'payment_method must be ONLINE or COD' });
+    }
+    const fType = ['SELF_PICKUP', 'DELIVERY'].includes((fulfillment_type || '').toUpperCase())
+      ? fulfillment_type.toUpperCase()
+      : 'DELIVERY';
+    if (fType === 'SELF_PICKUP' && method === 'COD') {
+      return res.status(400).json({ error: 'Self pickup requires advance payment. Cash on delivery is not available for self pickup orders.' });
     }
     const masterOrder = await masterOrderService.createSplitOrder({
       customer_id:        req.user.id,
@@ -30,6 +37,7 @@ async function createSplitOrder(req, res, next) {
       delivery_pincode,
       payment_proofs:     payment_proofs || [],
       payment_method:     method,
+      fulfillment_type:   fType,
     });
     await cartService.clearCart(req.user.id);
     res.status(201).json({ masterOrder });

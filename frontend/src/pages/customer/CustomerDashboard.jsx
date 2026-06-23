@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Typography, CircularProgress, Chip,
+  Box, Container, Typography, CircularProgress, Chip, Button,
+  Snackbar, Alert,
 } from "@mui/material";
+import LocationOnRoundedIcon from "@mui/icons-material/LocationOnRounded";
+import MapLocationPicker from "../../components/MapLocationPicker";
 import RestaurantRoundedIcon   from "@mui/icons-material/RestaurantRounded";
 import LunchDiningRoundedIcon  from "@mui/icons-material/LunchDiningRounded";
 import PeopleAltRoundedIcon    from "@mui/icons-material/PeopleAltRounded";
@@ -32,10 +35,19 @@ const CATEGORIES = [
 ];
 
 export default function CustomerDashboard() {
-  const [foods, setFoods]           = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [enabledMap, setEnabledMap] = useState({});
-  const [modalOpen, setModalOpen]   = useState(false);
+  const [foods, setFoods]             = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [enabledMap, setEnabledMap]   = useState({});
+  const [modalOpen, setModalOpen]     = useState(false);
+  const [locationOpen, setLocationOpen]   = useState(false);
+  const [locationLabel, setLocationLabel] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      return u.address || u.city || null;
+    } catch { return null; }
+  });
+  const [autoDetecting, setAutoDetecting] = useState(false);
+  const [locSnack, setLocSnack]           = useState({ open: false, message: "", severity: "info" });
 
   const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
@@ -60,12 +72,6 @@ export default function CustomerDashboard() {
       });
   }, []);
 
-  const handleCategoryClick = (cat) => {
-    const enabled = enabledMap[cat.serviceCode] ?? false;
-    if (enabled) navigate(cat.to);
-    else setModalOpen(true);
-  };
-
   const fetchFoods = useCallback(async (coords) => {
     try {
       setLoading(true);
@@ -82,6 +88,118 @@ export default function CustomerDashboard() {
       setLoading(false);
     }
   }, [customerCoords]);
+
+  const handleLocationConfirm = ({ address, city, lat, lng }) => {
+    setLocationOpen(false);
+    const label = address || city || null;
+    setLocationLabel(label);
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      u.latitude  = lat;
+      u.longitude = lng;
+      if (address) u.address = address;
+      if (city)    u.city    = city;
+      localStorage.setItem("user", JSON.stringify(u));
+    } catch { /* ignore */ }
+    fetchFoods({ lat, lng });
+  };
+
+  // ── Reverse geocode coords → update label + localStorage ────────────────────
+  const applyGeocoderResult = useCallback(async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      if (!res.ok) throw new Error("Nominatim failed");
+      const data = await res.json();
+      const a    = data?.address || {};
+      const road = a.road || a.pedestrian || a.suburb || "";
+      const city = a.city || a.town || a.village || a.county || "";
+      const address = road || city || data.display_name?.split(",")[0] || "";
+      const label   = address || city || null;
+      setLocationLabel(label);
+      try {
+        const u = JSON.parse(localStorage.getItem("user") || "{}");
+        u.latitude  = lat;
+        u.longitude = lng;
+        if (address) u.address = address;
+        if (city)    u.city    = city;
+        if (a.state)    u.state   = a.state;
+        if (a.postcode) u.pincode = a.postcode;
+        localStorage.setItem("user", JSON.stringify(u));
+      } catch { /* ignore */ }
+      fetchFoods({ lat, lng });
+    } catch {
+      // Geocoding failed — store coordinates anyway
+      try {
+        const u = JSON.parse(localStorage.getItem("user") || "{}");
+        u.latitude  = lat;
+        u.longitude = lng;
+        localStorage.setItem("user", JSON.stringify(u));
+      } catch { /* ignore */ }
+      fetchFoods({ lat, lng });
+    } finally {
+      setAutoDetecting(false);
+    }
+  }, [fetchFoods]);
+
+  // ── Auto-detect location on first mount if not already set ───────────────────
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "{}");
+      if (u.latitude && u.longitude) return; // already have coordinates
+    } catch { /* ignore */ }
+
+    const run = async () => {
+      setAutoDetecting(true);
+      try {
+        // Prefer Capacitor native GPS (works in APK)
+        const { Geolocation } = await import("@capacitor/geolocation");
+        const perms = await Geolocation.checkPermissions();
+
+        if (perms.location === "denied") {
+          setAutoDetecting(false);
+          setLocSnack({ open: true, severity: "warning",
+            message: "Location permission denied. Please select your location manually." });
+          return;
+        }
+
+        if (perms.location !== "granted") {
+          const result = await Geolocation.requestPermissions();
+          if (result.location !== "granted") {
+            setAutoDetecting(false);
+            setLocSnack({ open: true, severity: "warning",
+              message: "Location permission denied. Please select your location manually." });
+            return;
+          }
+        }
+
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+        await applyGeocoderResult(pos.coords.latitude, pos.coords.longitude);
+      } catch {
+        // Fallback to browser geolocation (web)
+        if (!navigator.geolocation) { setAutoDetecting(false); return; }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => applyGeocoderResult(pos.coords.latitude, pos.coords.longitude),
+          () => {
+            setAutoDetecting(false);
+            setLocSnack({ open: true, severity: "info",
+              message: "Could not detect location automatically. Please set it manually." });
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      }
+    };
+
+    run();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleCategoryClick = (cat) => {
+    const enabled = enabledMap[cat.serviceCode] ?? false;
+    if (enabled) navigate(cat.to);
+    else setModalOpen(true);
+  };
 
   useEffect(() => { fetchFoods(); }, [fetchFoods]);
 
@@ -125,13 +243,45 @@ export default function CustomerDashboard() {
       <Container maxWidth="lg" sx={{ pt: 2.5, pb: 4 }}>
 
         {/* Greeting */}
-        <Box sx={{ mb: 2.5 }}>
+        <Box sx={{ mb: 2 }}>
           <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
             Hi, {firstName}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.25 }}>
             What would you like today?
           </Typography>
+        </Box>
+
+        {/* Location bar */}
+        <Box
+          sx={{
+            display: "flex", alignItems: "center", gap: 1, mb: 2.5,
+            backgroundColor: brand.white, border: `1px solid ${brand.border}`,
+            borderRadius: 3, px: 1.75, py: 1,
+          }}
+        >
+          <LocationOnRoundedIcon sx={{ color: brand.orange, fontSize: 18, flexShrink: 0 }} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1, mb: 0.1 }}>
+              Current Location
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              {autoDetecting && <CircularProgress size={12} sx={{ color: brand.orange, flexShrink: 0 }} />}
+              <Typography variant="body2" sx={{ fontWeight: 600, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+                {autoDetecting ? "Detecting your location…" : (locationLabel || "Set your location")}
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setLocationOpen(true)}
+            sx={{ fontWeight: 700, fontSize: "0.72rem", px: 1.5, py: 0.4, flexShrink: 0,
+              borderColor: brand.orange, color: brand.orange,
+              "&:hover": { backgroundColor: brand.orangeLight } }}
+          >
+            Change
+          </Button>
         </Box>
 
         {/* Search */}
@@ -269,6 +419,29 @@ export default function CustomerDashboard() {
       </Container>
 
       <ComingSoonModal open={modalOpen} onClose={() => setModalOpen(false)} />
+
+      <Snackbar
+        open={locSnack.open}
+        autoHideDuration={5000}
+        onClose={() => setLocSnack((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={locSnack.severity}
+          variant="filled"
+          onClose={() => setLocSnack((s) => ({ ...s, open: false }))}
+        >
+          {locSnack.message}
+        </Alert>
+      </Snackbar>
+
+      <MapLocationPicker
+        open={locationOpen}
+        onClose={() => setLocationOpen(false)}
+        onConfirm={handleLocationConfirm}
+        initialLat={customerCoords?.lat ?? null}
+        initialLng={customerCoords?.lng ?? null}
+      />
     </AppLayout>
   );
 }

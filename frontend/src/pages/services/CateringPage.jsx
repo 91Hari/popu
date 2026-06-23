@@ -1,44 +1,40 @@
-import { useState, useEffect, useCallback } from "react";
-import { useCustomerGeo } from "../../utils/geoUtils";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useCustomerGeo, haversineKm } from "../../utils/geoUtils";
 import { useNavigate } from "react-router-dom";
 import {
-  Box, Container, Toolbar, Typography, InputBase, IconButton,
-  Grid, CircularProgress, Alert, Pagination, Select, MenuItem,
-  FormControl, Stack,
+  Box, Container, Typography, InputBase, IconButton,
+  Grid, CircularProgress, Alert, Pagination, Stack, Chip,
 } from "@mui/material";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
+import SearchRoundedIcon      from "@mui/icons-material/SearchRounded";
+import RestaurantRoundedIcon  from "@mui/icons-material/RestaurantRounded";
+import NearMeRoundedIcon      from "@mui/icons-material/NearMeRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
 import CatererCard from "../../components/CatererCard";
 import catererService from "../../services/catererService";
 
-const LOCATIONS = ["All", "Hyderabad", "Bangalore", "Chennai", "Mumbai", "Delhi", "Pune"];
-
 export default function CateringPage() {
-  const navigate      = useNavigate();
+  const navigate       = useNavigate();
   const customerCoords = useCustomerGeo();
-  const [caterers, setCaterers]   = useState([]);
-  const [total, setTotal]         = useState(0);
-  const [page, setPage]           = useState(1);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState("");
-  const [search, setSearch]       = useState("");
-  const [location, setLocation]   = useState("");
-  const [inputVal, setInputVal]   = useState("");
 
-  const LIMIT = 12;
+  const [caterers, setCaterers] = useState([]);
+  const [total, setTotal]       = useState(0);
+  const [page, setPage]         = useState(1);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
+  const [search, setSearch]     = useState("");
+  const [inputVal, setInputVal] = useState("");
 
-  const fetchCaterers = useCallback(async (s, loc, pg) => {
+  const LIMIT = 50; // fetch more so we can sort by distance client-side
+
+  const fetchCaterers = useCallback(async (s, pg) => {
     setLoading(true);
     setError("");
     try {
       const data = await catererService.getCaterers({
-        search:   s   || undefined,
-        location: loc || undefined,
-        page:     pg,
-        limit:    LIMIT,
+        search: s || undefined,
+        page:   pg,
+        limit:  LIMIT,
       });
       setCaterers(data.caterers || []);
       setTotal(data.total || 0);
@@ -49,7 +45,21 @@ export default function CateringPage() {
     }
   }, []);
 
-  useEffect(() => { fetchCaterers(search, location, page); }, [fetchCaterers, search, location, page]);
+  useEffect(() => { fetchCaterers(search, page); }, [fetchCaterers, search, page]);
+
+  // Sort caterers by distance when user coords are available
+  const sortedCaterers = useMemo(() => {
+    if (!customerCoords || caterers.length === 0) return caterers;
+    return [...caterers].sort((a, b) => {
+      const distA = (a.latitude != null && a.longitude != null)
+        ? haversineKm(customerCoords.lat, customerCoords.lng, Number(a.latitude), Number(a.longitude))
+        : Infinity;
+      const distB = (b.latitude != null && b.longitude != null)
+        ? haversineKm(customerCoords.lat, customerCoords.lng, Number(b.latitude), Number(b.longitude))
+        : Infinity;
+      return distA - distB;
+    });
+  }, [caterers, customerCoords]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -57,70 +67,53 @@ export default function CateringPage() {
     setSearch(inputVal.trim());
   };
 
-  const handleLocation = (e) => {
-    const val = e.target.value === "All" ? "" : e.target.value;
-    setLocation(val);
-    setPage(1);
-  };
-
   const pageCount = Math.ceil(total / LIMIT);
 
   return (
     <AppLayout>
-
       <Container maxWidth="lg" sx={{ pt: 3, pb: 5 }}>
         {/* Header */}
         <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate("/services")} sx={{ color: brand.muted }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <RestaurantRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>Catering</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {total} caterer{total !== 1 ? "s" : ""} available
             </Typography>
           </Box>
-        </Stack>
-
-        {/* Filters */}
-        <Stack direction={{ xs: "column", sm: "row" }} gap={1.5} sx={{ mb: 3 }}>
-          <Box
-            component="form"
-            onSubmit={handleSearchSubmit}
-            sx={{
-              flex: 1, display: "flex", alignItems: "center", gap: 1,
-              backgroundColor: brand.white, border: `1px solid ${brand.border}`,
-              borderRadius: 6, px: 2,
-              "&:focus-within": { borderColor: brand.orange },
-            }}
-          >
-            <SearchRoundedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-            <InputBase
-              fullWidth
-              placeholder="Search caterer name…"
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              sx={{ py: 1.1, fontSize: "0.9rem" }}
+          {customerCoords && (
+            <Chip
+              icon={<NearMeRoundedIcon sx={{ fontSize: 14 }} />}
+              label="Sorted by distance"
+              size="small"
+              sx={{ backgroundColor: brand.greenLight, color: brand.green, fontWeight: 600, fontSize: "0.7rem" }}
             />
-            <IconButton type="submit" size="small" sx={{ color: brand.orange }}>
-              <SearchRoundedIcon fontSize="small" />
-            </IconButton>
-          </Box>
-
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <Select
-              displayEmpty
-              value={location || "All"}
-              onChange={handleLocation}
-              sx={{ borderRadius: 6, backgroundColor: brand.white, fontSize: "0.9rem" }}
-            >
-              {LOCATIONS.map((l) => (
-                <MenuItem key={l} value={l}>{l === "All" ? "All Locations" : l}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          )}
         </Stack>
+
+        {/* Search only */}
+        <Box
+          component="form"
+          onSubmit={handleSearchSubmit}
+          sx={{
+            display: "flex", alignItems: "center", gap: 1, mb: 3,
+            backgroundColor: brand.white, border: `1px solid ${brand.border}`,
+            borderRadius: 6, px: 2,
+            "&:focus-within": { borderColor: brand.orange },
+          }}
+        >
+          <SearchRoundedIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+          <InputBase
+            fullWidth
+            placeholder="Search caterer name…"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            sx={{ py: 1.1, fontSize: "0.9rem" }}
+          />
+          <IconButton type="submit" size="small" sx={{ color: brand.orange }}>
+            <SearchRoundedIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
         {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -128,18 +121,22 @@ export default function CateringPage() {
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <CircularProgress sx={{ color: brand.orange }} />
           </Box>
-        ) : caterers.length === 0 ? (
+        ) : sortedCaterers.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 8 }}>
             <RestaurantRoundedIcon sx={{ fontSize: 56, color: brand.border, mb: 1 }} />
             <Typography variant="h6" sx={{ color: "text.secondary" }}>No caterers found</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>Try a different search or location</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>Try a different search term</Typography>
           </Box>
         ) : (
           <>
             <Grid container spacing={2}>
-              {caterers.map((c) => (
+              {sortedCaterers.map((c) => (
                 <Grid item key={c.id} xs={12} sm={6} md={4} lg={3}>
-                  <CatererCard caterer={c} onClick={() => navigate(`/services/catering/${c.id}`)} customerCoords={customerCoords} />
+                  <CatererCard
+                    caterer={c}
+                    onClick={() => navigate(`/services/catering/${c.id}`)}
+                    customerCoords={customerCoords}
+                  />
                 </Grid>
               ))}
             </Grid>

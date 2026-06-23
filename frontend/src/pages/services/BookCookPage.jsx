@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Box, Container, Toolbar, Typography, Button, IconButton, Stack } from "@mui/material";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { brand } from "../../theme";
 import AppLayout from "../../components/AppLayout";
 
@@ -12,12 +11,7 @@ export default function BookCookPage() {
     <AppLayout>
 
       <Container maxWidth="sm" sx={{ pt: 3, pb: 5 }}>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 4 }}>
-          <IconButton size="small" onClick={() => navigate("/services")} sx={{ color: brand.muted }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>Book A Cook</Typography>
-        </Stack>
+        <Typography variant="h5" sx={{ fontWeight: 800, mb: 4 }}>Book A Cook</Typography>
 
         <Box sx={{ textAlign: "center", py: 6 }}>
           <Box

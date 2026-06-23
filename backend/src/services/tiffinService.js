@@ -40,7 +40,7 @@ async function getCatererTiffinSettings(caterer_id) {
 async function getTiffinFoods(caterer_id) {
   const { rows } = await pool.query(
     `SELECT f.id, f.food_name, f.description, f.price, f.is_available,
-            f.image_url AS "imageUrl",
+            f.image_url AS "imageUrl", f.food_category, f.serves_count,
             COALESCE(tm.available_for_tiffin, TRUE) AS available_for_tiffin
      FROM food_items f
      LEFT JOIN tiffin_food_mapping tm
@@ -84,7 +84,7 @@ async function saveTiffinSettings(caterer_id, {
 async function getAllCatererFoodsForMapping(caterer_id) {
   const { rows } = await pool.query(
     `SELECT f.id, f.food_name, f.description, f.price, f.is_available,
-            f.image_url AS "imageUrl",
+            f.image_url AS "imageUrl", f.food_category, f.serves_count,
             COALESCE(tm.available_for_tiffin, TRUE) AS available_for_tiffin
      FROM food_items f
      LEFT JOIN tiffin_food_mapping tm
@@ -155,7 +155,7 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
   const { rows: foodRows } = await pool.query(
     `SELECT f.id, f.food_name, f.price, f.is_available,
             COALESCE(tm.available_for_tiffin, TRUE) AS available_for_tiffin
-     FROM food_items f
+     FROM food_items f -- serves_count included
      LEFT JOIN tiffin_food_mapping tm ON tm.food_item_id = f.id AND tm.caterer_id = $2
      WHERE f.id = ANY($1::uuid[]) AND f.caterer_id = $2`,
     [foodIds, caterer_id]

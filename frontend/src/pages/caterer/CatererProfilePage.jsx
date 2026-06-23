@@ -8,7 +8,6 @@ import {
 import ChevronRightRoundedIcon   from "@mui/icons-material/ChevronRightRounded";
 import LogoutRoundedIcon         from "@mui/icons-material/LogoutRounded";
 import PhonelinkRoundedIcon      from "@mui/icons-material/PhonelinkRounded";
-import LocationOnRoundedIcon     from "@mui/icons-material/LocationOnRounded";
 import SettingsRoundedIcon       from "@mui/icons-material/SettingsRounded";
 import PersonRoundedIcon         from "@mui/icons-material/PersonRounded";
 import { brand } from "../../theme";
@@ -17,9 +16,8 @@ import LogoutConfirmationDialog from "../../components/LogoutConfirmationDialog"
 import api from "../../services/api";
 
 const MENU = [
-  { label: "Payment Details", to: "/caterer/profile/payment",   icon: <PhonelinkRoundedIcon fontSize="small" /> },
-  { label: "My Addresses",    to: "/caterer/profile/addresses", icon: <LocationOnRoundedIcon fontSize="small" /> },
-  { label: "Settings",        to: "/caterer/profile/settings",  icon: <SettingsRoundedIcon fontSize="small" /> },
+  { label: "Payment Details", to: "/caterer/profile/payment",  icon: <PhonelinkRoundedIcon fontSize="small" /> },
+  { label: "Settings",        to: "/caterer/profile/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
 ];
 
 export default function CatererProfilePage() {

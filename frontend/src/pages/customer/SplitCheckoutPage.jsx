@@ -14,18 +14,20 @@ import QrCodeRoundedIcon               from "@mui/icons-material/QrCodeRounded";
 import UploadFileRoundedIcon           from "@mui/icons-material/UploadFileRounded";
 import CheckCircleRoundedIcon          from "@mui/icons-material/CheckCircleRounded";
 import DeleteOutlineRoundedIcon        from "@mui/icons-material/DeleteOutlineRounded";
-import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import LocalAtmRoundedIcon             from "@mui/icons-material/LocalAtmRounded";
 import CreditCardRoundedIcon           from "@mui/icons-material/CreditCardRounded";
 import HelpOutlineRoundedIcon          from "@mui/icons-material/HelpOutlineRounded";
 import ExpandMoreRoundedIcon           from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon           from "@mui/icons-material/ExpandLessRounded";
-import { useCart }        from "../../contexts/CartContext";
-import AppLayout          from "../../components/AppLayout";
-import QRCodeModal        from "../../components/QRCodeModal";
-import { brand }          from "../../theme";
-import { useCustomerGeo } from "../../utils/geoUtils";
-import api                from "../../services/api";
+import { useCart }             from "../../contexts/CartContext";
+import AppLayout               from "../../components/AppLayout";
+import QRCodeModal             from "../../components/QRCodeModal";
+import { brand }               from "../../theme";
+import { useCustomerGeo }      from "../../utils/geoUtils";
+import api                     from "../../services/api";
+import masterOrderService      from "../../services/masterOrderService";
+import DirectionsWalkRoundedIcon   from "@mui/icons-material/DirectionsWalkRounded";
+import LocalShippingRoundedIcon    from "@mui/icons-material/LocalShippingRounded";
 
 const PROOF_MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_PROOF_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"];
@@ -69,6 +71,10 @@ export default function SplitCheckoutPage() {
   const [proofFiles,      setProofFiles]      = useState({});
   const [qrModal,         setQrModal]         = useState({ open: false });
   const [paymentMethod,   setPaymentMethod]   = useState("ONLINE");
+  const [pickupRec,       setPickupRec]       = useState(null);
+  const [pickupLoading,   setPickupLoading]   = useState(false);
+  const [fulfillmentType, setFulfillmentType] = useState("DELIVERY");
+  const [pickupTracked,   setPickupTracked]   = useState(false);
   const fileInputRefs = useRef({});
 
   const catererGroups = useMemo(() => {
@@ -154,15 +160,71 @@ export default function SplitCheckoutPage() {
     setProofFiles((prev) => { const next = { ...prev }; delete next[catererId]; return next; });
   };
 
-  const [upiTipId,   setUpiTipId]   = useState(null);
-  const [guideOpen,  setGuideOpen]  = useState({}); // { [caterer_id]: bool }
+  // Fetch self-pickup recommendation for single-caterer orders
+  useEffect(() => {
+    if (catererGroups.length !== 1 || loading) return;
+    // Use GPS coords if available, fall back to saved address coordinates
+    const lat = customerCoords?.lat ?? defaultAddress?.latitude  ?? null;
+    const lng = customerCoords?.lng ?? defaultAddress?.longitude ?? null;
+    if (!lat || !lng) return;
+    const group = catererGroups[0];
+    const foodIds = group.items.map((i) => i.food_item_id).filter(Boolean);
+    setPickupLoading(true);
+    masterOrderService.getPickupRecommendation({
+      caterer_id:    group.caterer_id,
+      customer_lat:  lat,
+      customer_lng:  lng,
+      food_item_ids: foodIds,
+    }).then((rec) => {
+      setPickupRec(rec);
+    }).catch(() => {
+      setPickupRec({ show: false, reason: 'error' });
+    }).finally(() => {
+      setPickupLoading(false);
+    });
+  }, [catererGroups, loading, customerCoords, defaultAddress]);
 
-  const handleUpiPay = (upiLink, catererId) => {
-    // Show fallback tip after 2.5s — if PhonePe declines (browser security),
-    // the page will still be here and the tip guides the user to copy the UPI ID.
-    window.location.href = upiLink;
-    setTimeout(() => setUpiTipId(catererId), 2500);
+  // Track SHOWN once when recommendation becomes visible
+  useEffect(() => {
+    if (!pickupRec?.show || pickupTracked || catererGroups.length !== 1) return;
+    setPickupTracked(true);
+    masterOrderService.trackPickupEvent({
+      caterer_id:    catererGroups[0].caterer_id,
+      event:         'SHOWN',
+      distance_km:   pickupRec.distance_km,
+      saving_amount: pickupRec.saving,
+    }).catch(() => {});
+  }, [pickupRec, pickupTracked, catererGroups]);
+
+  // Self pickup requires advance payment — reset to ONLINE when selected
+  useEffect(() => {
+    if (fulfillmentType === 'SELF_PICKUP' && paymentMethod === 'COD') {
+      setPaymentMethod('ONLINE');
+    }
+  }, [fulfillmentType, paymentMethod]);
+
+  const handlePickupChoice = (choice) => {
+    if (catererGroups.length !== 1) return;
+    if (choice === fulfillmentType) return;
+    setFulfillmentType(choice);
+    if (choice === 'SELF_PICKUP') {
+      masterOrderService.trackPickupEvent({
+        caterer_id:    catererGroups[0].caterer_id,
+        event:         'ACCEPTED',
+        distance_km:   pickupRec?.distance_km,
+        saving_amount: pickupRec?.saving,
+      }).catch(() => {});
+    } else {
+      masterOrderService.trackPickupEvent({
+        caterer_id:    catererGroups[0].caterer_id,
+        event:         'REJECTED',
+        distance_km:   pickupRec?.distance_km,
+        saving_amount: pickupRec?.saving,
+      }).catch(() => {});
+    }
   };
+
+  const [guideOpen,  setGuideOpen]  = useState({}); // { [caterer_id]: bool }
 
   const handlePlaceOrder = async () => {
     if (!items.length || unavailableItems.length > 0) return;
@@ -179,24 +241,26 @@ export default function SplitCheckoutPage() {
             payment_screenshot_url: data.url,
           }))
         : [];
-      await api.request("/checkout/split-order", {
-        method: "POST",
-        body: JSON.stringify({
-          items:             items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
-          customer_lat:      customerCoords?.lat ?? defaultAddress?.latitude  ?? null,
-          customer_lng:      customerCoords?.lng ?? defaultAddress?.longitude ?? null,
-          delivery_house_no: defaultAddress?.house_no  ?? null,
-          delivery_street:   defaultAddress?.street    ?? null,
-          delivery_landmark: defaultAddress?.landmark  ?? null,
-          delivery_city:     defaultAddress?.city      ?? null,
-          delivery_state:    defaultAddress?.state     ?? null,
-          delivery_pincode:  defaultAddress?.pincode   ?? null,
-          payment_method:    paymentMethod,
-          payment_proofs,
-        }),
+      const masterOrder = await masterOrderService.createSplitOrder({
+        items:             items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
+        customer_lat:      customerCoords?.lat ?? defaultAddress?.latitude  ?? null,
+        customer_lng:      customerCoords?.lng ?? defaultAddress?.longitude ?? null,
+        delivery_house_no: defaultAddress?.house_no  ?? null,
+        delivery_street:   defaultAddress?.street    ?? null,
+        delivery_landmark: defaultAddress?.landmark  ?? null,
+        delivery_city:     defaultAddress?.city      ?? null,
+        delivery_state:    defaultAddress?.state     ?? null,
+        delivery_pincode:  defaultAddress?.pincode   ?? null,
+        payment_method:    paymentMethod,
+        payment_proofs,
+        fulfillment_type:  fulfillmentType,
       });
       await clearCart();
-      navigate("/customer/master-orders", { state: { justPlaced: true } });
+      if (fulfillmentType === 'SELF_PICKUP' && masterOrder?.id) {
+        navigate(`/customer/pickup/${masterOrder.id}`);
+      } else {
+        navigate("/customer/master-orders", { state: { justPlaced: true } });
+      }
     } catch (err) {
       setError(err?.message || "Could not place order. Please try again.");
     } finally {
@@ -251,6 +315,178 @@ export default function SplitCheckoutPage() {
           </Paper>
         )}
 
+        {/* ── Fulfillment Method ── always visible ── */}
+        <Paper elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 3, p: 2.5, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5 }}>
+            How would you like your order?
+          </Typography>
+          <Stack spacing={1.5}>
+
+            {/* Home Delivery */}
+            <Box
+              onClick={() => { if (fulfillmentType !== 'DELIVERY') handlePickupChoice('DELIVERY'); }}
+              sx={{
+                display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2, cursor: 'pointer',
+                border: `2px solid ${fulfillmentType === 'DELIVERY' ? brand.orange : brand.border}`,
+                backgroundColor: fulfillmentType === 'DELIVERY' ? brand.orangeLight : 'transparent',
+                transition: 'all 0.15s',
+              }}
+            >
+              <Box sx={{
+                width: 20, height: 20, borderRadius: '50%', flexShrink: 0, mt: 0.15,
+                border: `2px solid ${fulfillmentType === 'DELIVERY' ? brand.orange : '#C4C4C4'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {fulfillmentType === 'DELIVERY' && (
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: brand.orange }} />
+                )}
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocalShippingRoundedIcon sx={{ fontSize: 17, color: brand.orange }} />
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: brand.orange }}>Home Delivery</Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Delivered to your address by a rider
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Self Pickup — three states: loading / eligible / disabled */}
+            {catererGroups.length > 1 ? (
+              /* Multi-caterer — always disabled */
+              <Box sx={{
+                display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2,
+                border: `1px dashed ${brand.border}`, backgroundColor: '#FAFAFA',
+              }}>
+                <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #D0D0D0', flexShrink: 0, mt: 0.15 }} />
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DirectionsWalkRoundedIcon sx={{ fontSize: 17, color: 'text.disabled' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.disabled' }}>Self Pickup</Typography>
+                    <Chip label="Multi-caterer" size="small" sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18 }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    Self Pickup is available only when ordering from one caterer
+                  </Typography>
+                </Box>
+              </Box>
+            ) : pickupLoading ? (
+              /* Checking eligibility */
+              <Box sx={{
+                display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 2,
+                border: `1px solid ${brand.border}`,
+              }}>
+                <CircularProgress size={16} sx={{ color: brand.orange, flexShrink: 0 }} />
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>Self Pickup</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>Checking availability…</Typography>
+                </Box>
+              </Box>
+            ) : pickupRec?.show ? (
+              /* Eligible — selectable */
+              <Box
+                onClick={() => { if (fulfillmentType !== 'SELF_PICKUP') handlePickupChoice('SELF_PICKUP'); }}
+                sx={{
+                  display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.75, borderRadius: 2, cursor: 'pointer',
+                  border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : '#81C784'}`,
+                  backgroundColor: fulfillmentType === 'SELF_PICKUP' ? '#E8F5E9' : '#F9FFF9',
+                  transition: 'all 0.15s',
+                  '&:hover': { borderColor: '#2E7D32', backgroundColor: '#E8F5E9' },
+                }}
+              >
+                <Box sx={{
+                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0, mt: 0.15,
+                  border: `2px solid ${fulfillmentType === 'SELF_PICKUP' ? '#2E7D32' : '#C4C4C4'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {fulfillmentType === 'SELF_PICKUP' && (
+                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#2E7D32' }} />
+                  )}
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <DirectionsWalkRoundedIcon sx={{ fontSize: 17, color: '#2E7D32' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#2E7D32' }}>Self Pickup</Typography>
+                    {pickupRec.saving > 0 && (
+                      <Chip label={`Save ₹${Math.round(pickupRec.saving)}`} size="small"
+                        sx={{ backgroundColor: '#2E7D32', color: '#fff', fontWeight: 700, fontSize: '0.6rem', height: 18 }} />
+                    )}
+                    <Chip label={pickupRec.distance_label} size="small"
+                      sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18, backgroundColor: '#E8F5E9', color: '#2E7D32' }} />
+                  </Box>
+                  {fulfillmentType === 'SELF_PICKUP' ? (
+                    <Box sx={{ mt: 0.75 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: '#2E7D32' }}>
+                        You selected Self Pickup! 🎉
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#388E3C', display: 'block', mt: 0.25 }}>
+                        Pickup from: {catererGroups[0]?.caterer_name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        Ready in ~{pickupRec.prep_time} min · {pickupRec.distance_label} away
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ mt: 0.75 }}>
+                      <Typography variant="caption" sx={{ color: '#388E3C', display: 'block', fontStyle: 'italic', mb: 0.75 }}>
+                        {pickupRec.message}
+                      </Typography>
+                      <Stack spacing={0.35}>
+                        {pickupRec.saving > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <CheckRoundedIcon sx={{ fontSize: 13, color: '#2E7D32', flexShrink: 0 }} />
+                            <Typography variant="caption" sx={{ color: '#2E7D32', fontWeight: 700 }}>
+                              Save ₹{Math.round(pickupRec.saving)} on delivery charges
+                            </Typography>
+                          </Box>
+                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <CheckRoundedIcon sx={{ fontSize: 13, color: '#2E7D32', flexShrink: 0 }} />
+                          <Typography variant="caption" sx={{ color: '#388E3C', fontWeight: 600 }}>
+                            Ready in ~{pickupRec.prep_time} min
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <CheckRoundedIcon sx={{ fontSize: 13, color: '#2E7D32', flexShrink: 0 }} />
+                          <Typography variant="caption" sx={{ color: '#388E3C', fontWeight: 600 }}>
+                            No delivery waiting
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            ) : pickupRec && !pickupRec.show ? (
+              /* Not eligible — show reason, disabled */
+              <Box sx={{
+                display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, borderRadius: 2,
+                border: `1px dashed ${brand.border}`, backgroundColor: '#FAFAFA',
+              }}>
+                <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #D0D0D0', flexShrink: 0, mt: 0.15 }} />
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DirectionsWalkRoundedIcon sx={{ fontSize: 17, color: 'text.disabled' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.disabled' }}>Self Pickup</Typography>
+                    <Chip label="Unavailable" size="small" sx={{ fontSize: '0.6rem', fontWeight: 600, height: 18 }} />
+                  </Box>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    {pickupRec.reason === 'too_far'
+                      ? `Caterer is ${pickupRec.distance_km?.toFixed(1)} km away (max 3 km for pickup)`
+                      : pickupRec.reason === 'no_caterer_coords'
+                      ? 'Caterer location not set — contact support'
+                      : pickupRec.reason === 'prep_too_long'
+                      ? 'Preparation time exceeds 60 min for pickup'
+                      : 'Not available for this order'}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : null}
+
+          </Stack>
+        </Paper>
+
         {unavailableItems.length > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             {unavailableItems.map((i) => `"${i.food_name}"`).join(", ")}{" "}
@@ -287,6 +523,7 @@ export default function SplitCheckoutPage() {
             </ToggleButton>
             <ToggleButton
               value="COD"
+              disabled={fulfillmentType === 'SELF_PICKUP'}
               sx={{
                 flex: 1, borderRadius: "10px !important", border: `1.5px solid ${brand.border} !important`,
                 fontWeight: 700, textTransform: "none", py: 1.25, gap: 1,
@@ -295,6 +532,7 @@ export default function SplitCheckoutPage() {
                   borderColor: `#2E7D32 !important`,
                   color: "#2E7D32",
                 },
+                "&.Mui-disabled": { opacity: 0.4 },
               }}
             >
               <LocalAtmRoundedIcon sx={{ fontSize: 18 }} />
@@ -302,13 +540,19 @@ export default function SplitCheckoutPage() {
             </ToggleButton>
           </ToggleButtonGroup>
 
-          {paymentMethod === "COD" && (
+          {fulfillmentType === 'SELF_PICKUP' && (
+            <Alert severity="info" icon={<DirectionsWalkRoundedIcon fontSize="inherit" />}
+              sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
+              Self pickup requires advance payment to confirm your order.
+            </Alert>
+          )}
+          {paymentMethod === "COD" && fulfillmentType !== 'SELF_PICKUP' && (
             <Alert severity="success" icon={<LocalAtmRoundedIcon fontSize="inherit" />}
               sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
               Pay the rider in cash when your order arrives. Your rider will show the caterer's QR for payment.
             </Alert>
           )}
-          {paymentMethod === "ONLINE" && (
+          {paymentMethod === "ONLINE" && fulfillmentType !== 'SELF_PICKUP' && (
             <Alert severity="info" icon={<CreditCardRoundedIcon fontSize="inherit" />}
               sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
               Pay each caterer online using UPI or QR, then upload your payment screenshot below.

@@ -8,7 +8,6 @@ import {
 import PaymentRoundedIcon     from "@mui/icons-material/PaymentRounded";
 import EditRoundedIcon        from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon      from "@mui/icons-material/DeleteRounded";
-import ArrowBackRoundedIcon   from "@mui/icons-material/ArrowBackRounded";
 import AddRoundedIcon         from "@mui/icons-material/AddRounded";
 import AppLayout from "../../components/AppLayout";
 import api       from "../../services/api";
@@ -117,9 +116,6 @@ export default function PaymentMethodsPage() {
       <Container maxWidth="sm" sx={{ pt: 3, pb: 6 }}>
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <IconButton size="small" onClick={() => navigate(-1)} sx={{ color: brand.orange }}>
-            <ArrowBackRoundedIcon />
-          </IconButton>
           <PaymentRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />
           <Typography variant="h5" sx={{ fontWeight: 800 }}>Payment Methods</Typography>
         </Box>
