@@ -31,6 +31,10 @@ import CurrencyExchangeRoundedIcon  from "@mui/icons-material/CurrencyExchangeRo
 import ToggleOnRoundedIcon          from "@mui/icons-material/ToggleOnRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
+import VerifiedRoundedIcon          from "@mui/icons-material/VerifiedRounded";
+import BadgeRoundedIcon             from "@mui/icons-material/BadgeRounded";
+import SupportAgentRoundedIcon      from "@mui/icons-material/SupportAgentRounded";
+import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
 import EventNoteRoundedIcon         from "@mui/icons-material/EventNoteRounded";
 import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
@@ -84,6 +88,11 @@ const ADMIN_NAV = [
   { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },
   { label: "Service Management",path: "/admin/services",            icon: <ToggleOnRoundedIcon /> },
   { label: "Settings",          path: "/admin/settings",            icon: <SettingsRoundedIcon /> },
+  { label: "Compliance",        path: "/admin/compliance",          icon: <VerifiedRoundedIcon /> },
+  { label: "FSSAI Verification",path: "/admin/fssai",               icon: <VerifiedRoundedIcon /> },
+  { label: "KYC Verification",  path: "/admin/kyc",                 icon: <BadgeRoundedIcon /> },
+  { label: "Grievances",        path: "/admin/grievances",          icon: <SupportAgentRoundedIcon /> },
+  { label: "Settlements",       path: "/admin/settlements",         icon: <AccountBalanceWalletRoundedIcon /> },
 ];
 
 const RIDER_NAV = [
