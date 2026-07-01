@@ -244,13 +244,13 @@ export default function AppRoutes() {
           <Route path="/admin/grievances"         element={<C allowed={ADMIN} element={<GrievancesPage />} />} />
           <Route path="/admin/settlements"        element={<C allowed={ADMIN} element={<SettlementPage />} />} />
 
-          {/* Root: auto-route based on auth state */}
+          {/* Root: landing page for guests, dashboard redirect for authenticated */}
           <Route path="/" element={
             isAuthenticated()
               ? (() => { const r = getUserRole(); return <Navigate to={r === 'caterer' ? '/caterer' : r === 'admin' ? '/admin' : r === 'rider' ? '/rider' : '/customer'} replace />; })()
-              : <Navigate to="/login" replace />
+              : <LandingPage />
           } />
-          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/landing" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

@@ -35,7 +35,7 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors({
-  origin:  process.env.CORS_ORIGIN || '*',
+  origin:  process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? 'https://popu.co.in' : '*'),
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));

@@ -6,7 +6,7 @@ const phonePe          = require('./phonePeService');
 const payCalc          = require('./paymentCalculationService');
 const { notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://popu.co.in';
 
 function generateMerchantOrderId() {
   const uid = randomUUID().replace(/-/g, '').slice(0, 20).toUpperCase();

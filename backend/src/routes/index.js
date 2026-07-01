@@ -21,5 +21,6 @@ router.use('/profile',                require('./profileRoutes'));
 router.use('/tiffin',                 require('./tiffinRoutes'));
 router.use('/account',               require('./accountRoutes'));
 router.use('/compliance',            require('./complianceRoutes'));
+router.use('/public',               require('./publicRoutes'));
 
 module.exports = router;
