@@ -1,10 +1,20 @@
 import api from "./api";
 
 export default {
-  async createSplitOrder({ items, customer_lat, customer_lng, payment_proofs = [], fulfillment_type = 'DELIVERY' }) {
+  async createSplitOrder({
+    items, customer_lat, customer_lng,
+    delivery_house_no, delivery_street, delivery_landmark,
+    delivery_city, delivery_state, delivery_pincode,
+    payment_proofs = [], payment_method = 'ONLINE', fulfillment_type = 'DELIVERY',
+  }) {
     const data = await api.request("/checkout/split-order", {
       method: "POST",
-      body: JSON.stringify({ items, customer_lat, customer_lng, payment_proofs, fulfillment_type }),
+      body: JSON.stringify({
+        items, customer_lat, customer_lng,
+        delivery_house_no, delivery_street, delivery_landmark,
+        delivery_city, delivery_state, delivery_pincode,
+        payment_proofs, payment_method, fulfillment_type,
+      }),
     });
     return data.masterOrder ?? data;
   },

@@ -3,6 +3,7 @@ const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const morgan  = require('morgan');
+const pool    = require('./config/db');
 
 const authRoutes                 = require('./routes/authRoutes');
 const foodRoutes                 = require('./routes/foodRoutes');
@@ -26,6 +27,7 @@ const profileRoutes              = require('./routes/profileRoutes');
 const tiffinRoutes               = require('./routes/tiffinRoutes');
 const deliveryRoutes             = require('./routes/deliveryRoutes');
 const pickupRoutes               = require('./routes/pickupRoutes');
+const razorpayRoutes             = require('./routes/razorpayRoutes');
 
 const app = express();
 
@@ -35,7 +37,7 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors({
-  origin:  process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? 'https://popu.co.in' : '*'),
+  origin:  process.env.CORS_ORIGIN || '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -43,8 +45,61 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Basic health ping (always available)
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// ── Maintenance mode middleware ──────────────────────────────────────────────
+// Set MAINTENANCE_MODE=true in env to enable. All /api/* routes return 503
+// EXCEPT /api/health and /api/health/status which always pass through.
+if (process.env.MAINTENANCE_MODE === 'true') {
+  app.use('/api', (req, res, next) => {
+    if (req.path === '/health' || req.path === '/health/status') return next();
+    return res.status(503).json({
+      maintenance: true,
+      message: "We're upgrading PO.PU — we'll be back shortly.",
+    });
+  });
+}
+
+// ── Detailed health status endpoint ─────────────────────────────────────────
+app.get('/api/health/status', async (req, res) => {
+  const checks = {
+    database: 'unknown',
+    email:    'unknown',
+    payment:  'unknown',
+    maps:     'unknown',
+  };
+
+  // Database
+  try {
+    await pool.query('SELECT 1');
+    checks.database = 'ok';
+  } catch (e) {
+    checks.database = 'error';
+  }
+
+  // Email — check if SMTP env vars are configured
+  checks.email = process.env.SMTP_HOST ? 'ok' : 'not_configured';
+
+  // Payment — check if PhonePe credentials are set
+  checks.payment = process.env.PHONEPE_CLIENT_ID ? 'ok' : 'not_configured';
+
+  // Google Maps
+  checks.maps = process.env.GOOGLE_MAPS_API_KEY ? 'ok' : 'not_configured';
+
+  const allOk = Object.values(checks).every(
+    (v) => v === 'ok' || v === 'not_configured'
+  );
+
+  return res.status(allOk ? 200 : 207).json({
+    status:    allOk ? 'ok' : 'degraded',
+    checks,
+    timestamp: new Date().toISOString(),
+    version:   process.env.npm_package_version || '1.0.0',
+  });
+});
+
+// ── Application routes ───────────────────────────────────────────────────────
 app.use('/api/auth',                   authRoutes);
 app.use('/api/foods',                  foodRoutes);
 app.use('/api/orders',                 orderRoutes);
@@ -67,6 +122,7 @@ app.use('/api/profile',                profileRoutes);
 app.use('/api/tiffin',                 tiffinRoutes);
 app.use('/api/delivery',               deliveryRoutes);
 app.use('/api/pickup',                 pickupRoutes);
+app.use('/api/razorpay',              razorpayRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not Found' }));
 

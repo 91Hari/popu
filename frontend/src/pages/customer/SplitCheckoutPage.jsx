@@ -26,6 +26,7 @@ import { brand }               from "../../theme";
 import { useCustomerGeo }      from "../../utils/geoUtils";
 import api                     from "../../services/api";
 import masterOrderService      from "../../services/masterOrderService";
+import RazorpayButton          from "../../components/RazorpayButton";
 import DirectionsWalkRoundedIcon   from "@mui/icons-material/DirectionsWalkRounded";
 import LocalShippingRoundedIcon    from "@mui/icons-material/LocalShippingRounded";
 
@@ -128,7 +129,8 @@ export default function SplitCheckoutPage() {
   }, [catererGroups, catererProfiles, loading]);
 
   const allProofsReady = useMemo(() => {
-    if (paymentMethod === "COD") return true;
+    if (paymentMethod === "COD")      return true;
+    if (paymentMethod === "RAZORPAY") return true;
     if (paymentEnabledIds.size === 0) return true;
     return [...paymentEnabledIds].every((id) => !!proofFiles[id]);
   }, [paymentEnabledIds, proofFiles, paymentMethod]);
@@ -522,6 +524,21 @@ export default function SplitCheckoutPage() {
               Online Payment
             </ToggleButton>
             <ToggleButton
+              value="RAZORPAY"
+              sx={{
+                flex: 1, borderRadius: "10px !important", border: `1.5px solid ${brand.border} !important`,
+                fontWeight: 700, textTransform: "none", py: 1.25, gap: 1,
+                "&.Mui-selected": {
+                  backgroundColor: "#FFF8E1",
+                  borderColor: `#F59E0B !important`,
+                  color: "#B45309",
+                },
+              }}
+            >
+              <CreditCardRoundedIcon sx={{ fontSize: 18 }} />
+              Razorpay
+            </ToggleButton>
+            <ToggleButton
               value="COD"
               disabled={fulfillmentType === 'SELF_PICKUP'}
               sx={{
@@ -556,6 +573,12 @@ export default function SplitCheckoutPage() {
             <Alert severity="info" icon={<CreditCardRoundedIcon fontSize="inherit" />}
               sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
               Pay each caterer online using UPI or QR, then upload your payment screenshot below.
+            </Alert>
+          )}
+          {paymentMethod === "RAZORPAY" && (
+            <Alert severity="info" icon={<CreditCardRoundedIcon fontSize="inherit" />}
+              sx={{ mt: 1.5, fontSize: "0.8rem", py: 0.75, borderRadius: 2 }}>
+              Pay securely via Razorpay — cards, UPI, netbanking, and wallets accepted. Tap <strong>Pay via Razorpay</strong> below to continue.
             </Alert>
           )}
         </Paper>
@@ -617,7 +640,14 @@ export default function SplitCheckoutPage() {
                   <Divider sx={{ mb: 1.5 }} />
 
                   {/* ── Payment section ── */}
-                  {paymentMethod === "COD" ? (
+                  {paymentMethod === "RAZORPAY" ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 1.5, backgroundColor: "#FFF8E1", border: "1px solid #FCD34D" }}>
+                      <CreditCardRoundedIcon sx={{ fontSize: 18, color: "#B45309", flexShrink: 0 }} />
+                      <Typography variant="caption" sx={{ color: "#B45309", fontWeight: 700 }}>
+                        ₹{subtotal.toFixed(2)} — paid via Razorpay at checkout.
+                      </Typography>
+                    </Box>
+                  ) : paymentMethod === "COD" ? (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 1.5, backgroundColor: "#E8F5E9", border: "1px solid #A5D6A7" }}>
                       <LocalAtmRoundedIcon sx={{ fontSize: 18, color: "#2E7D32", flexShrink: 0 }} />
                       <Typography variant="caption" sx={{ color: "#2E7D32", fontWeight: 700 }}>
@@ -883,7 +913,11 @@ export default function SplitCheckoutPage() {
 
             <Divider sx={{ mb: 2 }} />
 
-            {paymentMethod === "COD" ? (
+            {paymentMethod === "RAZORPAY" ? (
+              <Alert severity="info" icon={<CreditCardRoundedIcon fontSize="inherit" />} sx={{ mb: 2, fontSize: "0.8rem" }}>
+                You will be taken to Razorpay's secure checkout. Your order is placed automatically after successful payment.
+              </Alert>
+            ) : paymentMethod === "COD" ? (
               <Alert severity="success" icon={<LocalAtmRoundedIcon fontSize="inherit" />} sx={{ mb: 2, fontSize: "0.8rem" }}>
                 Cash on Delivery — no upfront payment needed. Pay the rider when your food arrives.
               </Alert>
@@ -899,15 +933,43 @@ export default function SplitCheckoutPage() {
               </Alert>
             )}
 
-            <Button
-              fullWidth variant="contained" size="large"
-              onClick={handlePlaceOrder}
-              disabled={placing || !items.length || unavailableItems.length > 0 || (!loading && !allProofsReady && paymentEnabledIds.size > 0 && paymentMethod === "ONLINE")}
-              startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
-              sx={{ fontWeight: 700, py: 1.4 }}
-            >
-              {placing ? "Placing Order…" : "Place Order"}
-            </Button>
+            {paymentMethod === "RAZORPAY" ? (
+              <RazorpayButton
+                totalRupees={total}
+                orderParams={{
+                  items:             items.map((i) => ({ food_item_id: i.food_item_id, quantity: i.quantity })),
+                  customer_lat:      customerCoords?.lat ?? defaultAddress?.latitude  ?? null,
+                  customer_lng:      customerCoords?.lng ?? defaultAddress?.longitude ?? null,
+                  delivery_house_no: defaultAddress?.house_no  ?? null,
+                  delivery_street:   defaultAddress?.street    ?? null,
+                  delivery_landmark: defaultAddress?.landmark  ?? null,
+                  delivery_city:     defaultAddress?.city      ?? null,
+                  delivery_state:    defaultAddress?.state     ?? null,
+                  delivery_pincode:  defaultAddress?.pincode   ?? null,
+                  fulfillment_type:  fulfillmentType,
+                }}
+                disabled={!items.length || unavailableItems.length > 0}
+                onSuccess={async (masterOrder) => {
+                  await clearCart();
+                  if (fulfillmentType === 'SELF_PICKUP' && masterOrder?.id) {
+                    navigate(`/customer/pickup/${masterOrder.id}`);
+                  } else {
+                    navigate("/customer/master-orders", { state: { justPlaced: true } });
+                  }
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            ) : (
+              <Button
+                fullWidth variant="contained" size="large"
+                onClick={handlePlaceOrder}
+                disabled={placing || !items.length || unavailableItems.length > 0 || (!loading && !allProofsReady && paymentEnabledIds.size > 0 && paymentMethod === "ONLINE")}
+                startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
+                sx={{ fontWeight: 700, py: 1.4 }}
+              >
+                {placing ? "Placing Order…" : "Place Order"}
+              </Button>
+            )}
 
             {paymentMethod === "ONLINE" && !loading && !allProofsReady && paymentEnabledIds.size > 0 && (
               <Typography variant="caption" sx={{ color: brand.orange, display: "block", mt: 1, textAlign: "center", fontWeight: 600 }}>
