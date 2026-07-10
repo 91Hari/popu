@@ -4,14 +4,14 @@ const pool = require('../config/db');
 const { notifyAllCustomers, notifyUser, NOTIFICATION_TYPES } = require('./notificationService');
 
 async function getDashboardStats() {
-  const [customers, caterers, foods, orderStats, financials, codStats] = await Promise.all([
+  const [customers, caterers, foods, orderStats, financials, codStats, orderSummary] = await Promise.all([
     pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CUSTOMER' AND is_active = TRUE`),
-    pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CATERER' AND is_active = TRUE`),
+    pool.query(`SELECT COUNT(*) FROM users WHERE role = 'CATERER'  AND is_active = TRUE`),
     pool.query(`SELECT COUNT(*) FROM food_items WHERE is_available = TRUE`),
     pool.query(`
       SELECT
-        COUNT(DISTINCT mo.id)                                           AS total,
-        COUNT(CASE WHEN co.status = 'PLACED' THEN 1 END)               AS pending
+        COUNT(DISTINCT mo.id)                             AS total,
+        COUNT(CASE WHEN co.status = 'PLACED' THEN 1 END) AS pending
       FROM master_orders mo
       LEFT JOIN caterer_orders co ON co.master_order_id = mo.id
     `),
@@ -27,77 +27,142 @@ async function getDashboardStats() {
     `),
     pool.query(`
       SELECT
-        COUNT(*)                                                             AS cod_orders,
-        COALESCE(SUM(co.subtotal), 0)                                       AS cod_revenue,
-        COUNT(CASE WHEN co.payment_status = 'PENDING' THEN 1 END)           AS cod_pending,
-        COUNT(CASE WHEN co.payment_status = 'PAID'    THEN 1 END)           AS cod_collected
+        COUNT(*)                                                   AS cod_orders,
+        COALESCE(SUM(co.subtotal), 0)                             AS cod_revenue,
+        COUNT(CASE WHEN co.payment_status = 'PENDING' THEN 1 END) AS cod_pending,
+        COUNT(CASE WHEN co.payment_status = 'PAID'    THEN 1 END) AS cod_collected
       FROM caterer_orders co
       WHERE co.payment_method = 'COD'
         AND co.status NOT IN ('CANCELLED', 'AUTO_CANCELLED')
     `),
+    pool.query(`
+      SELECT
+        COUNT(CASE WHEN co.status IN ('ACCEPTED','PREPARING','READY','DELIVERED','COLLECTED') THEN co.id END)::int AS total_accepted,
+        COUNT(CASE WHEN co.status IN ('DELIVERED','COLLECTED')                                THEN co.id END)::int AS total_delivered,
+        COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS total_cancelled
+      FROM caterer_orders co
+    `),
   ]);
 
-  const o = orderStats.rows[0];
-  const f = financials.rows[0];
-  const c = codStats.rows[0];
+  const o  = orderStats.rows[0];
+  const f  = financials.rows[0];
+  const c  = codStats.rows[0];
+  const os = orderSummary.rows[0];
   return {
-    totalCustomers:     Number(customers.rows[0].count),
-    totalCaterers:      Number(caterers.rows[0].count),
-    totalFoods:         Number(foods.rows[0].count),
-    totalOrders:        Number(o.total),
-    pendingOrders:      Number(o.pending),
-    revenue:            parseFloat(f.total_order_value || 0).toFixed(2),
-    totalOrderValue:    parseFloat(f.total_order_value    || 0).toFixed(2),
-    totalCommission:    parseFloat(f.total_commission     || 0).toFixed(2),
-    totalPlatformFees:  parseFloat(f.total_platform_fees  || 0).toFixed(2),
-    totalCatererPayout: parseFloat(f.total_caterer_payout || 0).toFixed(2),
-    codOrders:          Number(c.cod_orders),
-    codRevenue:         parseFloat(c.cod_revenue || 0).toFixed(2),
-    codPending:         Number(c.cod_pending),
-    codCollected:       Number(c.cod_collected),
+    totalCustomers:      Number(customers.rows[0].count),
+    totalCaterers:       Number(caterers.rows[0].count),
+    totalFoods:          Number(foods.rows[0].count),
+    totalOrders:         Number(o.total),
+    pendingOrders:       Number(o.pending),
+    revenue:             parseFloat(f.total_order_value || 0).toFixed(2),
+    totalOrderValue:     parseFloat(f.total_order_value    || 0).toFixed(2),
+    totalCommission:     parseFloat(f.total_commission     || 0).toFixed(2),
+    totalPlatformFees:   parseFloat(f.total_platform_fees  || 0).toFixed(2),
+    totalCatererPayout:  parseFloat(f.total_caterer_payout || 0).toFixed(2),
+    codOrders:           Number(c.cod_orders),
+    codRevenue:          parseFloat(c.cod_revenue || 0).toFixed(2),
+    codPending:          Number(c.cod_pending),
+    codCollected:        Number(c.cod_collected),
+    platformOrdersAccepted:  Number(os.total_accepted),
+    platformOrdersDelivered: Number(os.total_delivered),
+    platformOrdersCancelled: Number(os.total_cancelled),
   };
 }
 
-async function getCustomers({ search, page = 1, limit = 20 } = {}) {
-  const params = [];
-  let idx = 1;
-  const conds = [`role = 'CUSTOMER'`];
-  if (search) { conds.push(`(name ILIKE $${idx} OR email ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
-  const where = conds.join(' AND ');
-  const { rows: cnt } = await pool.query(`SELECT COUNT(*) FROM users WHERE ${where}`, params);
-  const total   = Number(cnt[0].count);
-  const offset  = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
+async function getCustomers({ search, date_from, date_to, sort = 'created_at', page = 1, limit = 20 } = {}) {
+  // User filter (used for both COUNT and main query)
+  const searchParams = [];
+  let si = 1;
+  const userConds = [`u.role = 'CUSTOMER'`];
+  if (search) { userConds.push(`(u.name ILIKE $${si} OR u.email ILIKE $${si})`); searchParams.push(`%${search}%`); si++; }
+  const userWhere = userConds.join(' AND ');
+
+  const { rows: cnt } = await pool.query(`SELECT COUNT(*) FROM users u WHERE ${userWhere}`, searchParams);
+  const total  = Number(cnt[0].count);
+  const offset = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
+
+  // Main query params: search + date + pagination
+  const params = [...searchParams];
+  let idx = si;
+
+  // Date filter applied to the caterer_orders JOIN (not WHERE) so users with
+  // zero orders in that range still appear with 0 counts
+  const dateConds = [];
+  if (date_from) { dateConds.push(`co.created_at >= $${idx}::date`);                           params.push(date_from); idx++; }
+  if (date_to)   { dateConds.push(`co.created_at <  $${idx}::date + INTERVAL '1 day'`);       params.push(date_to);   idx++; }
+  const coJoin = dateConds.length ? ` AND ${dateConds.join(' AND ')}` : '';
+
+  const SORT = {
+    orders_accepted:  'orders_accepted  DESC NULLS LAST, u.name ASC',
+    orders_delivered: 'orders_delivered DESC NULLS LAST, u.name ASC',
+    orders_cancelled: 'orders_cancelled DESC NULLS LAST, u.name ASC',
+    total_spent:      'total_spent      DESC NULLS LAST, u.name ASC',
+  };
+  const orderBy = SORT[sort] || 'u.created_at DESC';
+
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
-    `SELECT id, name, email, phone, is_active, created_at
-     FROM users WHERE ${where}
-     ORDER BY created_at DESC
+    `SELECT u.id, u.name, u.email, u.phone, u.is_active, u.created_at,
+            COUNT(CASE WHEN co.status IN ('ACCEPTED','PREPARING','READY','DELIVERED','COLLECTED') THEN co.id END)::int AS orders_accepted,
+            COUNT(CASE WHEN co.status IN ('DELIVERED','COLLECTED')                                THEN co.id END)::int AS orders_delivered,
+            COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS orders_cancelled,
+            COALESCE(SUM(CASE WHEN co.status IN ('DELIVERED','COLLECTED') THEN co.subtotal ELSE 0 END), 0)::numeric   AS total_spent
+     FROM users u
+     LEFT JOIN master_orders  mo ON mo.customer_id      = u.id
+     LEFT JOIN caterer_orders co ON co.master_order_id  = mo.id${coJoin}
+     WHERE ${userWhere}
+     GROUP BY u.id
+     ORDER BY ${orderBy}
      LIMIT $${idx++} OFFSET $${idx}`,
     params
   );
   return { customers: rows, total, page: Number(page), limit: Number(limit) };
 }
 
-async function getCaterers({ search, page = 1, limit = 20 } = {}) {
-  const params = [];
-  let idx = 1;
-  const conds = [`u.role = 'CATERER'`];
-  if (search) { conds.push(`(u.name ILIKE $${idx} OR u.email ILIKE $${idx} OR u.business_name ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
-  const where = conds.join(' AND ');
-  const { rows: cnt } = await pool.query(`SELECT COUNT(*) FROM users u WHERE ${where}`, params);
-  const total   = Number(cnt[0].count);
-  const offset  = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
+async function getCaterers({ search, date_from, date_to, sort = 'created_at', page = 1, limit = 20 } = {}) {
+  const searchParams = [];
+  let si = 1;
+  const userConds = [`u.role = 'CATERER'`];
+  if (search) { userConds.push(`(u.name ILIKE $${si} OR u.email ILIKE $${si} OR u.business_name ILIKE $${si})`); searchParams.push(`%${search}%`); si++; }
+  const userWhere = userConds.join(' AND ');
+
+  const { rows: cnt } = await pool.query(`SELECT COUNT(*) FROM users u WHERE ${userWhere}`, searchParams);
+  const total  = Number(cnt[0].count);
+  const offset = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
+
+  const params = [...searchParams];
+  let idx = si;
+
+  const dateConds = [];
+  if (date_from) { dateConds.push(`co.created_at >= $${idx}::date`);                        params.push(date_from); idx++; }
+  if (date_to)   { dateConds.push(`co.created_at <  $${idx}::date + INTERVAL '1 day'`);    params.push(date_to);   idx++; }
+  const coJoin = dateConds.length ? ` AND ${dateConds.join(' AND ')}` : '';
+
+  const SORT = {
+    orders_accepted:  'orders_accepted  DESC NULLS LAST, u.name ASC',
+    orders_delivered: 'orders_delivered DESC NULLS LAST, u.name ASC',
+    orders_cancelled: 'orders_cancelled DESC NULLS LAST, u.name ASC',
+    avg_rating:       'avg_rating       DESC NULLS LAST, u.name ASC',
+    total_earned:     'total_earned     DESC NULLS LAST, u.name ASC',
+  };
+  const orderBy = SORT[sort] || 'u.created_at DESC';
+
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.phone, u.business_name, u.location,
             u.availability_status, u.is_active, u.created_at,
-            ROUND(AVG(r.rating)::numeric, 1) AS avg_rating,
-            COUNT(r.id)::int AS review_count
+            ROUND(AVG(DISTINCT r.rating)::numeric, 1)      AS avg_rating,
+            COUNT(DISTINCT r.id)::int                       AS review_count,
+            COUNT(CASE WHEN co.status IN ('ACCEPTED','PREPARING','READY','DELIVERED','COLLECTED') THEN co.id END)::int AS orders_accepted,
+            COUNT(CASE WHEN co.status IN ('DELIVERED','COLLECTED')                                THEN co.id END)::int AS orders_delivered,
+            COUNT(CASE WHEN co.status IN ('CANCELLED','AUTO_CANCELLED')                          THEN co.id END)::int AS orders_cancelled,
+            COALESCE(SUM(CASE WHEN co.status IN ('DELIVERED','COLLECTED') THEN co.caterer_payout ELSE 0 END), 0)::numeric AS total_earned
      FROM users u
-     LEFT JOIN reviews r ON r.subject_type = 'caterer' AND r.subject_id = u.id
-     WHERE ${where}
+     LEFT JOIN reviews r          ON r.subject_type = 'caterer' AND r.subject_id = u.id
+     LEFT JOIN caterer_orders co  ON co.caterer_id = u.id${coJoin}
+     WHERE ${userWhere}
      GROUP BY u.id
-     ORDER BY u.created_at DESC
+     ORDER BY ${orderBy}
      LIMIT $${idx++} OFFSET $${idx}`,
     params
   );

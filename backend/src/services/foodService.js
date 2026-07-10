@@ -56,16 +56,23 @@ async function createFood({
   food_category = 'VEG',
   preparation_time_minutes = 20,
   serves_count = 1,
+  allergens = [],
+  calories = null,
+  is_vegan = false,
+  is_jain = false,
 }) {
   const validCategory = ['VEG', 'NON_VEG'].includes(food_category) ? food_category : 'VEG';
   const validServes   = Math.min(100, Math.max(1, parseInt(serves_count, 10) || 1));
+  const isVeg         = validCategory === 'VEG';
   const { rows } = await pool.query(
     `INSERT INTO food_items
-       (caterer_id, food_name, description, price, image_url, is_available, category, food_category, preparation_time_minutes, serves_count)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (caterer_id, food_name, description, price, image_url, is_available, category, food_category,
+        preparation_time_minutes, serves_count, is_veg, allergens, calories, is_vegan, is_jain)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING *`,
     [caterer_id, food_name, description || null, price,
-     image_url || null, is_available, category || null, validCategory, preparation_time_minutes, validServes]
+     image_url || null, is_available, category || null, validCategory, preparation_time_minutes, validServes,
+     isVeg, allergens || [], calories || null, !!is_vegan, !!is_jain]
   );
   const food = rows[0];
 
@@ -107,7 +114,7 @@ async function updateFood(id, caterer_id, fields) {
   }
   const before = existing[0];
 
-  const allowed = ['food_name', 'description', 'price', 'image_url', 'is_available', 'category', 'food_category', 'preparation_time_minutes', 'serves_count'];
+  const allowed = ['food_name', 'description', 'price', 'image_url', 'is_available', 'category', 'food_category', 'preparation_time_minutes', 'serves_count', 'allergens', 'calories', 'is_vegan', 'is_jain'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -116,6 +123,11 @@ async function updateFood(id, caterer_id, fields) {
       sets.push(`${key} = $${idx++}`);
       values.push(fields[key]);
     }
+  }
+  // Keep is_veg in sync with food_category
+  if (fields.food_category !== undefined) {
+    sets.push(`is_veg = $${idx++}`);
+    values.push(fields.food_category === 'VEG');
   }
   if (sets.length === 0) {
     const err = new Error('No valid fields to update');

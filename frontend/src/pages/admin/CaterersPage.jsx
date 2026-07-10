@@ -4,14 +4,49 @@ import {
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Paper, Chip, Button, CircularProgress, Alert, Stack,
   Dialog, DialogTitle, DialogContent, DialogActions, Snackbar,
+  Select, MenuItem, FormControl, InputLabel, Tooltip,
 } from "@mui/material";
-import SearchRoundedIcon     from "@mui/icons-material/SearchRounded";
-import StorefrontRoundedIcon from "@mui/icons-material/StorefrontRounded";
-import PersonAddRoundedIcon  from "@mui/icons-material/PersonAddRounded";
-import StarRoundedIcon       from "@mui/icons-material/StarRounded";
+import SearchRoundedIcon      from "@mui/icons-material/SearchRounded";
+import StorefrontRoundedIcon  from "@mui/icons-material/StorefrontRounded";
+import PersonAddRoundedIcon   from "@mui/icons-material/PersonAddRounded";
+import StarRoundedIcon        from "@mui/icons-material/StarRounded";
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import LocalShippingRoundedIcon      from "@mui/icons-material/LocalShippingRounded";
+import CancelOutlinedIcon            from "@mui/icons-material/CancelOutlined";
 import AppLayout    from "../../components/AppLayout";
 import adminService from "../../services/adminService";
 import { brand }    from "../../theme";
+
+const PRESETS = [
+  { label: "All time",   value: "all" },
+  { label: "Today",      value: "today" },
+  { label: "This week",  value: "week" },
+  { label: "This month", value: "month" },
+  { label: "Custom",     value: "custom" },
+];
+
+function presetToDates(preset) {
+  const today = new Date();
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  if (preset === "today") return { date_from: fmt(today), date_to: fmt(today) };
+  if (preset === "week") {
+    const mon = new Date(today); mon.setDate(today.getDate() - today.getDay() + 1);
+    return { date_from: fmt(mon), date_to: fmt(today) };
+  }
+  if (preset === "month") {
+    return { date_from: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`, date_to: fmt(today) };
+  }
+  return {};
+}
+
+const SORT_OPTIONS = [
+  { label: "Joined (newest)",  value: "created_at" },
+  { label: "Orders accepted",  value: "orders_accepted" },
+  { label: "Orders delivered", value: "orders_delivered" },
+  { label: "Orders cancelled", value: "orders_cancelled" },
+  { label: "Rating",           value: "avg_rating" },
+  { label: "Amount earned",    value: "total_earned" },
+];
 
 export default function CaterersPage() {
   const [caterers, setCaterers] = useState([]);
@@ -24,20 +59,33 @@ export default function CaterersPage() {
   const [newUser, setNewUser]     = useState({ name: "", email: "", phone: "", password: "", business_name: "", location: "" });
   const [adding, setAdding]       = useState(false);
   const [snack, setSnack]         = useState({ open: false, message: "", severity: "success" });
+  const [preset, setPreset]       = useState("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo]     = useState("");
+  const [sort, setSort]             = useState("created_at");
 
-  const load = useCallback(async (q) => {
+  const buildParams = useCallback((q = search) => {
+    const params = { search: q, limit: 100, sort };
+    if (preset === "custom") {
+      if (customFrom) params.date_from = customFrom;
+      if (customTo)   params.date_to   = customTo;
+    } else {
+      Object.assign(params, presetToDates(preset));
+    }
+    return params;
+  }, [search, preset, customFrom, customTo, sort]);
+
+  const load = useCallback(async (q = search) => {
     setLoading(true);
     try {
-      const data = await adminService.getCaterers({ search: q, limit: 50 });
+      const data = await adminService.getCaterers(buildParams(q));
       setCaterers(data.caterers || []);
       setTotal(data.total || 0);
     } catch { setError("Failed to load caterers."); }
     finally { setLoading(false); }
-  }, []);
+  }, [buildParams, search]);
 
-  useEffect(() => { load(""); }, [load]);
-
-  const handleSearch = (e) => { e.preventDefault(); load(search); };
+  useEffect(() => { load(); }, [load]);
 
   const handleAddCaterer = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) return;
@@ -47,7 +95,7 @@ export default function CaterersPage() {
       setSnack({ open: true, message: "Caterer created successfully.", severity: "success" });
       setAddDialog(false);
       setNewUser({ name: "", email: "", phone: "", password: "", business_name: "", location: "" });
-      await load(search);
+      await load();
     } catch (err) {
       setSnack({ open: true, message: err?.message || "Failed to create caterer.", severity: "error" });
     } finally {
@@ -66,7 +114,8 @@ export default function CaterersPage() {
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ pt: 3, pb: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: 3, pb: 4 }}>
+        {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <StorefrontRoundedIcon sx={{ color: brand.orange, fontSize: 26 }} />
@@ -86,11 +135,40 @@ export default function CaterersPage() {
 
         {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Box component="form" onSubmit={handleSearch} sx={{ mb: 2, maxWidth: 400 }}>
-          <TextField fullWidth size="small" placeholder="Search caterers…" value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ fontSize: 18 }} /></InputAdornment> }} />
-        </Box>
+        {/* Filters */}
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems="flex-end" sx={{ mb: 2, flexWrap: "wrap" }}>
+          <TextField
+            size="small" placeholder="Search caterers…"
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load(search)}
+            sx={{ minWidth: 240 }}
+            slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} /></InputAdornment> } }}
+          />
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>Date range</InputLabel>
+            <Select label="Date range" value={preset} onChange={(e) => setPreset(e.target.value)}>
+              {PRESETS.map((p) => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+            </Select>
+          </FormControl>
+          {preset === "custom" && (
+            <>
+              <TextField size="small" label="From" type="date" value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ width: 150 }} />
+              <TextField size="small" label="To" type="date" value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ width: 150 }} />
+            </>
+          )}
+          <FormControl size="small" sx={{ minWidth: 170 }}>
+            <InputLabel>Sort by</InputLabel>
+            <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value)}>
+              {SORT_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <Button variant="outlined" onClick={() => load(search)}
+            sx={{ fontWeight: 700, color: brand.orange, borderColor: brand.orange, textTransform: "none" }}>
+            Apply
+          </Button>
+        </Stack>
 
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
@@ -98,30 +176,44 @@ export default function CaterersPage() {
           </Box>
         ) : (
           <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2 }}>
-            <Table>
+            <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Business</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Location</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Rating</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Availability</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
+                <TableRow sx={{ "& th": { fontWeight: 700, color: "text.secondary", fontSize: "0.8rem" } }}>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Business</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Location</TableCell>
+                  <TableCell>Joined</TableCell>
+                  <TableCell align="center">Rating</TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Orders accepted"><Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}><CheckCircleOutlineRoundedIcon sx={{ fontSize: 14, color: "success.main" }} />Accepted</Box></Tooltip>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Orders delivered / collected"><Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}><LocalShippingRoundedIcon sx={{ fontSize: 14, color: "primary.main" }} />Delivered</Box></Tooltip>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Orders cancelled"><Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}><CancelOutlinedIcon sx={{ fontSize: 14, color: "error.main" }} />Cancelled</Box></Tooltip>
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: "text.secondary", fontSize: "0.8rem" }}>Earned (₹)</TableCell>
+                  <TableCell align="center">Avail.</TableCell>
+                  <TableCell align="center">Status</TableCell>
+                  <TableCell align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {caterers.map((c) => (
                   <TableRow key={c.id} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{c.name}</TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>{c.business_name || "—"}</TableCell>
-                    <TableCell sx={{ fontSize: "0.8rem", color: "text.secondary" }}>{c.phone || "—"}</TableCell>
-                    <TableCell sx={{ color: "text.secondary" }}>{c.location || "—"}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{c.business_name || "—"}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{c.phone || "—"}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{c.location || "—"}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
+                      {c.created_at ? new Date(c.created_at).toLocaleDateString("en-IN") : "—"}
+                    </TableCell>
                     <TableCell align="center">
                       {c.avg_rating != null ? (
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.4 }}>
-                          <StarRoundedIcon sx={{ fontSize: 14, color: brand.star }} />
+                          <StarRoundedIcon sx={{ fontSize: 13, color: brand.star }} />
                           <Typography variant="caption" sx={{ fontWeight: 700 }}>{Number(c.avg_rating).toFixed(1)}</Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>({c.review_count})</Typography>
                         </Box>
@@ -130,8 +222,28 @@ export default function CaterersPage() {
                       )}
                     </TableCell>
                     <TableCell align="center">
-                      <Chip label={c.availability_status || "READY"}
-                        size="small" sx={{ fontWeight: 700, fontSize: "0.7rem",
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: c.orders_accepted > 0 ? "success.main" : "text.disabled" }}>
+                        {c.orders_accepted ?? 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: c.orders_delivered > 0 ? "primary.main" : "text.disabled" }}>
+                        {c.orders_delivered ?? 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: c.orders_cancelled > 0 ? "error.main" : "text.disabled" }}>
+                        {c.orders_cancelled ?? 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: parseFloat(c.total_earned) > 0 ? "success.main" : "text.disabled" }}>
+                        {parseFloat(c.total_earned || 0) > 0 ? `₹${Number(c.total_earned).toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip label={c.availability_status || "READY"} size="small"
+                        sx={{ fontWeight: 700, fontSize: "0.65rem",
                           backgroundColor: c.availability_status === "NOT_READY" ? "#9e9e9e" : brand.green, color: "#fff" }} />
                     </TableCell>
                     <TableCell align="center">
@@ -142,7 +254,7 @@ export default function CaterersPage() {
                       <Button size="small" variant="outlined"
                         color={c.is_active ? "error" : "success"} disabled={!!busy[c.id]}
                         onClick={() => toggleStatus(c.id, c.is_active)}
-                        sx={{ fontWeight: 600, fontSize: "0.75rem" }}>
+                        sx={{ fontWeight: 600, fontSize: "0.7rem" }}>
                         {busy[c.id] ? <CircularProgress size={14} /> : (c.is_active ? "Deactivate" : "Activate")}
                       </Button>
                     </TableCell>
@@ -153,6 +265,7 @@ export default function CaterersPage() {
           </TableContainer>
         )}
       </Container>
+
       {/* Add Caterer Dialog */}
       <Dialog open={addDialog} onClose={() => !adding && setAddDialog(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Add New Caterer</DialogTitle>

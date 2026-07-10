@@ -89,6 +89,11 @@ const AdminRefundsPage               = React.lazy(() => import("../pages/admin/A
 const ServiceManagementPage          = React.lazy(() => import("../pages/admin/ServiceManagementPage"));
 const AdminAccountManagementPage     = React.lazy(() => import("../pages/admin/AdminAccountManagementPage"));
 const AdminDeliveryManagementPage    = React.lazy(() => import("../pages/admin/AdminDeliveryManagementPage"));
+const ComplianceDashboard            = React.lazy(() => import("../pages/admin/ComplianceDashboard"));
+const FssaiVerificationPage          = React.lazy(() => import("../pages/admin/FssaiVerificationPage"));
+const KycVerificationPage            = React.lazy(() => import("../pages/admin/KycVerificationPage"));
+const GrievancesPage                 = React.lazy(() => import("../pages/admin/GrievancesPage"));
+const SettlementPage                 = React.lazy(() => import("../pages/admin/SettlementPage"));
 const PaymentCallbackPage        = React.lazy(() => import("../pages/customer/PaymentCallbackPage"));
 
 // Tiffin Box module
@@ -232,14 +237,20 @@ export default function AppRoutes() {
           <Route path="/admin/tiffin"              element={<C allowed={ADMIN} element={<AdminTiffinPage />} />} />
           <Route path="/admin/account-management" element={<C allowed={ADMIN} element={<AdminAccountManagementPage />} />} />
           <Route path="/admin/delivery"           element={<C allowed={ADMIN} element={<AdminDeliveryManagementPage />} />} />
+          {/* Compliance */}
+          <Route path="/admin/compliance"         element={<C allowed={ADMIN} element={<ComplianceDashboard />} />} />
+          <Route path="/admin/fssai"              element={<C allowed={ADMIN} element={<FssaiVerificationPage />} />} />
+          <Route path="/admin/kyc"                element={<C allowed={ADMIN} element={<KycVerificationPage />} />} />
+          <Route path="/admin/grievances"         element={<C allowed={ADMIN} element={<GrievancesPage />} />} />
+          <Route path="/admin/settlements"        element={<C allowed={ADMIN} element={<SettlementPage />} />} />
 
-          {/* Root: auto-route based on auth state */}
+          {/* Root: landing page for guests, dashboard redirect for authenticated */}
           <Route path="/" element={
             isAuthenticated()
               ? (() => { const r = getUserRole(); return <Navigate to={r === 'caterer' ? '/caterer' : r === 'admin' ? '/admin' : r === 'rider' ? '/rider' : '/customer'} replace />; })()
-              : <Navigate to="/login" replace />
+              : <LandingPage />
           } />
-          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/landing" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

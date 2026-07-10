@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Block admin, API, and internal paths from indexing
+Disallow: /admin
+Disallow: /caterer
+Disallow: /rider
+Disallow: /cart
+Disallow: /checkout
+Disallow: /payment
+
+Sitemap: https://popu.co.in/sitemap.xml

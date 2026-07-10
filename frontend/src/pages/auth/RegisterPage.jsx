@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import {
   Box, Card, CardContent, Typography, Button, TextField,
   Alert, CircularProgress, Stack, InputAdornment, IconButton,
-  Divider,
+  Divider, FormControlLabel, Checkbox,
 } from "@mui/material";
 import VisibilityRoundedIcon    from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
@@ -16,6 +16,7 @@ import Logo                     from "../../components/Logo";
 import MapLocationPicker        from "../../components/MapLocationPicker";
 import authService              from "../../services/authService";
 import { brand }                from "../../theme";
+import { reverseGeocode }       from "../../utils/geocodeService";
 
 function validatePassword(pw) {
   if (!pw || pw.length < 8)  return "Password must be at least 8 characters";
@@ -61,6 +62,10 @@ export default function RegisterPage() {
   const [locInfo, setLocInfo]         = useState(null); // { type, message }
   const [mapOpen, setMapOpen]         = useState(false);
 
+  // ── Consent ──────────────────────────────────────────────────────────────────
+  const [consentTerms, setConsentTerms]   = useState(false);
+  const [consentPrivacy, setConsentPrivacy] = useState(false);
+
   // ── Form state ───────────────────────────────────────────────────────────────
   const [errors, setErrors]     = useState({});
   const [apiError, setApiError] = useState("");
@@ -68,28 +73,22 @@ export default function RegisterPage() {
 
   const navigate = useNavigate();
 
-  // ── Nominatim reverse geocode ────────────────────────────────────────────────
   const geocodePosition = useCallback(async (latitude, longitude) => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      if (!res.ok) throw new Error("Nominatim failed");
-      const data = await res.json();
-      const a = data?.address || {};
-      const road = a.road || a.pedestrian || a.footway || a.suburb || "";
-      const area = a.suburb || a.neighbourhood || a.village || "";
-      const address = [road, area].filter(Boolean).join(", ") || data.display_name?.split(",")[0] || "";
-      setLocField({
-        address,
-        city:      a.city || a.town || a.village || a.county || "",
-        addrState: a.state || "",
-        pincode:   a.postcode || "",
-        lat:       latitude,
-        lng:       longitude,
-      });
-      setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
+      const result = await reverseGeocode(latitude, longitude);
+      if (result) {
+        setLocField({
+          address:   result.address,
+          city:      result.city,
+          addrState: result.state,
+          pincode:   result.pincode,
+          lat:       latitude,
+          lng:       longitude,
+        });
+        setLocInfo({ type: "success", message: "Location detected — review and edit if needed." });
+      } else {
+        throw new Error("Geocoding returned null");
+      }
     } catch {
       setLocField({ lat: latitude, lng: longitude });
       setLocInfo({ type: "info", message: "Could not auto-fill address. Please enter manually." });
@@ -153,6 +152,8 @@ export default function RegisterPage() {
     if (!loc.addrState.trim())                e.state    = "State is required";
     if (!loc.pincode.trim())                  e.pincode  = "Pincode is required";
     else if (!/^\d{6}$/.test(loc.pincode.trim())) e.pincode = "Enter a valid 6-digit pincode";
+    if (!consentTerms)   e.consentTerms   = "You must accept the Terms of Service";
+    if (!consentPrivacy) e.consentPrivacy = "You must accept the Privacy Policy";
     return e;
   };
 
@@ -370,6 +371,52 @@ export default function RegisterPage() {
                   error={!!errors.pincode} helperText={errors.pincode}
                   disabled={loading}
                 />
+              </Stack>
+
+              {/* ── Consent ────────────────────────────────────────────────── */}
+              <Stack spacing={0.5}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={consentTerms}
+                      onChange={e => { setConsentTerms(e.target.checked); clrErr("consentTerms")(); }}
+                      size="small"
+                      sx={{ color: errors.consentTerms ? "error.main" : undefined }}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      I agree to the{" "}
+                      <Box component="span" sx={{ color: brand.orange, fontWeight: 700, cursor: "pointer" }}>
+                        Terms of Service
+                      </Box>
+                    </Typography>
+                  }
+                />
+                {errors.consentTerms && (
+                  <Typography variant="caption" color="error" sx={{ ml: 4 }}>{errors.consentTerms}</Typography>
+                )}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={consentPrivacy}
+                      onChange={e => { setConsentPrivacy(e.target.checked); clrErr("consentPrivacy")(); }}
+                      size="small"
+                      sx={{ color: errors.consentPrivacy ? "error.main" : undefined }}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      I have read and accept the{" "}
+                      <Box component="span" sx={{ color: brand.orange, fontWeight: 700, cursor: "pointer" }}>
+                        Privacy Policy
+                      </Box>
+                    </Typography>
+                  }
+                />
+                {errors.consentPrivacy && (
+                  <Typography variant="caption" color="error" sx={{ ml: 4 }}>{errors.consentPrivacy}</Typography>
+                )}
               </Stack>
 
               {/* ── Submit ─────────────────────────────────────────────────── */}

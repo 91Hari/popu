@@ -55,7 +55,7 @@ async function logEmail({ recipient, subject, status, errorMessage = null }) {
 // ── Public: send password reset email ────────────────────────────────────────
 
 async function sendPasswordResetEmail({ to, name, resetUrl }) {
-  const fromEmail = process.env.SMTP_FROM_EMAIL || 'noreply@popu.com';
+  const fromEmail = process.env.SMTP_FROM_EMAIL || 'noreply@popu.co.in';
   const fromName  = process.env.SMTP_FROM_NAME  || 'PO.PU Support';
   const from      = `"${fromName}" <${fromEmail}>`;
   const subject   = 'Reset your PO.PU password';

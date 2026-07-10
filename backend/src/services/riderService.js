@@ -471,7 +471,7 @@ async function getAllRiders({ search, page = 1, limit = 20 } = {}) {
   const offset = (Math.max(1, Number(page)) - 1) * Math.min(100, Number(limit));
   params.push(Number(limit), offset);
   const { rows } = await pool.query(
-    `SELECT u.id, u.name, u.email, u.phone, u.is_active,
+    `SELECT u.id, u.name, u.email, u.phone, u.is_active, u.created_at,
             rp.vehicle_type, rp.vehicle_number, rp.caterer_id,
             uc.name AS caterer_name,
             ROUND(AVG(rv.rating)::numeric, 1) AS avg_rating,

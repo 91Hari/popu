@@ -71,19 +71,25 @@ export default function RiderTrackingPage() {
 
       if (!mapRef.current || lat === null || lng === null) return;
 
-      const pos = [lat, lng];
+      const pos = { lat, lng };
       if (!riderMarker.current) {
-        const L = (await import("leaflet")).default;
-        const icon = L.divIcon({
-          html: `<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#1565C0,#1976D2);border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M19 7c0-1.1-.9-2-2-2h-3l-2-4H7L5 5H3C1.9 5 1 5.9 1 7v10c0 1.1.9 2 2 2h.17C3.59 20.23 4.69 21 6 21s2.41-.77 2.83-2h6.34c.42 1.23 1.52 2 2.83 2s2.41-.77 2.83-2H21c.55 0 1-.45 1-1v-6l-3-7zm-7.5 1.5h-3L10 6h1.5v2.5zM6 19.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm12 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zM17 13H3V7h14v6z"/></svg>
-          </div>`,
-          className: "", iconSize: [42, 42], iconAnchor: [21, 21],
+        const riderIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M19 7c0-1.1-.9-2-2-2h-3l-2-4H7L5 5H3C1.9 5 1 5.9 1 7v10c0 1.1.9 2 2 2h.17C3.59 20.23 4.69 21 6 21s2.41-.77 2.83-2h6.34c.42 1.23 1.52 2 2.83 2s2.41-.77 2.83-2H21c.55 0 1-.45 1-1v-6l-3-7zm-7.5 1.5h-3L10 6h1.5v2.5zM6 19.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm12 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zM17 13H3V7h14v6z"/></svg>`;
+        const iconUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#1565C0" stroke="white" stroke-width="3"/>${riderIconSvg.replace('width="24" height="24"', 'x="12" y="12" width="24" height="24"')}</svg>`
+        )}`;
+        riderMarker.current = new window.google.maps.Marker({
+          position: pos,
+          map: mapRef.current,
+          icon: {
+            url: iconUrl,
+            scaledSize: new window.google.maps.Size(48, 48),
+            anchor: new window.google.maps.Point(24, 24),
+          },
         });
-        riderMarker.current = L.marker(pos, { icon }).addTo(mapRef.current);
-        mapRef.current.setView(pos, 15);
+        mapRef.current.setCenter(pos);
+        mapRef.current.setZoom(15);
       } else {
-        riderMarker.current.setLatLng(pos);
+        riderMarker.current.setPosition(pos);
       }
     } catch (err) {
       setFetchError(err.message || "Failed to fetch tracking data");
@@ -95,22 +101,22 @@ export default function RiderTrackingPage() {
 
     (async () => {
       try {
-        const L = (await import("leaflet")).default;
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-          shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-        });
+        const { ensureMapsInit } = await import("../../utils/mapsLoader");
+        const ok = await ensureMapsInit("maps");
+        if (!ok || destroyed || !mapDivRef.current) { setMapError("Map unavailable"); return; }
 
-        if (destroyed || !mapDivRef.current) { setMapError("Map container unavailable"); return; }
-        if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+        if (mapRef.current) {
+          window.google.maps.event.clearInstanceListeners(mapRef.current);
+          mapRef.current = null;
+        }
 
-        const map = L.map(mapDivRef.current, {
-          center: [17.385, 78.4867], zoom: 12,
-          zoomControl: true, attributionControl: false,
+        const map = new window.google.maps.Map(mapDivRef.current, {
+          center: { lat: 17.385, lng: 78.4867 }, zoom: 12,
+          disableDefaultUI: false,
+          fullscreenControl: false,
+          streetViewControl: false,
+          mapTypeControl: false,
         });
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
         mapRef.current = map;
         if (!destroyed) setMapReady(true);
 
@@ -127,8 +133,11 @@ export default function RiderTrackingPage() {
     return () => {
       destroyed = true;
       clearInterval(pollInterval.current);
-      if (riderMarker.current) { riderMarker.current.remove(); riderMarker.current = null; }
-      if (mapRef.current)      { mapRef.current.remove();      mapRef.current      = null; }
+      if (riderMarker.current) { riderMarker.current.setMap(null); riderMarker.current = null; }
+      if (mapRef.current) {
+        window.google.maps.event.clearInstanceListeners(mapRef.current);
+        mapRef.current = null;
+      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);

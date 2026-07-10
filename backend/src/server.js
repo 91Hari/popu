@@ -3,6 +3,7 @@ const app                 = require('./app');
 const pool                = require('./config/db');
 const escalationScheduler = require('./services/orderEscalationScheduler');
 const deliveryScheduler   = require('./services/deliveryScheduler');
+const { runDailyComplianceChecks } = require('./services/complianceScheduler');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
@@ -13,6 +14,9 @@ pool.query('SELECT 1')
       console.log(`Server listening on port ${PORT}`);
       escalationScheduler.start();
       deliveryScheduler.start();
+      // Run compliance checks once at startup, then every 24h
+      runDailyComplianceChecks();
+      setInterval(runDailyComplianceChecks, 24 * 60 * 60 * 1000);
     });
   })
   .catch((err) => {

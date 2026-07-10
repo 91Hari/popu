@@ -205,7 +205,7 @@ async function forgotPassword({ email }) {
     [user.id, tokenHash, expiresAt]
   );
 
-  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const frontendUrl = (process.env.FRONTEND_URL || 'https://popu.co.in').replace(/\/$/, '');
   const resetUrl    = `${frontendUrl}/#/reset-password?token=${rawToken}`;
 
   // Fire and forget — email failure must not crash this endpoint

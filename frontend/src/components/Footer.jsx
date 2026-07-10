@@ -55,8 +55,8 @@ export default function Footer() {
           {/* Contact */}
           <Grid item xs={12} sm={6} md={2.4}>
             <FooterHeading>Contact Us</FooterHeading>
-            <FooterLink href="mailto:support@popu.com">support@popu.com</FooterLink>
-            <FooterLink href="mailto:contact@popu.com">contact@popu.com</FooterLink>
+            <FooterLink href="mailto:support@popu.co.in">support@popu.co.in</FooterLink>
+            <FooterLink href="mailto:contact@popu.co.in">contact@popu.co.in</FooterLink>
             <FooterLink href="tel:+918008008000">+91 800 800 8000</FooterLink>
           </Grid>
 

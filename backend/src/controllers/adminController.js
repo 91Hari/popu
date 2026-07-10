@@ -9,15 +9,15 @@ async function getDashboard(req, res, next) {
 
 async function getCustomers(req, res, next) {
   try {
-    const { search, page, limit } = req.query;
-    res.json(await adminService.getCustomers({ search, page, limit }));
+    const { search, page, limit, date_from, date_to, sort } = req.query;
+    res.json(await adminService.getCustomers({ search, page, limit, date_from, date_to, sort }));
   } catch (err) { next(err); }
 }
 
 async function getCaterers(req, res, next) {
   try {
-    const { search, page, limit } = req.query;
-    res.json(await adminService.getCaterers({ search, page, limit }));
+    const { search, page, limit, date_from, date_to, sort } = req.query;
+    res.json(await adminService.getCaterers({ search, page, limit, date_from, date_to, sort }));
   } catch (err) { next(err); }
 }
 

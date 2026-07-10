@@ -18,9 +18,9 @@ export const APP_VERSION  = '1.0.0';
 export const VERSION_CODE = 1;
 
 export const PRIVACY_POLICY_URL =
-  process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? 'https://popu.app/privacy';
+  process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? 'https://popu.co.in/privacy';
 export const TERMS_URL =
-  process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://popu.app/terms';
+  process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://popu.co.in/terms';
 
 // Location tracking task name (background)
 export const LOCATION_TASK_NAME = 'POPU_BACKGROUND_LOCATION';

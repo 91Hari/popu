@@ -23,7 +23,7 @@ function createTransporter() {
 }
 
 async function sendPasswordResetEmail({ to, name, resetUrl }) {
-  const from = process.env.SMTP_FROM || 'noreply@popu.com';
+  const from = process.env.SMTP_FROM || 'noreply@popu.co.in';
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
       <h2 style="color:#1B5E20;margin-bottom:4px;">PO.PU — Password Reset</h2>

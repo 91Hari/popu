@@ -4,7 +4,7 @@ import {
   Container, Box, Toolbar, Card, CardContent, Typography,
   TextField, Button, Stack, Switch, FormControlLabel,
   CircularProgress, Alert, useTheme, useMediaQuery, InputAdornment,
-  ToggleButtonGroup, ToggleButton,
+  ToggleButtonGroup, ToggleButton, Chip,
 } from "@mui/material";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
@@ -23,6 +23,8 @@ export default function AddFoodPage() {
   const [imagePreview, setImagePreview] = useState("");
   const [foodCategory, setFoodCategory] = useState("VEG");
   const [servesCount, setServesCount]   = useState(1);
+  const [allergenInput, setAllergenInput] = useState("");
+  const [allergens, setAllergens]         = useState([]);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState("");
   const [success, setSuccess]           = useState("");
@@ -80,6 +82,7 @@ export default function AddFoodPage() {
         serves_count:             servesCount,
         preparation_time_minutes: parseInt(prepTime, 10),
         image_url:                imagePreview || null,
+        allergens,
       });
       setSuccess("Food saved successfully.");
       setTimeout(() => navigate("/caterer/foods"), 900);
@@ -144,6 +147,33 @@ export default function AddFoodPage() {
                       Non-Veg
                     </ToggleButton>
                   </ToggleButtonGroup>
+                </Box>
+
+                {/* Allergens */}
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 1 }}>
+                    Allergens (optional)
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1 }}>
+                    {allergens.map(a => (
+                      <Chip key={a} label={a} size="small" onDelete={() => setAllergens(prev => prev.filter(x => x !== a))}
+                        sx={{ mb: 0.5 }} />
+                    ))}
+                  </Stack>
+                  <TextField
+                    size="small" placeholder="Type allergen and press Enter (e.g. Gluten, Dairy, Nuts)"
+                    value={allergenInput} onChange={e => setAllergenInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && allergenInput.trim()) {
+                        e.preventDefault();
+                        const val = allergenInput.trim();
+                        if (!allergens.includes(val)) setAllergens(prev => [...prev, val]);
+                        setAllergenInput("");
+                      }
+                    }}
+                    fullWidth
+                    helperText="Press Enter after each allergen. Required for FSSAI compliance."
+                  />
                 </Box>
 
                 <TextField
