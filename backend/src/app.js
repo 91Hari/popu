@@ -36,8 +36,20 @@ const app = express();
 app.set('trust proxy', true);
 
 app.use(helmet());
+// Support comma-separated origins in CORS_ORIGIN env var
+// e.g. CORS_ORIGIN=https://popu.co.in,https://www.popu.co.in
+const _corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : null;
+
 app.use(cors({
-  origin:  process.env.CORS_ORIGIN || '*',
+  origin: _corsOrigins
+    ? (origin, cb) => {
+        // Allow requests with no origin (mobile apps, curl, Render health checks)
+        if (!origin || _corsOrigins.includes(origin)) return cb(null, true);
+        cb(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    : '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
