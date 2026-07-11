@@ -239,9 +239,9 @@ export default function AppRoutes() {
           <Route path="/" element={
             isAuthenticated()
               ? (() => { const r = getUserRole(); return <Navigate to={r === 'caterer' ? '/caterer' : r === 'admin' ? '/admin' : r === 'rider' ? '/rider' : '/customer'} replace />; })()
-              : <Navigate to="/login" replace />
+              : <LandingPage />
           } />
-          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/landing" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
