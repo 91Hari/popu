@@ -15,8 +15,8 @@ async function createSplitOrder(req, res, next) {
       return res.status(400).json({ error: 'items are required' });
     }
     const method = (payment_method || 'ONLINE').toUpperCase();
-    if (!['ONLINE', 'COD'].includes(method)) {
-      return res.status(400).json({ error: 'payment_method must be ONLINE or COD' });
+    if (!['ONLINE', 'COD', 'RAZORPAY'].includes(method)) {
+      return res.status(400).json({ error: 'payment_method must be ONLINE, COD, or RAZORPAY' });
     }
     const fType = ['SELF_PICKUP', 'DELIVERY'].includes((fulfillment_type || '').toUpperCase())
       ? fulfillment_type.toUpperCase()

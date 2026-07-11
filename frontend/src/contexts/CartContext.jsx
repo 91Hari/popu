@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useReducer } from "react";
+import { createContext, useCallback, useContext, useEffect, useReducer, useState } from "react";
 import cartApi from "../services/cartService";
+
+const CART_LOCAL_KEY = "popu_cart_local";
 
 const CartContext = createContext(null);
 
@@ -7,15 +9,36 @@ const initialState = { items: [], total: 0, loading: false };
 
 function reducer(state, action) {
   switch (action.type) {
-    case "SET":    return { ...state, items: action.items, total: action.total, loading: false };
+    case "SET":     return { ...state, items: action.items, total: action.total, loading: false };
     case "LOADING": return { ...state, loading: true };
-    case "IDLE":   return { ...state, loading: false };
-    default:       return state;
+    case "IDLE":    return { ...state, loading: false };
+    default:        return state;
+  }
+}
+
+/** Persist cart to localStorage for offline fallback */
+function persistCart(items) {
+  try {
+    localStorage.setItem(CART_LOCAL_KEY, JSON.stringify(items));
+  } catch { /* QuotaExceededError — silent */ }
+}
+
+/** Load cart from localStorage (returns [] on failure) */
+function loadPersistedCart() {
+  try {
+    const raw = localStorage.getItem(CART_LOCAL_KEY);
+    if (!raw) return null;
+    const items = JSON.parse(raw);
+    return Array.isArray(items) ? items : null;
+  } catch {
+    return null;
   }
 }
 
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  // Flag: true if cart was loaded from device cache (API was offline)
+  const [isOfflineCart, setIsOfflineCart] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!localStorage.getItem("token")) {
@@ -29,13 +52,33 @@ export function CartProvider({ children }) {
         return;
       }
     } catch { /* ignore parse errors */ }
+
     try {
       const data = await cartApi.getCart();
-      dispatch({ type: "SET", items: data.items || [], total: data.total || 0 });
+      const items = data.items || [];
+      dispatch({ type: "SET", items, total: data.total || 0 });
+      persistCart(items);
+      setIsOfflineCart(false);
     } catch {
-      dispatch({ type: "SET", items: [], total: 0 });
+      // API failed — try local cache
+      const cached = loadPersistedCart();
+      if (cached && cached.length > 0) {
+        const total = cached.reduce((s, i) => s + (i.price || 0) * (i.quantity || 0), 0);
+        dispatch({ type: "SET", items: cached, total });
+        setIsOfflineCart(true);
+      } else {
+        dispatch({ type: "SET", items: [], total: 0 });
+        setIsOfflineCart(false);
+      }
     }
   }, []);
+
+  // Sync persisted cart whenever items change
+  useEffect(() => {
+    if (state.items.length > 0 && !isOfflineCart) {
+      persistCart(state.items);
+    }
+  }, [state.items, isOfflineCart]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -76,7 +119,9 @@ export function CartProvider({ children }) {
   const clearCart = async () => {
     dispatch({ type: "LOADING" });
     await cartApi.clearCart();
+    try { localStorage.removeItem(CART_LOCAL_KEY); } catch { /* silent */ }
     dispatch({ type: "SET", items: [], total: 0 });
+    setIsOfflineCart(false);
   };
 
   const cartCount = state.items.reduce((s, i) => s + (i.quantity || 0), 0);
@@ -87,6 +132,7 @@ export function CartProvider({ children }) {
       total:          state.total,
       cartCount,
       loading:        state.loading,
+      isOfflineCart,
       refresh,
       addToCart,
       updateQty,

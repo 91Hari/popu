@@ -45,15 +45,21 @@ function hashToken(rawToken) {
 async function login({ username, password }) {
   if (!username) throw makeError('Email or mobile number is required', 400);
 
-  const v = username.trim();
-  const isEmail  = v.includes('@');
-  const isMobile = /^\d{10}$/.test(v);
+  const raw = username.trim();
+  const isEmail = raw.includes('@');
+
+  // Normalize mobile: strip +91 / 0091 / 91 country prefix and all spaces/dashes
+  const normalizedMobile = raw
+    .replace(/\s+/g, '')          // remove spaces
+    .replace(/^(\+91|0091|91)(?=\d{10}$)/, ''); // strip country code if followed by exactly 10 digits
+
+  const isMobile = /^\d{10}$/.test(normalizedMobile);
 
   if (!isEmail && !isMobile)
     throw makeError('Enter a valid email address or 10-digit mobile number', 400);
 
   const column = isEmail ? 'email' : 'mobile_number';
-  const value  = isEmail ? v.toLowerCase() : v;
+  const value  = isEmail ? raw.toLowerCase() : normalizedMobile;
 
   const { rows } = await pool.query(
     `SELECT id, name, email, mobile_number, password_hash, role, is_active, is_deleted
@@ -98,7 +104,10 @@ async function register({
   address, city, state, pincode, latitude, longitude,
 }) {
   if (!name?.trim()) throw makeError('Name is required', 400);
-  if (!mobileNumber || !/^\d{10}$/.test(String(mobileNumber).trim()))
+  const mobile = String(mobileNumber || '')
+    .replace(/\s+/g, '')
+    .replace(/^(\+91|0091|91)(?=\d{10}$)/, '');
+  if (!/^\d{10}$/.test(mobile))
     throw makeError('A valid 10-digit mobile number is required', 400);
 
   // Email is mandatory — required for password recovery and account identity
@@ -114,7 +123,6 @@ async function register({
     ? String(role).toUpperCase()
     : 'CUSTOMER';
 
-  const mobile     = String(mobileNumber).trim();
   const cleanEmail = email.trim().toLowerCase();
 
   const { rows: mobileRows } = await pool.query(

@@ -89,7 +89,13 @@ async function updateFood(req, res, next) {
 
 async function deleteFood(req, res, next) {
   try {
-    await foodService.deleteFood(req.params.id, req.user.id);
+    const { softDeleted } = await foodService.deleteFood(req.params.id, req.user.id);
+    if (softDeleted) {
+      return res.json({
+        message: 'Food item has been hidden from your menu. It cannot be fully deleted because it appears in past orders.',
+        soft_deleted: true,
+      });
+    }
     res.status(204).end();
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });

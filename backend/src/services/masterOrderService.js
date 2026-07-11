@@ -145,7 +145,7 @@ async function createSplitOrder({
         [masterOrder.id, caterer_id, subtotal,
          pc.commission_percentage, pc.commission_amount,
          effectivePlatformFee, effectivePayout,
-         isCod ? 'COD' : 'ONLINE',
+         payment_method,
          isSelfPickup ? 'SELF_PICKUP' : 'DELIVERY',
          pickupCode,
          pickupTime]

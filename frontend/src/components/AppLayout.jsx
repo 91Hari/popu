@@ -31,13 +31,10 @@ import CurrencyExchangeRoundedIcon  from "@mui/icons-material/CurrencyExchangeRo
 import ToggleOnRoundedIcon          from "@mui/icons-material/ToggleOnRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import TwoWheelerRoundedIcon        from "@mui/icons-material/TwoWheelerRounded";
-import VerifiedRoundedIcon          from "@mui/icons-material/VerifiedRounded";
-import BadgeRoundedIcon             from "@mui/icons-material/BadgeRounded";
-import SupportAgentRoundedIcon      from "@mui/icons-material/SupportAgentRounded";
-import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import EventRoundedIcon             from "@mui/icons-material/EventRounded";
 import EventNoteRoundedIcon         from "@mui/icons-material/EventNoteRounded";
 import SearchRoundedIcon            from "@mui/icons-material/SearchRounded";
+import MonitorHeartRoundedIcon      from "@mui/icons-material/MonitorHeartRounded";
 import Logo from "./Logo";
 import { brand } from "../theme";
 import { useCart }          from "../contexts/CartContext";
@@ -46,6 +43,7 @@ import LogoutConfirmationDialog from "./LogoutConfirmationDialog";
 import OrderAlertToast from "./OrderAlertToast";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
+import NetworkBanner from "./NetworkBanner";
 
 export const DRAWER_WIDTH = 240;
 
@@ -88,11 +86,7 @@ const ADMIN_NAV = [
   { label: "Refunds",           path: "/admin/refunds",             icon: <CurrencyExchangeRoundedIcon /> },
   { label: "Service Management",path: "/admin/services",            icon: <ToggleOnRoundedIcon /> },
   { label: "Settings",          path: "/admin/settings",            icon: <SettingsRoundedIcon /> },
-  { label: "Compliance",        path: "/admin/compliance",          icon: <VerifiedRoundedIcon /> },
-  { label: "FSSAI Verification",path: "/admin/fssai",               icon: <VerifiedRoundedIcon /> },
-  { label: "KYC Verification",  path: "/admin/kyc",                 icon: <BadgeRoundedIcon /> },
-  { label: "Grievances",        path: "/admin/grievances",          icon: <SupportAgentRoundedIcon /> },
-  { label: "Settlements",       path: "/admin/settlements",         icon: <AccountBalanceWalletRoundedIcon /> },
+  { label: "System Health",     path: "/admin/health",              icon: <MonitorHeartRoundedIcon /> },
 ];
 
 const RIDER_NAV = [
@@ -364,6 +358,9 @@ export default function AppLayout({ children }) {
               <Toolbar sx={{ minHeight: "56px !important" }} />
             </>
           )}
+
+          {/* Network offline banner — shows when user goes offline mid-session */}
+          <NetworkBanner />
 
           <Box sx={{ minHeight: "100vh", pb: isMobile && navItems === CUSTOMER_NAV ? "62px" : 0 }}>
             {children}
