@@ -214,15 +214,20 @@ async function deleteFood(id, caterer_id) {
   }
   const food = existing[0];
 
+  let softDeleted = false;
   try {
     await pool.query('DELETE FROM food_items WHERE id = $1 AND caterer_id = $2', [id, caterer_id]);
   } catch (pgErr) {
     if (pgErr.code === '23503') {
-      const err = new Error('Cannot delete food item with existing orders');
-      err.status = 409;
-      throw err;
+      // Food is referenced by past orders — hide it instead of hard-deleting
+      await pool.query(
+        'UPDATE food_items SET is_available = FALSE WHERE id = $1 AND caterer_id = $2',
+        [id, caterer_id]
+      );
+      softDeleted = true;
+    } else {
+      throw pgErr;
     }
-    throw pgErr;
   }
 
   _sideEffect(async () => {
@@ -233,10 +238,12 @@ async function deleteFood(id, caterer_id) {
         entity_id:    id,
         action:       EVENT_TYPES.FOOD_DELETED,
         performed_by: caterer_id,
-        details:      { food_name: food.food_name },
+        details:      { food_name: food.food_name, soft_deleted: softDeleted },
       }),
     ]);
   });
+
+  return { softDeleted };
 }
 
 async function changeAvailability(id, caterer_id, is_available) {

@@ -59,9 +59,15 @@ export default function FoodListPage() {
     setDialogOpen(false);
     if (!id) return;
     try {
-      await foodService.deleteFood(id);
+      const result = await foodService.deleteFood(id);
       setRows((prev) => prev.filter((r) => r.id !== id));
-      setSnack({ open: true, message: "Food item deleted.", severity: "success" });
+      setSnack({
+        open: true,
+        message: result?.soft_deleted
+          ? "Food item hidden from your menu (it exists in past orders)."
+          : "Food item deleted.",
+        severity: "success",
+      });
     } catch {
       setSnack({ open: true, message: "Failed to delete item.", severity: "error" });
     } finally {
@@ -243,7 +249,7 @@ export default function FoodListPage() {
           <DialogTitle sx={{ fontWeight: 700 }}>Delete Food Item</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete this food item? This cannot be undone.
+              Are you sure you want to delete this food item? If it appears in past orders, it will be hidden from your menu instead of permanently deleted.
             </DialogContentText>
           </DialogContent>
           <DialogActions>

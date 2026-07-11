@@ -109,7 +109,7 @@ export default function LoginPage() {
                 disabled={loading}
                 autoComplete="username"
                 placeholder="email@example.com or 10-digit mobile"
-                autoFocus
+                inputProps={{ inputMode: "email" }}
               />
 
               <TextField

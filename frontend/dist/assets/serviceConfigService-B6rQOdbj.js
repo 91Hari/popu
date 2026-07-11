@@ -1,0 +1,1 @@
+import{p as e}from"./index-tQ8vv4-V.js";const t={async getServices(){return e.request("/customer/services")},async adminGetServices(){return e.request("/admin/services")},async adminUpdateService(r,s){return e.request(`/admin/services/${r}`,{method:"PUT",body:JSON.stringify(s)})}};export{t as s};

@@ -31,9 +31,9 @@ const razorpayRoutes             = require('./routes/razorpayRoutes');
 
 const app = express();
 
-// Trust the first proxy (required on Render, Railway, Heroku, etc.)
+// Trust proxy chain (required on Render — uses multiple load balancer hops)
 // Allows express-rate-limit to read real client IP from X-Forwarded-For
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 app.use(helmet());
 app.use(cors({
