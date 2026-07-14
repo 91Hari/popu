@@ -7,6 +7,12 @@ const BOX_SLOTS = { ONE_CARRIAGE: 1, TWO_CARRIAGE: 2, THREE_CARRIAGE: 3 };
 const BOX_LABELS = { ONE_CARRIAGE: '1 Carriage Box', TWO_CARRIAGE: '2 Carriage Box', THREE_CARRIAGE: '3 Carriage Box' };
 const VALID_DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
 
+const TIFFIN_DELIVERY_CHARGE = 30; // ₹30 flat for home delivery
+
+function generatePickupCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 // ─── Caterer discovery ───────────────────────────────────────────────────────
 
 async function getTiffinCaterers() {
@@ -119,7 +125,13 @@ async function saveTiffinFoodMapping(caterer_id, mappings) {
 
 // ─── Order creation ──────────────────────────────────────────────────────────
 
-async function createTiffinOrder({ customer_id, caterer_id, service_type, box_type, days, items }) {
+async function createTiffinOrder({
+  customer_id, caterer_id, service_type, box_type, days, items,
+  fulfillment_type     = 'DELIVERY',
+  payment_method       = 'COD',
+  razorpay_order_id    = null,
+  razorpay_payment_id  = null,
+}) {
   const slots = BOX_SLOTS[box_type];
   if (!slots) {
     const e = new Error('Invalid box type'); e.status = 400; throw e;
@@ -139,6 +151,20 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
     e.status = 400; throw e;
   }
 
+  if (!['DELIVERY', 'SELF_PICKUP'].includes(fulfillment_type)) {
+    const e = new Error('fulfillment_type must be DELIVERY or SELF_PICKUP'); e.status = 400; throw e;
+  }
+  if (!['COD', 'RAZORPAY', 'ONLINE'].includes(payment_method)) {
+    const e = new Error('payment_method must be COD, RAZORPAY, or ONLINE'); e.status = 400; throw e;
+  }
+  if (fulfillment_type === 'SELF_PICKUP' && payment_method === 'COD') {
+    const e = new Error('Self Pickup requires advance payment. COD is not available for pickup orders.');
+    e.status = 400; throw e;
+  }
+  if (payment_method === 'RAZORPAY' && !razorpay_order_id) {
+    const e = new Error('razorpay_order_id is required for Razorpay payments'); e.status = 400; throw e;
+  }
+
   const settings = await getCatererTiffinSettings(caterer_id);
   if (!settings.tiffin_enabled) {
     const e = new Error('This caterer does not offer Lunch Box service'); e.status = 400; throw e;
@@ -149,13 +175,18 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
     TWO_CARRIAGE:   Number(settings.two_carriage_price),
     THREE_CARRIAGE: Number(settings.three_carriage_price),
   };
-  const total_amount = priceByType[box_type];
+  const boxPrice   = priceByType[box_type];
+  const daysCount  = (service_type === 'DAILY' && Array.isArray(days)) ? days.length : 1;
+  const delivery_charge = fulfillment_type === 'DELIVERY' ? TIFFIN_DELIVERY_CHARGE : 0;
+  const pickup_saving   = fulfillment_type === 'SELF_PICKUP' ? TIFFIN_DELIVERY_CHARGE : 0;
+  const total_amount    = (boxPrice * daysCount) + delivery_charge;
+  const pickup_code     = fulfillment_type === 'SELF_PICKUP' ? generatePickupCode() : null;
 
   const foodIds = items.map((i) => i.food_item_id);
   const { rows: foodRows } = await pool.query(
     `SELECT f.id, f.food_name, f.price, f.is_available,
             COALESCE(tm.available_for_tiffin, TRUE) AS available_for_tiffin
-     FROM food_items f -- serves_count included
+     FROM food_items f
      LEFT JOIN tiffin_food_mapping tm ON tm.food_item_id = f.id AND tm.caterer_id = $2
      WHERE f.id = ANY($1::uuid[]) AND f.caterer_id = $2`,
     [foodIds, caterer_id]
@@ -169,14 +200,35 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
   }
   const foodMap = new Map(foodRows.map((f) => [f.id, f]));
 
+  // Fetch caterer address for self-pickup directions
+  const { rows: [catererUser] } = await pool.query(
+    'SELECT address, latitude, longitude FROM users WHERE id = $1',
+    [caterer_id]
+  );
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
+    const paymentStatus = payment_method === 'RAZORPAY' ? 'SUCCESS' : 'PENDING';
+
     const { rows: [order] } = await client.query(
-      `INSERT INTO tiffin_orders (customer_id, caterer_id, service_type, box_type, total_amount)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [customer_id, caterer_id, service_type, box_type, total_amount]
+      `INSERT INTO tiffin_orders (
+         customer_id, caterer_id, service_type, box_type, total_amount,
+         fulfillment_type, payment_method, razorpay_order_id, razorpay_payment_id,
+         delivery_charge, pickup_saving, pickup_code,
+         caterer_address, caterer_lat, caterer_lng, payment_status
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       RETURNING *`,
+      [
+        customer_id, caterer_id, service_type, box_type, total_amount,
+        fulfillment_type, payment_method, razorpay_order_id, razorpay_payment_id,
+        delivery_charge, pickup_saving, pickup_code,
+        catererUser?.address || null,
+        catererUser?.latitude || null,
+        catererUser?.longitude || null,
+        paymentStatus,
+      ]
     );
 
     if (service_type === 'DAILY' && Array.isArray(days)) {
@@ -197,21 +249,47 @@ async function createTiffinOrder({ customer_id, caterer_id, service_type, box_ty
       );
     }
 
+    // Record Razorpay payment in payments table
+    if (payment_method === 'RAZORPAY' && razorpay_order_id) {
+      await client.query(
+        `INSERT INTO payments (
+           customer_id, merchant_transaction_id, amount, payment_status,
+           payment_method, payment_gateway, service_type,
+           razorpay_order_id, razorpay_payment_id,
+           delivery_charge, pickup_saving, tiffin_order_id, cart_snapshot
+         ) VALUES ($1, $2, $3, 'SUCCESS', 'RAZORPAY', 'RAZORPAY', 'LUNCH_BOX', $4, $5, $6, $7, $8, $9)`,
+        [
+          customer_id,
+          razorpay_order_id,
+          total_amount,
+          razorpay_order_id,
+          razorpay_payment_id || null,
+          delivery_charge,
+          pickup_saving,
+          order.id,
+          JSON.stringify({ service: 'LUNCH_BOX', box_type, caterer_id, items_count: items.length }),
+        ]
+      );
+    }
+
     await client.query('COMMIT');
 
     setImmediate(async () => {
       try {
+        const fulfillLabel = fulfillment_type === 'SELF_PICKUP' ? 'Self Pickup' : 'Home Delivery';
         await Promise.all([
           notifyUser(caterer_id, {
             notification_type: 'TIFFIN_ORDER',
             title:       'New Lunch Box Order',
-            message:     `A new ${BOX_LABELS[box_type]} Lunch Box order has been placed.`,
+            message:     `A new ${BOX_LABELS[box_type]} order (${fulfillLabel}) has been placed.`,
             reference_id: order.id,
           }),
           notifyUser(customer_id, {
             notification_type: 'TIFFIN_ORDER',
             title:       'Lunch Box Order Placed!',
-            message:     `Your ${BOX_LABELS[box_type]} Lunch Box order was placed successfully.`,
+            message:     pickup_code
+              ? `Your Lunch Box is confirmed! Pickup code: ${pickup_code}`
+              : `Your ${BOX_LABELS[box_type]} Lunch Box order was placed successfully.`,
             reference_id: order.id,
           }),
         ]);
