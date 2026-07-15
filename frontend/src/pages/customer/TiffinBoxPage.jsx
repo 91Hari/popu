@@ -1,24 +1,29 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Container, Typography, Card, CardContent, Button, Stack,
-  CircularProgress, Alert, Chip, Checkbox, FormControlLabel,
+  CircularProgress, Alert, Chip,
   Divider, IconButton, Stepper, Step, StepLabel,
   ToggleButtonGroup, ToggleButton,
 } from "@mui/material";
-import ArrowBackRoundedIcon      from "@mui/icons-material/ArrowBackRounded";
-import CheckCircleRoundedIcon    from "@mui/icons-material/CheckCircleRounded";
-import StorefrontRoundedIcon     from "@mui/icons-material/StorefrontRounded";
-import TodayRoundedIcon          from "@mui/icons-material/TodayRounded";
-import DateRangeRoundedIcon      from "@mui/icons-material/DateRangeRounded";
-import DinnerDiningRoundedIcon   from "@mui/icons-material/DinnerDiningRounded";
-import AddRoundedIcon            from "@mui/icons-material/AddRounded";
-import RemoveRoundedIcon         from "@mui/icons-material/RemoveRounded";
-import AppLayout                 from "../../components/AppLayout";
-import tiffinService             from "../../services/tiffinService";
-import { brand }                 from "../../theme";
+import ArrowBackRoundedIcon        from "@mui/icons-material/ArrowBackRounded";
+import CheckCircleRoundedIcon      from "@mui/icons-material/CheckCircleRounded";
+import StorefrontRoundedIcon       from "@mui/icons-material/StorefrontRounded";
+import TodayRoundedIcon            from "@mui/icons-material/TodayRounded";
+import DateRangeRoundedIcon        from "@mui/icons-material/DateRangeRounded";
+import DinnerDiningRoundedIcon     from "@mui/icons-material/DinnerDiningRounded";
+import LocalShippingRoundedIcon    from "@mui/icons-material/LocalShipping";
+import DirectionsWalkRoundedIcon   from "@mui/icons-material/DirectionsWalk";
+import CreditCardRoundedIcon       from "@mui/icons-material/CreditCardRounded";
+import MoneyRoundedIcon            from "@mui/icons-material/Money";
+import QrCode2RoundedIcon          from "@mui/icons-material/QrCode2";
+import AppLayout                   from "../../components/AppLayout";
+import RazorpayButton              from "../../components/RazorpayButton";
+import tiffinService               from "../../services/tiffinService";
+import { brand }                   from "../../theme";
 
-const STEPS = ["Caterer", "Schedule", "Box Type", "Food Items", "Review"];
+const STEPS = ["Caterer", "Schedule", "Box Type", "Food Items", "Fulfillment", "Review"];
+const DELIVERY_CHARGE = 30; // must match backend TIFFIN_DELIVERY_CHARGE
 
 const BOX_CONFIGS = [
   { key: "ONE_CARRIAGE",   label: "1 Carriage Box", slots: 1, description: "1 food compartment — perfect for a light meal" },
@@ -426,9 +431,158 @@ function StepFoodSelect({ caterer, boxType, onNext }) {
   );
 }
 
-// ─── Step 5: Review ───────────────────────────────────────────────────────────
-function StepReview({ caterer, serviceType, days, boxType, boxPrice, selectedItems, onPlaceOrder, placing, error }) {
-  const boxLabel = { ONE_CARRIAGE: "1 Carriage Box", TWO_CARRIAGE: "2 Carriage Box", THREE_CARRIAGE: "3 Carriage Box" }[boxType];
+// ─── Step 5: Fulfillment & Payment ───────────────────────────────────────────
+function StepFulfillment({ onNext }) {
+  const [fulfillment, setFulfillment] = useState(null);
+  const [payment,     setPayment]     = useState(null);
+  const [error,       setError]       = useState("");
+
+  const handleFulfillmentChange = (type) => {
+    setFulfillment(type);
+    if (type === "SELF_PICKUP" && payment === "COD") setPayment(null);
+    setError("");
+  };
+
+  const handleNext = () => {
+    if (!fulfillment) { setError("Please choose how you'd like to receive your order."); return; }
+    if (!payment)     { setError("Please select a payment method."); return; }
+    setError("");
+    onNext({ fulfillmentType: fulfillment, paymentMethod: payment });
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>Delivery & Payment</Typography>
+
+      {/* Fulfillment type */}
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.secondary", mb: 1, textTransform: "uppercase", letterSpacing: "0.07em", fontSize: "0.7rem" }}>
+        How to receive your order
+      </Typography>
+      <Stack spacing={1.25} sx={{ mb: 2.5 }}>
+        {[
+          {
+            key: "DELIVERY",
+            icon: <LocalShippingRoundedIcon sx={{ color: brand.orange, fontSize: 24 }} />,
+            label: "Home Delivery",
+            sub:   `Delivered to your door — +₹${DELIVERY_CHARGE} delivery charge`,
+          },
+          {
+            key: "SELF_PICKUP",
+            icon: <DirectionsWalkRoundedIcon sx={{ color: "#1565C0", fontSize: 24 }} />,
+            label: "Self Pickup",
+            sub:   `Pick up from caterer & save ₹${DELIVERY_CHARGE}`,
+            savingLabel: `Save ₹${DELIVERY_CHARGE}`,
+          },
+        ].map(({ key, icon, label, sub, savingLabel }) => (
+          <Card key={key} elevation={0} onClick={() => handleFulfillmentChange(key)}
+            sx={{
+              border: `2px solid ${fulfillment === key ? (key === "SELF_PICKUP" ? "#1565C0" : brand.orange) : brand.border}`,
+              borderRadius: 2, cursor: "pointer",
+              backgroundColor: fulfillment === key ? (key === "SELF_PICKUP" ? "#E3F2FD" : brand.orangeLight) : "transparent",
+              transition: "all 0.15s",
+            }}
+          >
+            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: "14px !important" }}>
+              <Box sx={{ width: 44, height: 44, borderRadius: 2, backgroundColor: key === "SELF_PICKUP" ? "#E3F2FD" : brand.orangeLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {icon}
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{label}</Typography>
+                  {savingLabel && (
+                    <Chip label={savingLabel} size="small"
+                      sx={{ fontSize: "0.6rem", fontWeight: 800, backgroundColor: "#E8F5E9", color: "#2E7D32", height: 18, "& .MuiChip-label": { px: 0.75 } }} />
+                  )}
+                </Box>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>{sub}</Typography>
+              </Box>
+              {fulfillment === key && <CheckCircleRoundedIcon sx={{ color: key === "SELF_PICKUP" ? "#1565C0" : brand.orange, flexShrink: 0 }} />}
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
+
+      {fulfillment === "SELF_PICKUP" && (
+        <Alert severity="success" sx={{ mb: 2, fontSize: "0.8rem" }}>
+          Smart choice! You save ₹{DELIVERY_CHARGE} by picking up your order. Advance payment required.
+        </Alert>
+      )}
+
+      {/* Payment method */}
+      {fulfillment && (
+        <>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.secondary", mb: 1, textTransform: "uppercase", letterSpacing: "0.07em", fontSize: "0.7rem" }}>
+            Payment Method
+          </Typography>
+          <Stack spacing={1.25} sx={{ mb: 2.5 }}>
+            {[
+              {
+                key: "COD",
+                icon: <MoneyRoundedIcon sx={{ color: "#558B2F", fontSize: 24 }} />,
+                label: "Cash on Delivery",
+                sub:   "Pay when your order arrives",
+                disabled: fulfillment === "SELF_PICKUP",
+                disabledReason: "Not available for Self Pickup",
+              },
+              {
+                key: "RAZORPAY",
+                icon: <CreditCardRoundedIcon sx={{ color: "#B45309", fontSize: 24 }} />,
+                label: "Razorpay",
+                sub:   "UPI, Cards, Net Banking — pay now",
+              },
+            ].map(({ key, icon, label, sub, disabled: isDisabled, disabledReason }) => (
+              <Card key={key} elevation={0}
+                onClick={() => !isDisabled && setPayment(key)}
+                sx={{
+                  border: `2px solid ${payment === key ? "#F59E0B" : brand.border}`,
+                  borderRadius: 2,
+                  cursor: isDisabled ? "not-allowed" : "pointer",
+                  opacity: isDisabled ? 0.45 : 1,
+                  backgroundColor: payment === key ? "#FFF8E1" : "transparent",
+                  transition: "all 0.15s",
+                }}
+              >
+                <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: "14px !important" }}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: 2, backgroundColor: key === "COD" ? "#F9FBE7" : "#FFF8E1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {icon}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{label}</Typography>
+                    <Typography variant="caption" sx={{ color: isDisabled ? "error.main" : "text.secondary" }}>
+                      {isDisabled ? disabledReason : sub}
+                    </Typography>
+                  </Box>
+                  {payment === key && <CheckCircleRoundedIcon sx={{ color: "#F59E0B", flexShrink: 0 }} />}
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </>
+      )}
+
+      {error && <Alert severity="warning" sx={{ mb: 1.5 }}>{error}</Alert>}
+
+      <Button fullWidth variant="contained" size="large" onClick={handleNext}
+        sx={{ fontWeight: 700, py: 1.4 }}>
+        Continue
+      </Button>
+    </Box>
+  );
+}
+
+// ─── Step 6: Review ───────────────────────────────────────────────────────────
+function StepReview({
+  caterer, serviceType, days, boxType, boxPrice, selectedItems,
+  fulfillmentType, paymentMethod,
+  onPlaceOrder, onRazorpayVerified,
+  placing, error,
+}) {
+  const boxLabel   = { ONE_CARRIAGE: "1 Carriage Box", TWO_CARRIAGE: "2 Carriage Box", THREE_CARRIAGE: "3 Carriage Box" }[boxType];
+  const daysCount  = serviceType === "DAILY" ? days.length : 1;
+  const boxTotal   = boxPrice * daysCount;
+  const charge     = fulfillmentType === "DELIVERY" ? DELIVERY_CHARGE : 0;
+  const saving     = fulfillmentType === "SELF_PICKUP" ? DELIVERY_CHARGE : 0;
+  const grandTotal = boxTotal + charge;
 
   return (
     <Box>
@@ -437,12 +591,14 @@ function StepReview({ caterer, serviceType, days, boxType, boxPrice, selectedIte
       <Card elevation={0} sx={{ border: `1px solid ${brand.border}`, borderRadius: 2, mb: 2 }}>
         <CardContent sx={{ p: 2 }}>
           <Stack spacing={1.25}>
-            <Row label="Caterer"   value={caterer.name} />
-            <Row label="Service"   value={serviceType === "TODAY" ? "Today" : "Daily Subscription"} />
+            <Row label="Caterer"     value={caterer.name} />
+            <Row label="Service"     value={serviceType === "TODAY" ? "Today" : "Daily Subscription"} />
             {serviceType === "DAILY" && (
-              <Row label="Days" value={days.map((d) => DAY_LABELS[d]).join(", ")} />
+              <Row label="Days" value={`${days.map((d) => DAY_LABELS[d]).join(", ")} (${daysCount} days)`} />
             )}
-            <Row label="Box Type"  value={boxLabel} />
+            <Row label="Box Type"    value={boxLabel} />
+            <Row label="Fulfillment" value={fulfillmentType === "DELIVERY" ? "Home Delivery" : "Self Pickup"} />
+            <Row label="Payment"     value={paymentMethod === "RAZORPAY" ? "Razorpay (pay now)" : "Cash on Delivery"} />
             <Divider />
             <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Food Items
@@ -461,35 +617,40 @@ function StepReview({ caterer, serviceType, days, boxType, boxPrice, selectedIte
               </Box>
             ))}
             <Divider />
+            {serviceType === "DAILY" && daysCount > 1 && (
+              <Row label={`Box (₹${boxPrice} × ${daysCount} days)`} value={`₹${boxTotal.toFixed(2)}`} />
+            )}
+            {charge > 0 && <Row label="Delivery Charge" value={`+₹${charge.toFixed(2)}`} />}
+            {saving > 0 && (
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>Pickup Saving</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#2E7D32" }}>−₹{saving.toFixed(2)}</Typography>
+              </Box>
+            )}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Total</Typography>
-              <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange }}>₹{Number(boxPrice).toFixed(2)}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900, color: brand.orange }}>₹{grandTotal.toFixed(2)}</Typography>
             </Box>
-            {serviceType === "TODAY" && (
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                One-time payment for today's Lunch Box.
-              </Typography>
-            )}
-            {serviceType === "DAILY" && (
-              <Alert severity="info" sx={{ fontSize: "0.75rem", py: 0.25 }}>
-                Daily subscription starts from next week. Payment per delivery.
-              </Alert>
-            )}
           </Stack>
         </CardContent>
       </Card>
 
       {error && <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert>}
 
-      <Alert severity="info" sx={{ mb: 2, fontSize: "0.8rem" }}>
-        Pay via the caterer's UPI ID after placing your order.
-      </Alert>
-
-      <Button fullWidth variant="contained" size="large" onClick={onPlaceOrder} disabled={placing}
-        startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
-        sx={{ fontWeight: 700, py: 1.4 }}>
-        {placing ? "Placing Order…" : "Place Order"}
-      </Button>
+      {paymentMethod === "RAZORPAY" ? (
+        <RazorpayButton
+          totalRupees={grandTotal}
+          onVerified={onRazorpayVerified}
+          onError={(msg) => onPlaceOrder({}, msg)}
+          label={`Pay ₹${grandTotal.toFixed(2)} & Confirm Order`}
+        />
+      ) : (
+        <Button fullWidth variant="contained" size="large" onClick={() => onPlaceOrder({}, null)} disabled={placing}
+          startIcon={placing ? <CircularProgress size={18} color="inherit" /> : null}
+          sx={{ fontWeight: 700, py: 1.4 }}>
+          {placing ? "Placing Order…" : "Place Order"}
+        </Button>
+      )}
     </Box>
   );
 }
@@ -504,14 +665,41 @@ function Row({ label, value }) {
 }
 
 // ─── Confirmation ─────────────────────────────────────────────────────────────
-function StepConfirmation({ navigate }) {
+function StepConfirmation({ navigate, placedOrder }) {
+  const pickupCode     = placedOrder?.pickup_code;
+  const fulfillment    = placedOrder?.fulfillment_type;
+
   return (
     <Box sx={{ textAlign: "center", py: 4 }}>
       <CheckCircleRoundedIcon sx={{ fontSize: 72, color: brand.orange, mb: 2 }} />
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>Order Placed!</Typography>
       <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
-        Your Lunch Box order has been placed successfully. The caterer will start preparing your meal.
+        {fulfillment === "SELF_PICKUP"
+          ? "Your Lunch Box is confirmed! Show the pickup code at the caterer."
+          : "Your Lunch Box order has been placed. The caterer will start preparing your meal."}
       </Typography>
+
+      {pickupCode && (
+        <Box sx={{
+          mb: 3, p: 2.5, borderRadius: 3,
+          background: "linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)",
+          border: "2px dashed #1565C0",
+        }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 0.5 }}>
+            <QrCode2RoundedIcon sx={{ color: "#1565C0", fontSize: 20 }} />
+            <Typography variant="caption" sx={{ fontWeight: 700, color: "#1565C0", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Your Pickup Code
+            </Typography>
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: "0.25em", color: "#0D47A1" }}>
+            {pickupCode}
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#1565C0", mt: 0.5, display: "block" }}>
+            Show this code at the caterer to collect your order
+          </Typography>
+        </Box>
+      )}
+
       <Stack spacing={1.5}>
         <Button variant="contained" fullWidth onClick={() => navigate("/customer/tiffin-orders")}
           sx={{ fontWeight: 700 }}>
@@ -530,36 +718,52 @@ function StepConfirmation({ navigate }) {
 export default function TiffinBoxPage() {
   const navigate = useNavigate();
 
-  const [step,          setStep]         = useState(0);
-  const [done,          setDone]         = useState(false);
-  const [caterer,       setCaterer]      = useState(null);
-  const [serviceType,   setServiceType]  = useState(null);
-  const [days,          setDays]         = useState([]);
-  const [boxType,       setBoxType]      = useState(null);
-  const [boxPrice,      setBoxPrice]     = useState(0);
-  const [selectedItems, setSelectedItems]= useState([]);
-  const [placing,       setPlacing]      = useState(false);
-  const [placeError,    setPlaceError]   = useState("");
+  const [step,            setStep]          = useState(0);
+  const [done,            setDone]          = useState(false);
+  const [caterer,         setCaterer]       = useState(null);
+  const [serviceType,     setServiceType]   = useState(null);
+  const [days,            setDays]          = useState([]);
+  const [boxType,         setBoxType]       = useState(null);
+  const [boxPrice,        setBoxPrice]      = useState(0);
+  const [selectedItems,   setSelectedItems] = useState([]);
+  const [fulfillmentType, setFulfillmentType] = useState(null);
+  const [paymentMethod,   setPaymentMethod]   = useState(null);
+  const [placing,         setPlacing]       = useState(false);
+  const [placeError,      setPlaceError]    = useState("");
+  const [placedOrder,     setPlacedOrder]   = useState(null);
 
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
-  const handlePlaceOrder = async () => {
+  const placeOrder = async ({ razorpay_order_id, razorpay_payment_id } = {}, errorOverride) => {
+    if (errorOverride) { setPlaceError(errorOverride); return; }
     setPlacing(true);
     setPlaceError("");
     try {
-      await tiffinService.createOrder({
-        caterer_id:   caterer.id,
-        service_type: serviceType,
-        box_type:     boxType,
-        days:         serviceType === "DAILY" ? days : [],
-        items:        selectedItems.map((f) => ({ food_item_id: f.id })),
+      const order = await tiffinService.createOrder({
+        caterer_id:          caterer.id,
+        service_type:        serviceType,
+        box_type:            boxType,
+        days:                serviceType === "DAILY" ? days : [],
+        items:               selectedItems.map((f) => ({ food_item_id: f.id })),
+        fulfillment_type:    fulfillmentType,
+        payment_method:      paymentMethod,
+        razorpay_order_id:   razorpay_order_id   || undefined,
+        razorpay_payment_id: razorpay_payment_id || undefined,
       });
+      setPlacedOrder(order.order || order);
       setDone(true);
     } catch (err) {
       setPlaceError(err?.message || "Failed to place order. Please try again.");
     } finally {
       setPlacing(false);
     }
+  };
+
+  const handleRazorpayVerified = (rzpResponse) => {
+    placeOrder({
+      razorpay_order_id:   rzpResponse.razorpay_order_id,
+      razorpay_payment_id: rzpResponse.razorpay_payment_id,
+    });
   };
 
   return (
@@ -578,7 +782,7 @@ export default function TiffinBoxPage() {
         {!done && <StepHeader step={step} onBack={goBack} />}
 
         {done ? (
-          <StepConfirmation navigate={navigate} />
+          <StepConfirmation navigate={navigate} placedOrder={placedOrder} />
         ) : step === 0 ? (
           <StepCaterer onSelect={(c) => { setCaterer(c); setStep(1); }} />
         ) : step === 1 ? (
@@ -593,6 +797,10 @@ export default function TiffinBoxPage() {
           <StepFoodSelect caterer={caterer} boxType={boxType} onNext={({ selectedItems: si }) => {
             setSelectedItems(si); setStep(4);
           }} />
+        ) : step === 4 ? (
+          <StepFulfillment onNext={({ fulfillmentType: ft, paymentMethod: pm }) => {
+            setFulfillmentType(ft); setPaymentMethod(pm); setStep(5);
+          }} />
         ) : (
           <StepReview
             caterer={caterer}
@@ -601,7 +809,10 @@ export default function TiffinBoxPage() {
             boxType={boxType}
             boxPrice={boxPrice}
             selectedItems={selectedItems}
-            onPlaceOrder={handlePlaceOrder}
+            fulfillmentType={fulfillmentType}
+            paymentMethod={paymentMethod}
+            onPlaceOrder={placeOrder}
+            onRazorpayVerified={handleRazorpayVerified}
             placing={placing}
             error={placeError}
           />

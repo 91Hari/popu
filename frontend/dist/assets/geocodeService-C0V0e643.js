@@ -1,1 +1,0 @@
-import{ensureMapsInit as t}from"./mapsLoader-CLglCnlo.js";import{p as i}from"./parseAddressComponents-DUH46OxD.js";async function p(n,r){return await t("geocoding")?new Promise(o=>{new window.google.maps.Geocoder().geocode({location:{lat:n,lng:r}},(e,s)=>{if(s!=="OK"||!e?.[0]){o(null);return}o(i(e[0].address_components))})}):null}export{p as r};

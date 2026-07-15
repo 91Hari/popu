@@ -36,17 +36,35 @@ const app = express();
 app.set('trust proxy', true);
 
 app.use(helmet());
-// Support comma-separated origins in CORS_ORIGIN env var
-// e.g. CORS_ORIGIN=https://popu.co.in,https://www.popu.co.in
-const _corsOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+// Support comma-separated origins in CORS_ORIGIN env var.
+// Entries may contain * as a wildcard, e.g. https://*.vercel.app
+// Paths/hashes in entries are stripped — CORS origins are scheme+host+port only.
+const _corsMatchers = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((entry) => {
+      // Strip any accidental path/hash/query — origin is scheme+host+port
+      let o = entry.trim();
+      try { o = new URL(o).origin; } catch { /* keep as-is if not a valid URL */ }
+
+      if (o.includes('*')) {
+        // Convert glob wildcard to regex: escape regex chars, then * → .*
+        const pattern = o
+          .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*');
+        return new RegExp(`^${pattern}$`);
+      }
+      return o; // exact string match
+    })
   : null;
 
 app.use(cors({
-  origin: _corsOrigins
+  origin: _corsMatchers
     ? (origin, cb) => {
         // Allow requests with no origin (mobile apps, curl, Render health checks)
-        if (!origin || _corsOrigins.includes(origin)) return cb(null, true);
+        if (!origin) return cb(null, true);
+        const allowed = _corsMatchers.some((m) =>
+          typeof m === 'string' ? m === origin : m.test(origin)
+        );
+        if (allowed) return cb(null, true);
         cb(new Error(`CORS: origin ${origin} not allowed`));
       }
     : '*',

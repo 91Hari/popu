@@ -10,14 +10,18 @@ const KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
  * Self-contained Razorpay checkout button.
  *
  * Props:
- *  - orderParams   { items, customer_lat, customer_lng, delivery_*, fulfillment_type }
- *  - totalRupees   number — displayed total in INR (also used for Razorpay amount)
- *  - customerName  string — prefill in checkout modal
- *  - customerEmail string
- *  - customerPhone string
- *  - onSuccess(masterOrder) — called after PO.PU order is created
+ *  - orderParams    { items, customer_lat, customer_lng, delivery_*, fulfillment_type }
+ *                   Required when onVerified is NOT provided (master-order flow).
+ *  - totalRupees    number — displayed total in INR (also used for Razorpay amount)
+ *  - customerName   string — prefill in checkout modal
+ *  - customerEmail  string
+ *  - customerPhone  string
+ *  - onSuccess(masterOrder) — called after PO.PU order is created (master-order flow)
+ *  - onVerified(response)   — if provided, called instead of creating master order;
+ *                             receives { razorpay_order_id, razorpay_payment_id, razorpay_signature }
  *  - onError(message)       — called on any failure
- *  - disabled              boolean
+ *  - disabled               boolean
+ *  - label                  string — optional button label override
  */
 export default function RazorpayButton({
   orderParams,
@@ -26,8 +30,10 @@ export default function RazorpayButton({
   customerEmail = "",
   customerPhone = "",
   onSuccess,
+  onVerified,
   onError,
   disabled = false,
+  label,
 }) {
   const [scriptReady, setScriptReady] = useState(false);
   const [processing,  setProcessing]  = useState(false);
@@ -80,14 +86,22 @@ export default function RazorpayButton({
                 response.razorpay_signature
               );
 
-              // Create PO.PU order
-              const masterOrder = await masterOrderService.createSplitOrder({
-                ...orderParams,
-                payment_method: "RAZORPAY",
-                payment_proofs: [],
-              });
-
-              resolve(masterOrder);
+              if (onVerified) {
+                // Caller handles order creation (e.g. tiffin orders)
+                resolve({
+                  razorpay_order_id:   response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature:  response.razorpay_signature,
+                });
+              } else {
+                // Default: create master (food) order
+                const masterOrder = await masterOrderService.createSplitOrder({
+                  ...orderParams,
+                  payment_method: "RAZORPAY",
+                  payment_proofs: [],
+                });
+                resolve(masterOrder);
+              }
             } catch (err) {
               reject(err);
             }
@@ -103,8 +117,12 @@ export default function RazorpayButton({
           reject(new Error(resp?.error?.description || "Payment failed."));
         });
         rzp.open();
-      }).then((masterOrder) => {
-        onSuccess?.(masterOrder);
+      }).then((result) => {
+        if (onVerified) {
+          onVerified(result);
+        } else {
+          onSuccess?.(result);
+        }
       });
     } catch (err) {
       if (!err?.cancelled) {
@@ -141,7 +159,7 @@ export default function RazorpayButton({
         ? "Processing Payment…"
         : !scriptReady
         ? "Loading Payment Gateway…"
-        : `Pay ₹${Number(totalRupees).toFixed(2)} via Razorpay`}
+        : label || `Pay ₹${Number(totalRupees).toFixed(2)} via Razorpay`}
     </Button>
   );
 }

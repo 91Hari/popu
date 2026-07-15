@@ -1,1 +1,0 @@
-import{ac as f,ad as c,h as i,ae as S}from"./index-tQ8vv4-V.js";function u(o){const{elementType:s,externalSlotProps:t,ownerState:e,skipResolvingSlotProps:n=!1,...p}=o,r=n?{}:f(t,e),{props:a,internalRef:l}=c({...p,externalSlotProps:r}),P=i(l,r?.ref,o.additionalProps?.ref);return S(s,{...a,ref:P},e)}export{u};
